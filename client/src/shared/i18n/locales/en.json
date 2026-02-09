@@ -1,0 +1,24 @@
+{
+  "title": "Hello",
+  "navigation": {
+    "header": {
+      "catalog": "Catalog",
+      "about": "About us",
+      "content": "Content",
+      "principles": "Principles",
+      "contacts": "Contacts"
+    },
+    "footer": {
+      "catalog": "Product catalog",
+      "aboutUs": "About us",
+      "laboratory": "Laboratory",
+      "library": "Library",
+      "paymentDelivery": "Payment and delivery",
+      "warrantyReturns": "Warranty and returns"
+    }
+  },
+  "language": {
+    "english": "English",
+    "ukrainian": "Ukrainian"
+  }
+}

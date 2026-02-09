@@ -1,0 +1,11 @@
+@import "../../shared/ui/styles/variables.scss";
+@import "../../shared/ui/styles/utilities.scss";
+@import "../../shared/ui/styles/reset.scss";
+
+
+
+// widgets
+@import "../../widgets/header/style/header.scss";
+
+// features
+@import "../../features/language-switcher/style/languageDropdown.scss";

@@ -1,0 +1,15 @@
+body {
+  background-image: url("/img/bg.webp");
+}
+
+.container {
+  width: 100%;
+  max-width: $container-max;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 $container-padding;
+
+  @include down($bp-mobile) {
+    padding: 0 $container-padding-mobile;
+  }
+}

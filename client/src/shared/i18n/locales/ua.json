@@ -1,0 +1,24 @@
+{
+  "title": "Привіт",
+  "navigation": {
+    "header": {
+      "catalog": "Каталог",
+      "about": "Про нас",
+      "content": "Контент",
+      "principles": "Принципи",
+      "contacts": "Контакти"
+    },
+    "footer": {
+      "catalog": "Каталог товарів",
+      "aboutUs": "Про нас",
+      "laboratory": "Лабораторія",
+      "library": "Бібліотека",
+      "paymentDelivery": "Оплата і доставка",
+      "warrantyReturns": "Гарантії і повернення"
+    }
+  },
+  "language": {
+    "english": "Англійська",
+    "ukrainian": "Українська"
+  }
+}
