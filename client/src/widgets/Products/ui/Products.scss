@@ -1,0 +1,22 @@
+.products {
+    h2 {
+        text-align: center;
+        color: var(--White, var(--color-grey-100, #FEFEFE));
+        font-family: Unbounded;
+        font-size: 60px;
+        font-style: normal;
+        font-weight: 900;
+        line-height: normal;
+        text-transform: uppercase;
+        margin-bottom: 40px;
+
+        span {
+            color: var(--Accent-color-1, #E41F25);
+        }
+    }
+
+    button {
+        margin: 0 auto 40px auto;
+        display: block;
+    }
+}

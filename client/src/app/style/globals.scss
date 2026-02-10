@@ -2,12 +2,18 @@
 @import "../../shared/ui/styles/utilities.scss";
 @import "../../shared/ui/styles/reset.scss";
 
+//entities
+@import "../../entities/ProductItem/ui/ProductItem.scss";
 
 
 // widgets
 @import "../../widgets/header/ui/Header.scss";
 @import "../../widgets/Preview/ui/preview.scss";
 @import "../../widgets/Partners/ui/partners.scss";
+@import "../../widgets/Ticker/ui/ticker.scss";
+@import "../../widgets/Ticker/ui/common/scrollVelocity.scss";
+@import "../../widgets/Products/ui/Products.scss";
+@import "../../widgets/Products/ui/common/productsList.scss";
 
 // features
 @import "../../features/language-switcher/ui/languageDropdown.scss";

@@ -1,5 +1,6 @@
 .header {
     position: sticky;
+    z-index: 1000;
     top: 0;
     font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: rgba(13, 13, 13, 0.80);

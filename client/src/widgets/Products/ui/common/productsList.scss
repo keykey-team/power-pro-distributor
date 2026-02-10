@@ -1,0 +1,15 @@
+.products__list{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    margin-bottom: 40px;
+
+    @media(max-width: 1050px) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media(max-width: 600px) {
+        grid-template-columns: 1fr;
+        margin-bottom: 24px;
+    }
+}

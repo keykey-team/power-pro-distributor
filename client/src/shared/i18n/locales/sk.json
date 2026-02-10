@@ -33,5 +33,12 @@
       "description": "Mladá a ambiciózna značka, ktorá mení pohľad na zdravé snacky. FitWin sa zameriava na dokonalú chuť bez pridaného cukru, čím pomáha športovcom dosahovať ciele s radosťou z každého sústa.",
       "btn": "Web FitWin →"
     }
+  },
+  "ticker": "\u00A0\u00A0\u00A0\u00A0NAJLEPŠIA BÍLKOVINA NA SLOVENSKU\u00A0\u00A0\u00A0\u00A0•\u00A0\u00A0\u00A0\u00A0ŽIADNY CUKOR\u00A0\u00A0\u00A0\u00A0•\u00A0\u00A0\u00A0\u00A0LEN ČISTÁ ENERGIA\u00A0\u00A0\u00A0\u00A0•",
+  "products": {
+    "title1": "Vyberte si",
+    "title2": "svoju chuť",
+    "btn": "Zostavte si svoj box",
+    "btn2": "Pozrieť si ďalšie produkty"
   }
 }
