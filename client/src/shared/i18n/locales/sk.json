@@ -1,0 +1,37 @@
+{
+  "navigation": {
+    "header": {
+      "us": "O nás",
+      "partners": "Partneri",
+      "prods": "Produkty",
+      "contacts": "Kontakt",
+      "btn": "Môj výber"
+    }
+  },
+  "preview": {
+    "title1": "Energia pre",
+    "title2": "Víťazov",
+    "description": "Pridajte produkty do zoznamu a pošlite nám dopyt",
+    "btn": "Vybrať príchuť"
+  },
+  "language": {
+    "english": "Англійська",
+    "ukrainian": "Українська"
+  },
+  "partners": {
+    "title1": "Aliancia",
+    "title2": "Silných",
+    "powerpro": {
+      "info": "Hlavný Partner",
+      "title": "PowerPro",
+      "description": "Líder na ukrajinskom trhu športovej výživy. Od roku 2013 vytvárajú produkty na báze vysoko kvalitných európskych surovín. Ich tyčinky sú známe čistým zložením a vysokým obsahom bielkovín.",
+      "btn": "Web výrobcu →"
+    },
+    "fitwin": {
+      "info": "Inovácia",
+      "title": "FitWin",
+      "description": "Mladá a ambiciózna značka, ktorá mení pohľad na zdravé snacky. FitWin sa zameriava na dokonalú chuť bez pridaného cukru, čím pomáha športovcom dosahovať ciele s radosťou z každého sústa.",
+      "btn": "Web FitWin →"
+    }
+  }
+}

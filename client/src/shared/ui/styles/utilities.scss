@@ -3,13 +3,7 @@ body {
 }
 
 .container {
-  width: 100%;
-  max-width: $container-max;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 0 $container-padding;
-
-  @include down($bp-mobile) {
-    padding: 0 $container-padding-mobile;
+  max-width: 1530px;
+    padding: 0 15px;
+    margin: 0 auto;
   }
-}

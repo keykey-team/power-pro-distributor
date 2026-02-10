@@ -5,7 +5,9 @@
 
 
 // widgets
-@import "../../widgets/header/style/header.scss";
+@import "../../widgets/header/ui/Header.scss";
+@import "../../widgets/Preview/ui/preview.scss";
+@import "../../widgets/Partners/ui/partners.scss";
 
 // features
-@import "../../features/language-switcher/style/languageDropdown.scss";
+@import "../../features/language-switcher/ui/languageDropdown.scss";
