@@ -40,5 +40,27 @@
     "title2": "svoju chuť",
     "btn": "Zostavte si svoj box",
     "btn2": "Pozrieť si ďalšie produkty"
-  }
+  },
+  "form": {
+    "title": "Dokončiť",
+    "titleSpan": "dopyt",
+    "products": "Vybrané produkty:",
+    "noProducts": "Žiadne produkty",
+    "nameLabel": "Meno",
+    "namePlaceholder": "Meno a priezvisko",
+    "phoneLabel": "Telefón (WhatsApp/Telegram)",
+    "phonePlaceholder": "+421 901 234 567",
+    "submit": "Odoslať dopyt manažérovi",
+    "submitting": "Odosielam...",
+    "success": "Dopyt bol úspešne odoslaný!",
+    "error": "Nastala chyba. Skúste to prosím neskôr."
+  },
+  "validation": {
+    "nameRequired": "Meno je povinné",
+    "nameMin": "Meno musí mať aspoň 2 znaky",
+    "phoneRequired": "Telefónne číslo je povinné",
+    "phoneFormat": "Zadajte platné číslo vo formáte +421... (povinný kód krajiny)"
+  },
+  "phoneCodes": ["+421", "+380", "+420", "+48", "+49", "+36"]
 }
+

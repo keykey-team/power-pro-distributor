@@ -11,6 +11,7 @@ export async function Products({ locale }) {
       <h2><span>{t('products.title1')}</span> {t('products.title2')}</h2>
       <button className='preview__button'>{t('products.btn')}</button>
       <ProductsList/>
+      <button className='preview__button white'>{t('products.btn2')}</button>
     </div>
   )
 }

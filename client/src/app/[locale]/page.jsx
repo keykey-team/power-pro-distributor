@@ -1,3 +1,4 @@
+import OrderForm from "@features/OrderForm/ui/OrderForm";
 import { getMessages } from "@shared/i18n/getMessages";
 import { createI18nServer } from "@shared/i18n/server";
 import { Partners } from "@widgets/Partners/ui/Partners";
@@ -16,5 +17,6 @@ export default async function HomePage({ params }) {
     <Partners locale={locale} />
     <Ticker locale={locale} />
     <Products locale={locale} />
+    <OrderForm />
   </>;
 }

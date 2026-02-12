@@ -1,0 +1,21 @@
+.burger-menu {
+    position: fixed;
+    top: 99%;
+    left: 100%;
+    width: 400px;
+    height: 100vh;
+    background: #151515;
+    z-index: 1001;
+    transform: translateX(0);
+
+    transition: transform 0.3s ease;
+
+    @media (max-width: 600px) {
+        width: 100%;
+    }
+
+    &.active {
+        transform: translateX(-100%);
+
+    }
+}

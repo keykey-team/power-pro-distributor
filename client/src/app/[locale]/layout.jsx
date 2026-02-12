@@ -5,6 +5,7 @@ import Providers from "@shared/providers";
 import "../style/globals.scss";
 import { Header } from "@widgets/header/ui/Header";
 import { inter, unbounded } from "@shared/ui/styles/font";
+import { Footer } from "@widgets/Footer/ui/Footer";
 
 
 export default async function LocaleLayout({ children, params }) {
@@ -27,6 +28,7 @@ export default async function LocaleLayout({ children, params }) {
           <div className="layout">
             <Header locale={locale} />
             <main className="main">{children}</main>
+            <Footer locale={locale} />
           </div>
         </Providers>
       </body>

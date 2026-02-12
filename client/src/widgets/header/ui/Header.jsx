@@ -1,16 +1,23 @@
+"use client"
 import LanguageDropdown from '@features/language-switcher'
 import { getMessages } from '@shared/i18n/getMessages';
 import { createI18nServer } from '@shared/i18n/server';
+import { useModals } from '@shared/index';
 import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
+import BurgerMenu from './common/BurgerMenu';
+import BurgerMenuButton from './common/BurgerMenuButton';
 
 export async function Header({ locale }) {
+
+
     const messages = await getMessages(locale);
     const { t } = createI18nServer(messages);
     return (
-        <div className='header'>
-            <div className="header__content container">
+        <header className='header'>
+
+            <div className="header__content container"> <BurgerMenu />
                 <Image src="/img/logo.svg" alt="logo" className='header__logo' width={237} height={35} />
                 <ul className="header__list">
                     <li className='header__item'>
@@ -39,21 +46,11 @@ export async function Header({ locale }) {
                         <LanguageDropdown />
 
                     </div>
-                    <div className="header__burger">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="14" viewBox="0 0 18 14" fill="none">
-                            <path
-                                d="M1.3335 1.3335H16.3335M1.3335 6.8335H16.3335M1.3335 12.3335H16.3335"
-                                stroke="black"
-                                strokeWidth="2.66667"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            />
-                        </svg>
-                    </div>
+                    <BurgerMenuButton />
 
                 </div>
             </div>
-        </div>
+        </header>
     )
 }
 

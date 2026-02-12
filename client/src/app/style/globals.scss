@@ -7,13 +7,17 @@
 
 
 // widgets
+
 @import "../../widgets/header/ui/Header.scss";
+@import "../../widgets/header/ui/common/burgerMenu.scss";
 @import "../../widgets/Preview/ui/preview.scss";
 @import "../../widgets/Partners/ui/partners.scss";
 @import "../../widgets/Ticker/ui/ticker.scss";
 @import "../../widgets/Ticker/ui/common/scrollVelocity.scss";
 @import "../../widgets/Products/ui/Products.scss";
 @import "../../widgets/Products/ui/common/productsList.scss";
+@import "../../widgets/Footer/ui/footer.scss";
 
 // features
 @import "../../features/language-switcher/ui/languageDropdown.scss";
+@import "../../features/OrderForm/ui/OrderForm.scss";
