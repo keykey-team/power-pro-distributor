@@ -61,6 +61,7 @@
     "phoneRequired": "Telefónne číslo je povinné",
     "phoneFormat": "Zadajte platné číslo vo formáte +421... (povinný kód krajiny)"
   },
-  "phoneCodes": ["+421", "+380", "+420", "+48", "+49", "+36"]
+  "phoneCodes": ["+421", "+380", "+420", "+48", "+49", "+36"],
+  "box": "Zostavte si svoj box"
 }
 
