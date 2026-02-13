@@ -1,0 +1,182 @@
+.form {
+    padding: 170px 0;
+    position: relative;
+
+    @media(max-width: 768px) {
+        padding-right: 15px;
+        padding-left: 15px;
+        padding: 100px 15px;
+    }
+
+    @media(max-width: 450px) {
+        padding: 72px 15px;
+    }
+
+    .form-bg {
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .form-content {
+        padding: 56px 40px;
+        border-radius: 32px;
+        border: 1px solid rgba(255, 237, 0, 0.20);
+        background: rgba(10, 10, 10, 0.40);
+        backdrop-filter: blur(5px);
+        max-width: 738px;
+        width: 100%;
+        margin: 0 auto;
+
+        @media(max-width: 600px) {
+            padding: 32px 24px;
+        }
+
+
+    }
+
+    .form-title {
+        text-align: center;
+        color: var(--White, var(--color-grey-100, #FEFEFE));
+        font-family: Unbounded;
+        font-size: 40px;
+        font-style: normal;
+        font-weight: 900;
+        line-height: normal;
+        text-transform: uppercase;
+        margin-bottom: 41px;
+
+
+        @media(max-width: 600px) {
+            font-size: 24px;
+        }
+
+        span {
+            color: var(--Accent-color-1, #E41F25);
+        }
+    }
+
+    .form-prods {
+        color: var(--Gray, #6B7280);
+        font-family: Inter;
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 600;
+        line-height: normal;
+        text-transform: uppercase;
+        margin-bottom: 16px;
+
+        @media(max-width: 600px) {
+            font-size: 12px;
+        }
+    }
+
+    .form-prods-list {
+        color: var(--Accent-color-2, #FFED00);
+        font-family: Inter;
+        font-size: 16px;
+        font-style: italic;
+        font-weight: 500;
+        line-height: normal;
+        margin-bottom: 32px;
+
+        @media(max-width: 600px) {
+            font-size: 14px;
+        }
+    }
+
+    input {
+        outline: none;
+        padding: 8px 0;
+        border: none;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.10);
+        color: var(--White, #FEFEFE);
+        font-family: Inter;
+        font-size: 16px;
+        background: inherit;
+        font-style: normal;
+        font-weight: 600;
+        line-height: normal;
+
+        @media(max-width: 600px) {
+            font-size: 14px;
+        }
+
+        &:focus {
+            border-bottom: 2px solid #FFED00;
+        }
+
+        &::placeholder {
+
+            color: #6B7280
+        }
+    }
+
+    .form-group {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 32px;
+
+        label {
+            color: var(--Gray, #6B7280);
+            font-family: Inter;
+            font-size: 14px;
+            font-style: normal;
+            font-weight: 600;
+            line-height: normal;
+            text-transform: uppercase;
+
+            @media(max-width: 600px) {
+                font-size: 12px;
+            }
+        }
+
+        .error-message {
+            position: absolute;
+            left: 5px;
+            top: 100%;
+            color: var(--Accent-color-2, #f80000);
+            font-family: Inter;
+            font-size: 10px;
+            font-style: italic;
+            font-weight: 500;
+            line-height: normal;
+        }
+    }
+
+    .form-submit {
+        color: var(--White, #FEFEFE);
+        text-align: center;
+        font-family: Inter;
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 700;
+        line-height: normal;
+        letter-spacing: 5px;
+        text-transform: uppercase;
+        //
+        border-radius: 10000px;
+        background: var(--Accent-color-1, #E41F25);
+        box-shadow: 0 0 20px 1px rgba(228, 31, 37, 0.20);
+        padding: 24px 48px;
+        display: block;
+        margin: 0 auto; transition: 0.3s;
+
+        &:hover {
+            transform: translate3d(0, -2px, 0);
+            transition: 0.3s;
+            background: var(--Accent-color-1, #ffffff);
+            box-shadow: 0 0 20px 1px rgba(255, 255, 255, 0.2);
+            color: #000;
+        }
+
+        @media(max-width: 600px) {
+            font-size: 12px;
+            width: 100%;
+            padding: 16px 0;
+        }
+    }
+}

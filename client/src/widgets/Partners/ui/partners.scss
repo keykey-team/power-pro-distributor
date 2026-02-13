@@ -31,11 +31,14 @@
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 24px;
-        margin-bottom: 21px;
+        margin-bottom: 104px;
 
         @media(max-width: 1050px) {
             grid-template-columns: 1fr;
         }
+@media(max-width: 600px) {
+    margin-bottom: 50px;
+}
     }
 
     &__item:last-child {
@@ -145,7 +148,9 @@
 
 
 
-    &__item-button {cursor: pointer;transition: 0.3s;
+        &__item-button {
+            cursor: pointer;
+            transition: 0.3s;
         color: var(--White, var(--color-grey-100, #FEFEFE));
         font-family: Inter;
         font-size: 12px;
@@ -167,7 +172,8 @@
         @media(max-width: 500px) {
             font-size: 10px;
         }
-          &:hover {
+
+                &:hover {
             transition: 0.3s;
             transform: translate3d(0, -2px, 0);
             opacity: 0.7;
