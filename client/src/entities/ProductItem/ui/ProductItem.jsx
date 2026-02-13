@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import React from 'react'
+import ProductButton from './ProductButton'
 
 export async function ProductItem({ product }) {
     return (
@@ -23,7 +24,7 @@ export async function ProductItem({ product }) {
                     <span className='prod-some'>kcal</span>
                 </div>
             </div>
-            <div className="products__item-button">Pridať do výberu • {product.price}€</div>
+            <ProductButton product={product} />
         </div>
     )
 }

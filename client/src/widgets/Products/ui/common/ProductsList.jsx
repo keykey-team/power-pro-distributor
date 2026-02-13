@@ -1,4 +1,5 @@
 import { ProductItem } from '@entities/ProductItem/ui/ProductItem';
+import { ProductModal } from '@widgets/ProductModal/ui/ProductModal';
 import React from 'react'
 
 export const products = [
@@ -127,11 +128,14 @@ export const products = [
 
 const ProductsList = () => {
     return (
-        <ul className='products__list'>
-            {products.map((product) => (
-                <ProductItem product={product} key={product.id} />
-            ))}
-        </ul>
+        <>
+            <ProductModal product={products[0]} />
+            <ul className='products__list'>
+                {products.map((product) => (
+                    <ProductItem product={product} key={product.id} />
+                ))}
+            </ul>
+        </>
     )
 }
 

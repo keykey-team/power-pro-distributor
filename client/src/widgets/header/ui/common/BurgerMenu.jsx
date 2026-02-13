@@ -15,6 +15,7 @@ const BurgerMenu = () => {
                     className="overlay"
                 />
             )}
+
             <div className={isModalOpen === "burger" ? "burger-menu active" : "burger-menu"}>
                 <div className="burger-menu__list">
 

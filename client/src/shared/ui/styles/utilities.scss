@@ -21,4 +21,7 @@ body {
   cursor: pointer;
   transition: opacity 0.3s ease;
   opacity: 1;
+  &.item {
+      z-index: 1000;
+    }
 }
