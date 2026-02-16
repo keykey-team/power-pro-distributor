@@ -1,5 +1,11 @@
 .build-func {
     padding: 80px 15px;
+    @media(max-width:900px) {
+        padding: 80px 15px 40px 15px;
+    }
+    @media(max-width:600px) {
+        padding: 64px 15px 32px 15px;
+    }
     h1 {
         color: var(--White, var(--color-grey-100, #FEFEFE));
         text-align: center;
@@ -10,6 +16,12 @@
         line-height: normal;
         margin-bottom: 24px;
         text-transform: uppercase;
+        @media(max-width:900px) {
+            font-size: 48px;
+        }
+        @media(max-width:600px) {
+            font-size: 32px;
+        }
         b {
             color: var(--Accent-color-2, #FFED00);
         }
@@ -25,6 +37,14 @@
         letter-spacing: 5px;
         text-transform: uppercase;
         margin-bottom: 86px;
+        @media(max-width:900px) {
+            font-size: 14px;
+            margin-bottom: 60px;
+        }
+        @media(max-width:600px) {
+            font-size: 12px;
+            margin-bottom: 48px;
+        }
     }
     &__grid {
         max-width: 992px;
@@ -33,6 +53,10 @@
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 24px;
+        @media(max-width:600px) {
+            grid-template-columns: repeat(1, 1fr);
+            margin: 0 auto 32px auto;
+        }
     }
     &__item {
         cursor: pointer;
@@ -46,10 +70,16 @@
         gap: 12px;
         align-items: center;
         transition: 0.3s;
+        @media(max-width:900px) {
+            padding: 24px;
+        }
         &:hover {
             transform: translate3d(0, -2px, 0);
             transition: 0.3s;
             border: 2px solid var(--Accent-color-2, #FFED00);
+        }
+        &.active{
+              border: 2px solid var(--Accent-color-2, #FFED00);
         }
         &-title {
             color: var(--White, var(--color-grey-100, #FEFEFE));
@@ -60,6 +90,9 @@
             font-weight: 900;
             line-height: normal;
             text-transform: uppercase;
+            @media(max-width:900px) {
+                font-size: 24px;
+            }
         }
         &-sub {
             color: var(--Accent-color-2, #FFED00);
@@ -70,6 +103,9 @@
             font-weight: 600;
             line-height: normal;
             text-transform: uppercase;
+            @media(max-width:900px) {
+                font-size: 14px;
+            }
         }
         &-desc {
             color: var(--Gray, #6B7280);
@@ -80,6 +116,9 @@
             font-weight: 400;
             line-height: normal;
             text-transform: uppercase;
+            @media(max-width:900px) {
+                font-size: 14px;
+            }
         }
     }
     &__range {
@@ -87,6 +126,7 @@
         border: 1px solid rgba(107, 114, 128, 0.50);
         background: var(--Light-dark, #151515);
         padding: 32px;
+        @media(max-width:600px) {padding: 24px;}
         &-txt {
             display: flex;
             justify-content: space-between;
@@ -118,4 +158,109 @@
             background: var(--Accent-color-1, #E41F25);
         }
     }
+}
+//
+/* Progress Bar Styles */
+.progress-bar {
+    width: 100%;
+    height: 21px;
+    background: #F0F0F0;
+    border-radius: 30px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+    position: relative;
+}
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #E41F25, #780d11);
+    border-radius: 30px;
+    position: relative;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(255, 107, 0, 0.3);
+}
+/* Анимация пульсации при достижении 100% */
+.progress-bar-fill[style*="width: 100%"] {
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0% {
+        opacity: 1;
+        box-shadow: 0 2px 8px rgba(255, 107, 0, 0.3);
+    }
+    50% {
+        opacity: 0.8;
+        box-shadow: 0 4px 16px rgba(255, 107, 0, 0.5);
+    }
+    100% {
+        opacity: 1;
+        box-shadow: 0 2px 8px rgba(255, 107, 0, 0.3);
+    }
+}
+/* Добавим счетчик товаров над прогресс-баром */
+.build-func__range::before {
+    content: attr(data-count);
+    position: absolute;
+    top: -25px;
+    right: 0;
+    font-size: 14px;
+    color: #666;
+}
+/* Для мобильных устройств */
+@media (max-width: 768px) {
+    .build-func__range-txt p {
+        font-size: 20px;
+    }
+    .build-func__range-txt span {
+        font-size: 14px;
+     
+    }
+}
+  @media(max-width:600px) {
+      .build-func__range-txt p {
+        font-size: 16px;
+    }
+      .build-func__range-txt span {
+        font-size: 12px;
+       
+    }
+  }
+/* Если нужны метки под прогресс-баром */
+.progress-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #999;
+}
+.progress-labels span:first-child {
+    color: #FF6B00;
+    font-weight: 500;
+}
+.progress-labels span:last-child {
+    color: #333;
+    font-weight: 500;
+}
+/* Альтернативный дизайн с градиентом */
+.progress-bar-fill.gradient-alt {
+    background: linear-gradient(90deg, #FF416C, #FF4B2B);
+}
+/* Стили для отображения текущего количества */
+.build-func__range-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+/* Если нужно добавить иконку или дополнительный элемент */
+.progress-bar__icon {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 2;
 }

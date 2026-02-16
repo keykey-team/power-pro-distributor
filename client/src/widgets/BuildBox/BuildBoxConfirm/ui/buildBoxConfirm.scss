@@ -3,6 +3,9 @@
     background: var(--Light-dark, #151515);
     padding: 32px;
     margin-bottom: 76px;
+    @media(max-width:600px) {
+        padding: 24px;margin-bottom: 60px;
+    }
     .btn-box-confirm {
         display: block;
         border-radius: 20px;
@@ -17,14 +20,15 @@
         text-transform: uppercase;
         padding: 16px 80px;
         margin: 0 auto;
-        &:active {
+        @media(max-width:600px) {
+            font-size: 16px;
+            padding: 16px 24px;
+        }
+        &.active {
             background: var(--Accent-color-1, #E41F25);
             color: var(--White, #FEFEFE);
             text-align: center;
             font-family: Unbounded;
-            font-size: 20px;
-            font-style: normal;
-            font-weight: 700;
             line-height: normal;
             text-transform: uppercase;
         }

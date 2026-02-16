@@ -86,8 +86,8 @@
     },
     "range": "Tvoj Box : ",
     "range-btn": "Doplňte box",
-    "confrim": "",
-    "": "",
-    "": ""
+    "confirm1": "Pridajte ďalšie",
+    "confirm2": "tyčinky",
+    "confirm-done": "Pridať Box do košíka"
   }
 }
