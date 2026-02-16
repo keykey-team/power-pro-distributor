@@ -1,0 +1,387 @@
+openapi: 3.0.3
+info:
+  title: FitWin Shop API
+  version: 1.0.3
+  description: >
+    API для CRUD товаров и отправки заявок в Telegram (без оплаты).
+    В БД заявка (lead) сохраняет только: name, phone, promoCode.
+servers:
+  - url: /api
+
+tags:
+  - name: Products
+    description: CRUD товаров
+  - name: Leads
+    description: Заявки (отправка в Telegram). Включает товары и кастомные боксы.
+
+paths:
+  /products:
+    get:
+      tags: [Products]
+      summary: Список товаров
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - in: query
+          name: q
+          schema: { type: string }
+          description: Текстовый поиск (если есть text index)
+        - in: query
+          name: isActive
+          schema: { type: boolean }
+        - in: query
+          name: inStock
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Product" }
+                  page: { type: integer }
+                  limit: { type: integer }
+                  total: { type: integer }
+                  pages: { type: integer }
+
+    post:
+      tags: [Products]
+      summary: Создать товар
+      description: Обычно должен быть защищён админ-авторизацией.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProductCreate" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Product" }
+
+  /products/{idOrSlug}:
+    get:
+      tags: [Products]
+      summary: Получить товар по id или slug
+      parameters:
+        - in: path
+          name: idOrSlug
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Product" }
+        "404":
+          description: Not found
+
+  /products/{id}:
+    put:
+      tags: [Products]
+      summary: Обновить товар по id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProductUpdate" }
+            example:
+              price: 2.49
+              oldPrice: 2.99
+              inStock: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Product" }
+        "404":
+          description: Not found
+
+    delete:
+      tags: [Products]
+      summary: Удалить товар по id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, example: true }
+        "404":
+          description: Not found
+
+  /leads/send:
+    post:
+      tags: [Leads]
+      summary: Отправить lead в Telegram (товары и/или кастомные боксы)
+      description: |
+        **Важно:** в БД сохраняются только `name`, `phone`, `promoCode`.
+        Поле `items` используется только для формирования сообщения в Telegram.
+
+        ## Как формировать кастомный бокс (custom_box)
+
+        В массив `items` можно добавить объект:
+        ```json
+        {
+          "kind": "custom_box",
+          "size": 5,
+          "items": [
+            { "productId": "PRODUCT_ID_1", "qty": 2 },
+            { "productId": "PRODUCT_ID_2", "qty": 3 }
+          ]
+        }
+        ```
+
+        ### Правила:
+        - `kind` = `"custom_box"`
+        - `size` ∈ **{5, 10}**
+        - `items[]` — массив выбранных товаров
+        - каждый элемент `items[]` должен иметь:
+          - `productId` **или** `_id` **или** `id`
+          - `qty` **или** `quantity` (число > 0)
+        - **сумма всех qty/quantity должна быть ровно равна `size`**
+          - иначе сервер вернёт `box_invalid_total_qty`
+
+        ### Что делает сервер:
+        - подтягивает товары из Mongo по id
+        - считает стоимость по цене товара (`cost` или `price`) * qty
+        - применяет скидку товара (`discount`) если есть
+        - формирует позицию `custom_box` и отправляет в Telegram
+
+        Ошибки:
+        - `box_invalid_size`, `box_empty`, `box_invalid_total_qty`, `box_product_not_found`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LeadSendRequest" }
+            examples:
+              lead_only_products:
+                summary: Lead — только товары
+                value:
+                  name: "Ivan"
+                  phone: "+421901234567"
+                  promoCode: "SALE10"
+                  items:
+                    - kind: "product"
+                      productId: "65f0aaaaaaaaaaaaaaaaaaaaaaa1"
+                      quantity: 2
+                    - kind: "product"
+                      _id: "65f0aaaaaaaaaaaaaaaaaaaaaaa2"
+                      qty: 1
+
+              lead_only_custom_box_5:
+                summary: Lead — только custom_box (size=5, сумма qty=5)
+                value:
+                  name: "Marek"
+                  phone: "+421900000000"
+                  promoCode: ""
+                  items:
+                    - kind: "custom_box"
+                      size: 5
+                      items:
+                        - productId: "65f0aaaaaaaaaaaaaaaaaaaaaaa1"
+                          qty: 2
+                        - productId: "65f0aaaaaaaaaaaaaaaaaaaaaaa2"
+                          qty: 3
+
+              lead_custom_box_10_plus_product:
+                summary: Lead — custom_box (10) + отдельный товар
+                value:
+                  name: "Oksana"
+                  phone: "+380501112233"
+                  promoCode: "FIT5"
+                  items:
+                    - kind: "custom_box"
+                      size: 10
+                      items:
+                        - _id: "65f0aaaaaaaaaaaaaaaaaaaaaaa1"
+                          quantity: 4
+                        - _id: "65f0aaaaaaaaaaaaaaaaaaaaaaa2"
+                          quantity: 6
+                    - kind: "product"
+                      productId: "65f0aaaaaaaaaaaaaaaaaaaaaaa3"
+                      quantity: 1
+
+              lead_invalid_custom_box_total:
+                summary: ❌ Ошибка — сумма qty не равна size
+                value:
+                  name: "Test"
+                  phone: "+421900111222"
+                  promoCode: "X"
+                  items:
+                    - kind: "custom_box"
+                      size: 10
+                      items:
+                        - productId: "65f0aaaaaaaaaaaaaaaaaaaaaaa1"
+                          qty: 3
+                        - productId: "65f0aaaaaaaaaaaaaaaaaaaaaaa2"
+                          qty: 3
+      responses:
+        "201":
+          description: OK (sent to Telegram)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, example: true }
+                  leadId: { type: string, example: "65f0bbbbbbbbbbbbbbbbbbbbbbb" }
+        "400":
+          description: Bad request (name/phone required)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+        "500":
+          description: Failed to send lead
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  error: { type: string }
+
+components:
+  schemas:
+    LocalizedString:
+      type: object
+      properties:
+        ua: { type: string, default: "" }
+        ru: { type: string, default: "" }
+        en: { type: string, default: "" }
+        sk: { type: string, default: "" }
+
+    Product:
+      type: object
+      properties:
+        _id: { type: string, example: "65f0aaaaaaaaaaaaaaaaaaaaaaa1" }
+        slug: { type: string, example: "fitwin-pistachio-cream-60g" }
+        title: { $ref: "#/components/schemas/LocalizedString" }
+        subtitle: { $ref: "#/components/schemas/LocalizedString" }
+        ingredients: { $ref: "#/components/schemas/LocalizedString" }
+        currency: { type: string, example: "EUR" }
+        price: { type: number, example: 2.49 }
+        oldPrice: { type: number, nullable: true, example: 2.99 }
+        inStock: { type: boolean, example: true }
+        isActive: { type: boolean, example: true }
+
+    ProductCreate:
+      type: object
+      required: [slug, title, price]
+      properties:
+        slug: { type: string }
+        title: { $ref: "#/components/schemas/LocalizedString" }
+        subtitle: { $ref: "#/components/schemas/LocalizedString" }
+        ingredients: { $ref: "#/components/schemas/LocalizedString" }
+        currency: { type: string, default: "EUR" }
+        price: { type: number }
+        oldPrice: { type: number, nullable: true }
+        inStock: { type: boolean, default: true }
+        isActive: { type: boolean, default: true }
+
+    ProductUpdate:
+      type: object
+      properties:
+        slug: { type: string }
+        title: { $ref: "#/components/schemas/LocalizedString" }
+        subtitle: { $ref: "#/components/schemas/LocalizedString" }
+        ingredients: { $ref: "#/components/schemas/LocalizedString" }
+        currency: { type: string }
+        price: { type: number }
+        oldPrice: { type: number, nullable: true }
+        inStock: { type: boolean }
+        isActive: { type: boolean }
+
+    LeadSendRequest:
+      type: object
+      required: [name, phone]
+      properties:
+        name: { type: string, example: "Ivan" }
+        phone: { type: string, example: "+421901234567" }
+        promoCode: { type: string, example: "SALE10" }
+        items:
+          type: array
+          description: >
+            Позиции лида. Поддерживает:
+            - kind=product
+            - kind=custom_box (size=5|10, сумма qty должна равняться size)
+          items:
+            oneOf:
+              - $ref: "#/components/schemas/LeadItemProduct"
+              - $ref: "#/components/schemas/LeadItemCustomBox"
+
+    LeadItemProduct:
+      type: object
+      required: [kind]
+      properties:
+        kind: { type: string, enum: [product], example: product }
+        productId:
+          type: string
+          description: Можно также прислать _id или id — на бэке это нормализуется
+          example: "65f0aaaaaaaaaaaaaaaaaaaaaaa1"
+        _id: { type: string, example: "65f0aaaaaaaaaaaaaaaaaaaaaaa1" }
+        id: { type: string, example: "65f0aaaaaaaaaaaaaaaaaaaaaaa1" }
+        quantity: { type: integer, minimum: 1, example: 2 }
+        qty: { type: integer, minimum: 1, example: 2 }
+
+    LeadItemCustomBox:
+      type: object
+      required: [kind, size, items]
+      properties:
+        kind: { type: string, enum: [custom_box], example: custom_box }
+        size:
+          type: integer
+          description: Размер бокса (строго 5 или 10)
+          enum: [5, 10]
+          example: 10
+        items:
+          type: array
+          minItems: 1
+          description: >
+            Список выбранных товаров для бокса.
+            Сумма qty/quantity по всем items должна быть равна size.
+          items:
+            $ref: "#/components/schemas/CustomBoxItem"
+
+    CustomBoxItem:
+      type: object
+      properties:
+        productId: { type: string, example: "65f0aaaaaaaaaaaaaaaaaaaaaaa1" }
+        _id: { type: string, example: "65f0aaaaaaaaaaaaaaaaaaaaaaa1" }
+        id: { type: string, example: "65f0aaaaaaaaaaaaaaaaaaaaaaa1" }
+        quantity: { type: integer, minimum: 1, example: 4 }
+        qty: { type: integer, minimum: 1, example: 4 }
+      oneOf:
+        - required: [productId, qty]
+        - required: [_id, qty]
+        - required: [id, qty]
+        - required: [productId, quantity]
+        - required: [_id, quantity]
+        - required: [id, quantity]
