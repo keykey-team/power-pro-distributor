@@ -61,7 +61,33 @@
     "phoneRequired": "Telefónne číslo je povinné",
     "phoneFormat": "Zadajte platné číslo vo formáte +421... (povinný kód krajiny)"
   },
-  "phoneCodes": ["+421", "+380", "+420", "+48", "+49", "+36"],
-  "box": "Zostavte si svoj box"
+  "phoneCodes": [
+    "+421",
+    "+380",
+    "+420",
+    "+48",
+    "+49",
+    "+36"
+  ],
+  "box": "Zostavte si svoj box",
+  "build-box": {
+    "title": "Zostav si svoj",
+    "title2": "Power Box",
+    "subtitle": "Vyber si veľkosť a naplň ju svojimi obľúbenými chuťami",
+    "block-txt1": {
+      "title": "STANDARD",
+      "subtitle": "5 TYČINIEK",
+      "desc": "Ideálne pre týždenný tréning"
+    },
+    "block-txt2": {
+      "title": "Performance",
+      "subtitle": "10 TYČINIEK",
+      "desc": "Pre náročných športovcov"
+    },
+    "range": "Tvoj Box : ",
+    "range-btn": "Doplňte box",
+    "": "",
+    "": "",
+    "": ""
+  }
 }
-

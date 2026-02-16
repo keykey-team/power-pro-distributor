@@ -1,5 +1,6 @@
 import { getMessages } from '@shared/i18n/getMessages';
 import { createI18nServer } from '@shared/i18n/server';
+import Link from 'next/link';
 import React from 'react'
 
 export async function Preview({ locale }) {
@@ -9,7 +10,7 @@ export async function Preview({ locale }) {
         <div className='preview'>
             <h1 className='preview__title'>{t("preview.title1")}<p>{t("preview.title2")}</p></h1>
             <p className='preview__description'>{t("preview.description")}</p>
-            <button className='preview__button'>{t("preview.btn")}</button>
+            <button className='preview__button'><Link href={"/build-box"}>{t("preview.btn")}</Link></button>
         </div>
     )
 }
