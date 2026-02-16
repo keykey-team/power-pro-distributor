@@ -1,6 +1,7 @@
 
 import { getMessages } from "@shared/i18n/getMessages";
 import { createI18nServer } from "@shared/i18n/server";
+import BuildBoxConfirm from "@widgets/BuildBox/BuildBoxConfirm/ui/BuildBoxConfirm";
 import BuildBoxFunc from "@widgets/BuildBox/BuildBoxFunc/ui/BuildBoxFunc";
 import BuildBoxList from "@widgets/BuildBox/BuildBoxList/ui/BuildBoxList";
 
