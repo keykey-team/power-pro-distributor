@@ -13,5 +13,6 @@ export default async function BoxPage({ params }) {
     return <>
         <BuildBoxFunc locale={locale} />
         <BuildBoxList locale={locale} />
+        <BuildBoxConfirm locale={locale}/>
     </>;
 }
