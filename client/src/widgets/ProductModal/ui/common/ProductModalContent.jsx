@@ -4,9 +4,10 @@ import { formatProductTitle } from '@widgets/ProductModal/lib/formatProductTitle
 import Image from 'next/image';
 import React from 'react'
 
-const ProductModalContent = ({ product }) => {
+const ProductModalContent = ({ product, locale }) => {
     const { isModalOpen, setIsModalOpen, isProdModalId, setIsProdModalId } = useModals();
-    const { firstPart, secondPart } = formatProductTitle(product.title)
+    const { firstPart, secondPart } = formatProductTitle(product.title?.[locale])
+    console.log(product)
     return (
         <>
             {(isModalOpen === "prod-modal") && (
@@ -20,9 +21,9 @@ const ProductModalContent = ({ product }) => {
                 <div className='prod-modal'>
                     <div className="prod-modal__content">
                         <div className="prod-modal-mobile">
-                             <p className='prod-modal__data-title'>{firstPart}<b> {secondPart}</b></p>
-                             <p className='prod-modal__data-description'>FitWin tyčinka s náplňou. Obsahuje sladidlo. (60 g)</p>
-                            
+                            <p className='prod-modal__data-title'>{firstPart}<b> {secondPart}</b></p>
+                            <p className='prod-modal__data-description'>{product?.subtitle?.[locale]}</p>
+
                         </div>
                         <button className="prod-modal__close" onClick={() => setIsModalOpen(null)}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 25 25" fill="none">
@@ -52,42 +53,32 @@ const ProductModalContent = ({ product }) => {
                         <div className="prod-modal__data">
                             <p className='prod-modal__data-title'>{firstPart}<b> {secondPart}</b></p>
                             <p className='prod-modal__data-description'>FitWin tyčinka s náplňou. Obsahuje sladidlo. (60 g)</p>
-                            <p className='prod-modal__data-subtitle'>Výživové údaje</p>
+                            <p className='prod-modal__data-subtitle'>{product?.nutritionTable?.title?.[locale]}</p>
                             <ul className="prod-modal__data-list">
                                 <li className="prod-modal__data-item for-title">
                                     <p>Parameter</p>
                                     <p>NA 100G</p>
                                     <p>NA 60G</p>
                                 </li>
-                                <li className="prod-modal__data-item">
-                                    <p>Energia</p>
-                                    <p>1436 kJ/ 364 kcal</p>
-                                    <p>862 kJ/218 kcal</p>
-                                </li>
-                                <li className="prod-modal__data-item">
-                                    <p>Energia</p>
-                                    <p>1436 kJ/ 364 kcal</p>
-                                    <p>862 kJ/218 kcal</p>
-                                </li>
-                                <li className="prod-modal__data-item">
-                                    <p>Energia</p>
-                                    <p>1436 kJ/ 364 kcal</p>
-                                    <p>862 kJ/218 kcal</p>
-                                </li>
-                                <li className="prod-modal__data-item">
-                                    <p>Energia</p>
-                                    <p>1436 kJ/ 364 kcal</p>
-                                    <p>862 kJ/218 kcal</p>
-                                </li>
+                                {product?.nutritionTable?.rows.map((el) => (
+                                    <li className="prod-modal__data-item">
+                                        <p>{el?.label?.[locale]}</p>
+                                        <p>{el?.values?.per_60g?.text?.trim() || "-"}</p>
+                                        <p>{el?.values?.per_100g?.text?.trim() || "-"}</p>
+                                    </li>
+                                ))}
+
+
                             </ul>
                             <p className='prod-modal__data-subtitle bottom'>Zloženie</p>
-                            <p className='prod-modal__data-description bottom'>Mliečna bielkovinová zmes 38% (srvátkový bielkovinový koncentrát (mlieko), srvátkový bielkovinový izolát (mlieko), vo vode rozpustná kukuričná vláknina, poleva 17% (kakaové maslo, sušené plnotučné mlieko, sladidlá: maltitol, glykozidy steviolu), kokosový tuk, kešu oriešky, pistácie 2%, arašidy, prírodná aróma, vitamín E. Môže obsahovať vajcia.</p>
+                            <p className='prod-modal__data-description bottom'>{product?.ingredients?.[locale]}</p>
+
 
                         </div>
 
                     </div>
                     <div className="prod-modal__main-btn">
-                        <button className='products__item-button'>Pridať do výberu • €115</button>
+                        <button className='products__item-button'>Pridať do výberu • €{product.price}</button>
                     </div>
                 </div>
             )}

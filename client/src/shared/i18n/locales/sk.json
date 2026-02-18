@@ -53,7 +53,9 @@
     "submit": "Odoslať dopyt manažérovi",
     "submitting": "Odosielam...",
     "success": "Dopyt bol úspešne odoslaný!",
-    "error": "Nastala chyba. Skúste to prosím neskôr."
+    "error": "Nastala chyba. Skúste to prosím neskôr.",
+  "promoCodeLabel": "Promo kód",
+"promoCodePlaceholder": "Zadajte promo kód"
   },
   "validation": {
     "nameRequired": "Meno je povinné",
@@ -88,6 +90,9 @@
     "range-btn": "Doplňte box",
     "confirm1": "Pridajte ďalšie",
     "confirm2": "tyčinky",
-    "confirm-done": "Pridať Box do košíka"
+    "confirm-done": "Pridať Box do košíka",
+    "successfully_added": "Úspešne pridané",
+    "successfully_added2": "do košíka",
+    "go_to_cart": "Prejsť do košíka"
   }
 }

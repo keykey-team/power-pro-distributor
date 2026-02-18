@@ -5,15 +5,17 @@ import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { products } from "@widgets/Products/ui/common/ProductsList";
+import { scrollToOrderForm } from "@widgets/header/lib/scrollToOrderForm";
 
 // Ключи для localStorage
 const BOX_STORAGE_KEY = 'box-products';
 const MAIN_CART_KEY = 'cart'; // Уточните название ключа главной корзины
 
 const BuildBoxConfirm = () => {
+
     const router = useRouter();
     const { t } = useI18n();
-    const { curt, setIsCurt } = useModals();
+    const { curt, setIsCurt, setIsModalOpen } = useModals();
     const searchParams = useSearchParams();
     const [isProcessing, setIsProcessing] = useState(false);
 
@@ -23,40 +25,42 @@ const BuildBoxConfirm = () => {
     const isLimitReached = totalItems === limit;
 
     // Функция для добавления товаров в главную корзину
-const addToMainCart = (boxItems) => {
-    try {
-        // Получаем текущую главную корзину
-        const mainCart = JSON.parse(localStorage.getItem(MAIN_CART_KEY) || '[]');
+    const addToMainCart = (boxItems) => {
+        try {
+            // Получаем текущую главную корзину
+            const mainCart = JSON.parse(localStorage.getItem(MAIN_CART_KEY) || '[]');
+            const quantity = boxItems.reduce((sum, el) => {
+                return sum + el.quantity;
+            }, 0);
 
-        // Создаем объект бокса для главной корзины
-        const boxProduct = {
-            type: "box",
-            products: boxItems.map(item => ({
-                id: item.key,
-                name: item.product.name,
-                variant: item.variant.flavor,
-                quantity: item.quantity,
-                weight: item.variant.weight,
-                protein: item.variant.protein,
-                image: item.product.image,
-            }))
-        };
 
-        // Добавляем бокс как один элемент в корзину (НЕ через ...)
-        const updatedCart = [...mainCart, boxProduct];
+            // Создаем объект бокса для главной корзины
+            const boxProduct = {
+                kind: "custom_box",
+                name: `Tvoj Box ${quantity} tyčinky`,
+                size: quantity,
+                products: boxItems.map(item => ({
+                   
+                    productId: item.key,
+                    quantity: item.quantity,
+                }))
+            };
 
-        // Сохраняем в главную корзину
-        localStorage.setItem(MAIN_CART_KEY, JSON.stringify(updatedCart));
-        
-        console.log('Добавлено в корзину:', boxProduct);
-        console.log('Обновленная корзина:', updatedCart);
+            // Добавляем бокс как один элемент в корзину (НЕ через ...)
+            const updatedCart = [...mainCart, boxProduct];
 
-        return true;
-    } catch (error) {
-        console.error('Ошибка при добавлении в главную корзину:', error);
-        return false;
-    }
-};
+            // Сохраняем в главную корзину
+            localStorage.setItem(MAIN_CART_KEY, JSON.stringify(updatedCart));
+
+            console.log('Добавлено в корзину:', boxProduct);
+            console.log('Обновленная корзина:', updatedCart);
+
+            return true;
+        } catch (error) {
+            console.error('Ошибка при добавлении в главную корзину:', error);
+            return false;
+        }
+    };
 
     const handleConfirm = async () => {
         if (!isLimitReached) {
@@ -79,6 +83,7 @@ const addToMainCart = (boxItems) => {
             localStorage.removeItem(BOX_STORAGE_KEY);
 
 
+            scrollToOrderForm()
 
 
 

@@ -4,35 +4,42 @@ import ProductButton from './ProductButton'
 import ClientProductWrapper from './ClientProductWrapper'
 
 // Убираем 'async' если не нужны асинхронные операции
-export function ProductItem({ product }) {
+export function ProductItem({ product, locale }) {
     return (
-        <ClientProductWrapper productId={product.id}>
+        <ClientProductWrapper productId={product.slug}>
             <div className='products__item'>
                 <div className="products__item-img">
-                    <Image 
-                        src={product.image} 
-                        alt={product.title} 
-                        width={400} 
-                        height={400} 
+                    <Image
+                        src={"/img/test.png"}
+                        alt={product?.title?.[locale]}
+                        width={400}
+                        height={400}
                     />
                 </div>
-                <p className="products__item-title">{product.title}</p>
-                <p className="products__item-subtitle">{product.subtitle}</p>
+                <p className="products__item-title">{product?.title?.[locale]}</p>
+                <p className="products__item-subtitle">{product?.subtitle?.[locale]}</p>
                 <div className="products__item-info">
-                    <div className="products__item-info-item">
-                        <p>{product.protein}g</p>
-                        <p className='prod-some'>Bielok</p>
-                    </div>
-                    <div className="products__item-info-item">
-                        <p>{product.sugar}g</p>
-                        <span className='prod-some'>Cukor</span>
-                    </div>
-                    <div className="products__item-info-item">
-                        <p>{product.calories}g</p> 
-                        <span className='prod-some'>kcal</span>
-                    </div>
+
+                    {product.nutritionTable.rows.map((item) => {
+                        if (item.key === "protein" || item.key === "sugars" || item.key === "energy") {
+                           
+                            return (
+                                <div className="products__item-info-item" key={item.key}>
+                                    <p>
+                                        {item?.values?.per_100g?.value === "" || item?.values?.per_100g?.value === null || item?.values?.per_100g?.value === undefined
+                                            ? "NULL"
+                                            : `${item.values.per_100g.value} ${item.values.per_100g.unit || ''}`}
+                                    </p>
+                                    <p className='prod-some'>{item?.label?.[locale]}</p>
+                                </div>
+                            )
+                        }
+                        return null;
+                    })}
+
+                  
                 </div>
-                <ProductButton product={product} />
+                <ProductButton product={product} locale={locale} />
             </div>
         </ClientProductWrapper>
     )

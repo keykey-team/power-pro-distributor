@@ -4,7 +4,8 @@
     padding: 32px;
     margin-bottom: 76px;
     @media(max-width:600px) {
-        padding: 24px;margin-bottom: 60px;
+        padding: 24px;
+        margin-bottom: 60px;
     }
     .btn-box-confirm {
         display: block;
@@ -33,4 +34,48 @@
             text-transform: uppercase;
         }
     }
+}
+.box-confirm-modal {
+    position: fixed;
+    left: 50%;
+    bottom: 50%;
+    transform: translate(-50%, 50%);
+    border-radius: 30px;
+    border: 2px solid var(--Accent-color-2, #FFED00);
+    background: rgba(13, 13, 13, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 32px;
+    z-index: 100000;
+    h1 {
+        margin-bottom: 24px;
+        color: var(--White, var(--color-grey-100, #FEFEFE));
+        text-align: center;
+        font-family: Unbounded;
+        font-size: 36px;
+        font-style: normal;
+        font-weight: 900;
+        line-height: normal;
+        text-transform: uppercase;
+        b {
+            color: var(--Accent-color-2, #FFED00);
+        }
+    }
+    button {
+        padding: 8px 32px;
+        color: rgb(255, 255, 255);
+        text-align: center;
+        font-family: Unbounded;
+        font-size: 20px;
+        font-style: normal;
+        font-weight: 700;
+        line-height: normal;
+        text-transform: uppercase;
+        border-radius: 20px;
+        background: rgba(107, 114, 128, 0.50);
+        display: block;
+        margin: 0 auto;
+    }
+}
+.overlay.confirm {
+    z-index: 10000;
 }
