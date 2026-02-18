@@ -27,9 +27,12 @@
         -webkit-box-orient: vertical;
         overflow: hidden;
         height: 120px;
+        @media (max-width:600px) {
+             height: auto;
+        }
     }
     &-subtitle {
-         display: -webkit-box;
+        display: -webkit-box;
         -webkit-line-clamp: 2; // количество строк
         -webkit-box-orient: vertical;
         overflow: hidden;
@@ -42,6 +45,9 @@
         text-transform: uppercase;
         height: 44px;
         margin-bottom: 16px;
+        @media (max-width:600px) {
+             height: auto;
+        }
     }
     &-info {
         margin-bottom: 16px;
@@ -98,6 +104,11 @@
         &:hover {
             box-shadow: 0 0 20px 1px rgba(255, 237, 0, 0.50);
             transition: 0.3s;
+        }
+        &.in-cart {
+            border-radius: 12px;
+            background: var(--White, #FEFEFE) !important;
+            box-shadow: 0 0 20px 1px rgba(254, 254, 254, 0.50) !important;
         }
     }
 }

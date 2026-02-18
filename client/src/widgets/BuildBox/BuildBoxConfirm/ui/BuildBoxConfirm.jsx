@@ -39,7 +39,7 @@ const BuildBoxConfirm = () => {
                 kind: "custom_box",
                 name: `Tvoj Box ${quantity} tyčinky`,
                 size: quantity,
-                products: boxItems.map(item => ({
+                items: boxItems.map(item => ({
                    
                     productId: item.key,
                     quantity: item.quantity,

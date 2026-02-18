@@ -35,18 +35,12 @@ const ProductModalContent = ({ product, locale }) => {
                                 <Image src={"/img/test.png"} alt='prod' width={480} height={480} />
                             </div>
                             <ul className="prod-modal__preview-stats">
-                                <li className="prod-modal__preview-stats-item">
-                                    <p>20g bielkovín v každej tyčinke</p>
-                                </li>
-                                <li className="prod-modal__preview-stats-item">
-                                    <p>20g bielkovín v každej tyčinke</p>
-                                </li>
-                                <li className="prod-modal__preview-stats-item">
-                                    <p>20g bielkovín v každej tyčinke</p>
-                                </li>
-                                <li className="prod-modal__preview-stats-item">
-                                    <p>20g bielkovín v každej tyčinke</p>
-                                </li>
+                                {product?.features?.[locale]?.map((prod, index) => (
+                                    <li className="prod-modal__preview-stats-item">
+                                        <p>{prod}</p>
+                                    </li>
+                                ))}
+
                             </ul>
 
                         </div>

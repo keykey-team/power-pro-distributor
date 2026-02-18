@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useI18n } from "@shared/i18n/use-i18n";
+import { sendLead } from "@shared/services/productsServices";
 
 const OrderForm = () => {
   const { t } = useI18n();
@@ -65,26 +66,25 @@ const OrderForm = () => {
         .required(t("validation.nameRequired"))
         .min(2, t("validation.nameMin")),
       phone: Yup.string()
-        .required(t("validation.phoneRequired"))
-        .test("phone-format", t("validation.phoneFormat"), (value) => {
-          if (!value) return false;
-          const phoneRegex = /^\+\d{1,4}[-\s]?\d{6,14}$/;
-          if (!phoneRegex.test(value)) return false;
-          const countryCode = value.split(/[-\s]/)[0];
-          return ALLOWED_COUNTRY_CODES.includes(countryCode);
-        }),
+        .required(t("validation.phoneRequired")),
+
       promoCode: Yup.string(),
     }),
     onSubmit: async (values, { setSubmitting, resetForm }) => {
       try {
         const payload = {
           ...values,
-          cart: cartItems,
+          items: cartItems,
         };
         console.log("Odosielam dopyt:", payload);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        alert(t("form.success"));
-        resetForm();
+        const data = await sendLead(payload);
+
+       
+        localStorage.setItem('cart', JSON.stringify([]));  
+        setCartItems([]);                                   
+        window.dispatchEvent(new Event('cartUpdated'));     
+
+        resetForm(); // сброс формы
       } catch (error) {
         console.error("Chyba pri odosielaní:", error);
         alert(t("form.error"));

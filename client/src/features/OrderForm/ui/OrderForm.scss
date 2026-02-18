@@ -151,6 +151,7 @@
             font-size: 12px;
             width: 100%;
             padding: 16px 0;
+            letter-spacing: 1px;
         }
     }
 }
@@ -165,5 +166,6 @@
 }
 .cart-items {
     display: flex;
-    gap: 24px;
+    gap: 4px 24px;
+    flex-wrap: wrap;
 }

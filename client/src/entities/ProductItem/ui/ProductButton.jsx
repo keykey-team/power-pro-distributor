@@ -1,51 +1,59 @@
 "use client";
 import { useModals } from '@shared/index';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 const ProductButton = ({ product, locale }) => {
     const { isModalOpen, setIsModalOpen, isProdModalId, setIsProdModalId } = useModals();
+    const [cart, setCart] = useState([]);
+
+    useEffect(() => {
+        const loadCart = () => {
+            try {
+                const storedCart = JSON.parse(localStorage.getItem('cart') || '[]');
+                setCart(storedCart);
+            } catch (error) {
+                console.error('Ошибка загрузки корзины:', error);
+                setCart([]);
+            }
+        };
+
+        loadCart();
+        window.addEventListener('cartUpdated', loadCart);
+        return () => window.removeEventListener('cartUpdated', loadCart);
+    }, []);
 
     const handleAddToCart = (e) => {
-        e.stopPropagation(); // предотвращаем всплытие к родительской карточке
+        e.stopPropagation();
         try {
-            // Получаем текущую корзину
-            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-
-            // Формируем объект товара
+            const currentCart = JSON.parse(localStorage.getItem('cart') || '[]');
             const cartItem = {
                 kind: 'product',
                 name: product?.title?.[locale],
-                size: 1,
-                products: [
-                    {
-                        productId: product.slug,
-                        quantity: 1,
-                    },
-                ],
+                productId: product._id,
+                quantity: 1
             };
-
-            // Добавляем в корзину
-            const updatedCart = [...cart, cartItem];
+            const updatedCart = [...currentCart, cartItem];
             localStorage.setItem('cart', JSON.stringify(updatedCart));
-
-            // Сообщаем другим компонентам (например, OrderForm) об изменении корзины
+            setCart(updatedCart); // 👈 обновляем локальное состояние сразу
             window.dispatchEvent(new Event('cartUpdated'));
-
-            // Можно оставить небольшое уведомление (alert или что‑то более красивое)
-            // alert('Товар добавлен в корзину');
         } catch (error) {
             console.error('Ошибка при добавлении в корзину:', error);
             alert('Не удалось добавить товар');
         }
     };
 
+    const isInCart = () => {
+        if (!product?._id) return false;
+        return cart.some(item => item.productId === product._id); // 👈 правильная проверка
+    };
+
     return (
         <button
             type="button"
-            className="products__item-button"
+            className={`products__item-button ${isInCart() ? 'in-cart' : ''}`}
             onClick={handleAddToCart}
         >
-            Pridať do výberu • {product.price}€
+             {isInCart() ? 'V zozname ✓' : 'Pridať do výberu •'} {product.price}€
         </button>
     );
 };
