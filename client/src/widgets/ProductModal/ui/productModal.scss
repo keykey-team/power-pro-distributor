@@ -1,5 +1,27 @@
 .prod-modal {
     animation: slideSpring 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-height: 100dvh;
+    overflow-y: auto;
+   
+    &::-webkit-scrollbar {
+        height: 200px;
+        width: 6px;
+    }
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: #D1D5DB;
+        /* светло-серый */
+        border-radius: 6px;
+        transition: background 0.2s ease;
+    }
+    &::-webkit-scrollbar-thumb:hover {
+        background: #9CA3AF;
+    }
+    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #D1D5DB transparent;
     @keyframes slideSpring {
         0% {
             opacity: 0;
@@ -19,7 +41,7 @@
             }
             100% {
                 opacity: 1;
-                transform: translateY(50%);
+                transform: translateY(0);
             }
         }
     }
@@ -38,12 +60,13 @@
     width: 100%;
     display: flex;
     flex-direction: column;
+    border-radius: 0;
     @media(max-width:900px) {
-        transform: translate(0, 50%);
-        left: 15px;
-        right: 15px;
-        top: 15px;
-        bottom: 15px;
+        transform: none;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
         width: auto;
         max-height: 99dvh;
         overflow: auto;
@@ -221,6 +244,9 @@
         }
         &-list {
             margin-bottom: 24px;
+            max-height: 226px;
+            overflow: auto;
+            /* Chrome, Edge, Safari */
         }
         &-item {
             display: grid;
@@ -236,6 +262,10 @@
                 font-style: normal;
                 font-weight: 400;
                 line-height: normal;
+                max-width: 170px;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
                 @media(max-width:600px) {
                     font-size: 12px;
                 }

@@ -1,38 +1,90 @@
 "use client";
 import Image from "next/image";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useI18n } from "@shared/i18n/use-i18n";
+import { sendLead } from "@shared/services/productsServices";
 
 const OrderForm = () => {
   const { t } = useI18n();
   const ALLOWED_COUNTRY_CODES = t("phoneCodes");
+  const [cartItems, setCartItems] = useState([]);
+
+  // Функция для загрузки корзины из localStorage и обновления состояния
+  const updateCartFromStorage = () => {
+    const storedCart = localStorage.getItem("cart");
+    if (storedCart) {
+      try {
+        const parsed = JSON.parse(storedCart);
+        if (Array.isArray(parsed)) {
+          setCartItems(parsed);
+        } else {
+          setCartItems([]);
+        }
+      } catch (error) {
+        console.error("Failed to parse cart:", error);
+        setCartItems([]);
+      }
+    } else {
+      setCartItems([]);
+    }
+  };
+
+  useEffect(() => {
+    // Первоначальная загрузка
+    updateCartFromStorage();
+
+    // Слушаем кастомное событие 'cartUpdated' (для обновлений в той же вкладке)
+    window.addEventListener('cartUpdated', updateCartFromStorage);
+    // Слушаем событие storage (для обновлений в других вкладках)
+    window.addEventListener('storage', updateCartFromStorage);
+
+    return () => {
+      window.removeEventListener('cartUpdated', updateCartFromStorage);
+      window.removeEventListener('storage', updateCartFromStorage);
+    };
+  }, []);
+
+  // Удаление товара из корзины
+  const handleRemoveItem = (index) => {
+    const updatedCart = cartItems.filter((_, i) => i !== index);
+    setCartItems(updatedCart);
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
+    // Диспатчим событие, чтобы другие компоненты (если есть) тоже обновились
+    window.dispatchEvent(new Event('cartUpdated'));
+  };
+
   const formik = useFormik({
     initialValues: {
       name: "",
       phone: "",
+      promoCode: "",
     },
     validationSchema: Yup.object({
       name: Yup.string()
         .required(t("validation.nameRequired"))
         .min(2, t("validation.nameMin")),
       phone: Yup.string()
-        .required(t("validation.phoneRequired"))
-        .test("phone-format", t("validation.phoneFormat"), (value) => {
-          if (!value) return false;
-          const phoneRegex = /^\+\d{1,4}[-\s]?\d{6,14}$/;
-          if (!phoneRegex.test(value)) return false;
-          const countryCode = value.split(/[-\s]/)[0];
-          return ALLOWED_COUNTRY_CODES.includes(countryCode);
-        }),
+        .required(t("validation.phoneRequired")),
+
+      promoCode: Yup.string(),
     }),
     onSubmit: async (values, { setSubmitting, resetForm }) => {
       try {
-        console.log("Odosielam dopyt:", values);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        alert(t("form.success"));
-        resetForm();
+        const payload = {
+          ...values,
+          items: cartItems,
+        };
+        console.log("Odosielam dopyt:", payload);
+        const data = await sendLead(payload);
+
+       
+        localStorage.setItem('cart', JSON.stringify([]));  
+        setCartItems([]);                                   
+        window.dispatchEvent(new Event('cartUpdated'));     
+
+        resetForm(); // сброс формы
       } catch (error) {
         console.error("Chyba pri odosielaní:", error);
         alert(t("form.error"));
@@ -64,7 +116,7 @@ const OrderForm = () => {
   };
 
   return (
-    <div className="form container">
+    <div id="order-form" className="form container">
       <Image
         className="form-bg"
         src="/img/probar.png"
@@ -79,7 +131,29 @@ const OrderForm = () => {
         </p>
 
         <p className="form-prods">{t("form.products")}</p>
-        <p className="form-prods-list">{t("form.noProducts")}</p>
+
+        {/* Список товаров из корзины */}
+        <div className="form-prods-list">
+          {cartItems.length === 0 ? (
+            <p>{t("form.noProducts")}</p>
+          ) : (
+            <ul className="cart-items">
+              {cartItems.map((item, index) => (
+                <li key={index} className="cart-item">
+                  <span>{item.name}</span>
+                  <button
+                    type="button"
+                    className="remove-item"
+                    onClick={() => handleRemoveItem(index)}
+                    aria-label="Remove item"
+                  >
+                    ✕
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
         <form onSubmit={formik.handleSubmit} className="order-form">
           <div className="form-group">
@@ -110,6 +184,17 @@ const OrderForm = () => {
             {formik.touched.phone && formik.errors.phone && (
               <div className="error-message">{formik.errors.phone}</div>
             )}
+          </div>
+
+          {/* Поле для промокода */}
+          <div className="form-group">
+            <label htmlFor="promoCode">{t("form.promoCodeLabel") || "Promo kód"}</label>
+            <input
+              id="promoCode"
+              type="text"
+              placeholder={t("form.promoCodePlaceholder") || "Zadajte promo kód"}
+              {...formik.getFieldProps("promoCode")}
+            />
           </div>
 
           <button

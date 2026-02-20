@@ -4,11 +4,12 @@ import { useModals } from '@shared/index';
 import React from 'react'
 
 export default function ClientProductWrapper({ children, productId }) {
-    const { setIsModalOpen, setIsProdModalId } = useModals();
-    
+    const { isProdModalId, setIsProdModalId,setIsModalOpen } = useModals();
+
     const handleClick = () => {
         setIsModalOpen("prod-modal");
         setIsProdModalId(productId);
+        
     };
 
     return (

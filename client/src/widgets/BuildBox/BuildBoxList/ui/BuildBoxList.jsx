@@ -1,3 +1,4 @@
+// ProductList.tsx
 "use client";
 import { useModals } from "@shared/index";
 import { useSearchParams } from "next/navigation";
@@ -6,32 +7,32 @@ import React, { useEffect, useRef, useCallback } from "react";
 
 const STORAGE_KEY = 'box-products';
 
-const ProductList = () => {
+const ProductList = ({ data, locale }) => {
+  console.log(data);
   const { curt, setIsCurt } = useModals();
   const searchParams = useSearchParams();
   const limit = Number(searchParams.get('limit')) || 5;
   const isInitialized = useRef(false);
 
-  // Функция валидации корзины под лимит
+  // Валидация корзины под лимит
   const validateCartByLimit = useCallback((cart, currentLimit) => {
     if (!cart || !Array.isArray(cart)) return [];
-    
-    const validCart = cart.filter(item => 
-      item && 
-      item.key && 
-      item.product && 
-      item.variant && 
+
+    const validCart = cart.filter(item =>
+      item &&
+      item.key &&
+      item.product &&
       typeof item.quantity === 'number' &&
       item.quantity > 0
     );
-    
+
     const totalItems = validCart.reduce((sum, item) => sum + item.quantity, 0);
-    
+
     if (totalItems > currentLimit) {
       let newTotal = 0;
       return validCart.reduce((acc, item) => {
         if (newTotal >= currentLimit) return acc;
-        
+
         const availableSlots = currentLimit - newTotal;
         if (item.quantity <= availableSlots) {
           newTotal += item.quantity;
@@ -42,7 +43,7 @@ const ProductList = () => {
         }
       }, []);
     }
-    
+
     return validCart;
   }, []);
 
@@ -62,7 +63,7 @@ const ProductList = () => {
       setIsCurt([]);
     }
     isInitialized.current = true;
-  }, []); // Только при монтировании
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Валидация при изменении лимита
   useEffect(() => {
@@ -74,58 +75,32 @@ const ProductList = () => {
   // Сохранение в localStorage при изменении корзины
   useEffect(() => {
     if (!isInitialized.current) return;
-    
     localStorage.setItem(STORAGE_KEY, JSON.stringify(curt));
   }, [curt]);
 
-  const products = [
-    {
-      name: "FITWIN (BEZ CUKRU)",
-      image: "photo_2026-01-28_21-05-31 2",
-      variants: [
-        {
-          flavor: "PISTÁCIA A KRÉM",
-          weight: "60G",
-          protein: "20G",
-        },
-      ],
-    },
-    {
-      name: "POWERPRO (HIGH PROTEÍN)",
-      variants: [
-        {
-          flavor: "ČOKOLÁDOVÝ BROWNIE",
-          weight: "60G",
-          protein: "20G",
-          note: "10+",
-        },
-      ],
-    },
-  ];
-
-  const getQuantity = (product, variant) => {
-    const key = `${product.name}-${variant.flavor}`;
+  const getQuantity = (product) => {
+    const key = product._id;
     const item = curt.find((i) => i.key === key);
     return item ? item.quantity : 0;
   };
 
   const totalItems = curt.reduce((sum, item) => sum + item.quantity, 0);
 
-  const updateQuantity = (product, variant, delta) => {
-    const key = `${product.name}-${variant.flavor}`;
-    
+  const updateQuantity = (product, delta) => {
+    const key = product._id;
+
     setIsCurt((prev) => {
       const existing = prev.find((i) => i.key === key);
       const currentTotal = prev.reduce((sum, item) => sum + item.quantity, 0);
-      
+
       if (existing) {
         const newQty = existing.quantity + delta;
-        
+
         if (delta > 0 && currentTotal >= limit) {
           alert(`Максимальное количество товаров: ${limit}`);
           return prev;
         }
-        
+
         if (newQty <= 0) {
           return prev.filter((i) => i.key !== key);
         } else {
@@ -139,31 +114,51 @@ const ProductList = () => {
             alert(`Максимальное количество товаров: ${limit}`);
             return prev;
           }
-          return [...prev, { key, product, variant, quantity: 1 }];
+          return [...prev, { key, product, quantity: 1 }];
         }
         return prev;
       }
     });
   };
 
+  // Фильтруем товары на две группы
+  const fitwinItems = data?.items?.filter(product => product.slug && product.slug.includes('fitwin')) || [];
+  const otherItems = data?.items?.filter(product => !product.slug || !product.slug.includes('fitwin')) || [];
+
   return (
     <div className="products__boxes container">
-      {products.map((product, idx) => (
-        <div key={idx} className="products__box-list">
-          <h2>{product.name}</h2>
-          {product.variants.map((variant, vidx) => (
+      {fitwinItems.length > 0 && (
+        <div className="products__box-list">
+          <h2>FitWin</h2>
+          {fitwinItems.map((product) => (
             <BoxProductItem
-              key={vidx}
+              key={product._id}
               product={product}
-              variant={variant}
-              quantity={getQuantity(product, variant)}
-              onIncrement={() => updateQuantity(product, variant, 1)}
-              onDecrement={() => updateQuantity(product, variant, -1)}
+              locale={locale}
+              quantity={getQuantity(product)}
+              onIncrement={() => updateQuantity(product, 1)}
+              onDecrement={() => updateQuantity(product, -1)}
               isMaxLimit={totalItems >= limit}
             />
           ))}
         </div>
-      ))}
+      )}
+      {otherItems.length > 0 && (
+        <div className="products__box-list">
+          <h2>PowerPro (High Protein)</h2>
+          {otherItems.map((product) => (
+            <BoxProductItem
+              key={product._id}
+              product={product}
+              locale={locale}
+              quantity={getQuantity(product)}
+              onIncrement={() => updateQuantity(product, 1)}
+              onDecrement={() => updateQuantity(product, -1)}
+              isMaxLimit={totalItems >= limit}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
