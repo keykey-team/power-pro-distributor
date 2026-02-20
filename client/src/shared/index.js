@@ -12,8 +12,8 @@ export { ModalsProvider } from "./context/ModalsContext";
 
 
 // Styles fonts
-export {
-  manrope,
-  plusJakartaSans,
-  sofiaSansCondensed,
-} from "./ui/styles/font";
+// export {
+//   manrope,
+//   plusJakartaSans,
+//   sofiaSansCondensed,
+// } from "./ui/styles/font";
