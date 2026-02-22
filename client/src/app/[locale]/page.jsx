@@ -37,7 +37,7 @@ const metadataByLocale = {
 export async function generateMetadata({ params }) {
   const { locale = "ua" } = await params;
   const meta = metadataByLocale[locale] || metadataByLocale.ua;
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://185.237.205.5:5002";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://fitwin-powerpro.com";
 
   return {
     title: meta.title,
@@ -45,9 +45,8 @@ export async function generateMetadata({ params }) {
     keywords: meta.keywords,
     metadataBase: new URL(baseUrl),
     icons: {
-      icon: '/img/google.ico',          // <-- добавлено
-      // можно добавить и другие размеры:
-      // icon: [{ url: '/icon.png', sizes: '32x32' }],
+      icon: '/img/google.ico',         
+  
     },
     alternates: {
       canonical: locale === "ua" ? "/" : `/${locale}`,
@@ -64,7 +63,7 @@ export async function generateMetadata({ params }) {
       siteName: "ProteinBar",
       images: [
         {
-          url: 'https://travnitsaa.ua/img/google.png', // <-- заменено/добавлено
+          url: 'https://fitwin-powerpro.com/img/google.png', // <-- заменено/добавлено
           width: 1200,
           height: 630,
           alt: "ProteinBar - športová výživa",

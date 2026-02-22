@@ -1,5 +1,7 @@
+"use client"
 import { useI18n } from '@shared/i18n/use-i18n';
 import { useModals } from '@shared/index';
+import { scrollToElement } from '@widgets/header/lib/scrollToOrderForm';
 import React from 'react'
 
 
@@ -21,17 +23,29 @@ const BurgerMenu = () => {
 
                 </div>
                 <ul>
-                    <li>
+                    <li onClick={() => {
+                        scrollToElement("prev");
+                        setIsModalOpen(null)
+                    }}>
                         <p>{t("navigation.header.us")}</p>
                     </li>
-                    <li>
+                    <li onClick={() => {
+                        scrollToElement("partners");
+                        setIsModalOpen(null)
+                    }}>
                         <p>{t("navigation.header.partners")}</p>
                     </li>
-                    <li>
+                    <li onClick={() => {
+                        scrollToElement("prods");
+                        setIsModalOpen(null)
+                    }}>
                         <p>{t("navigation.header.prods")}</p>
                     </li>
-                    <li>
-                        <p>{t("navigation.header.contacts")}</p>
+                    <li onClick={() => {
+                        scrollToElement("prev");
+                        setIsModalOpen(null)
+                    }}>
+                        <p>{t("navigation.header.order-form")}</p>
                     </li>
 
                 </ul>
