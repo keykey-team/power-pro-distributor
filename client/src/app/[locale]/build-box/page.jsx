@@ -36,7 +36,7 @@ export async function generateMetadata({ params }) {
   const { locale = "ua" } = await params;
   const meta = metadataByLocale[locale] || metadataByLocale.ua;
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://185.237.205.5:5002";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://fitwin-powerpro.com";
 
   return {
     title: meta.title,
@@ -61,7 +61,7 @@ export async function generateMetadata({ params }) {
       siteName: "ProteinBar",
       images: [
         {
-          url: "https://travnitsaa.ua/img/google.png", // замените на актуальное изображение для страницы бокса
+          url: "https://fitwin-powerpro.com/img/google.png", // замените на актуальное изображение для страницы бокса
           width: 1200,
           height: 630,
           alt: "ProteinBar",

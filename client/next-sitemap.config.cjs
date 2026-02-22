@@ -9,7 +9,7 @@ const staticPagePaths = [
 ];
 
 module.exports = {
-  siteUrl: process.env.SITE_URL || 'http://192.168.0.106:5002',
+  siteUrl: process.env.SITE_URL || 'https://fitwin-powerpro.com',
   generateRobotsTxt: true,
   changefreq: 'daily',
   sitemapSize: 5000,
