@@ -10,7 +10,6 @@ import OrderConfirm from "../OrderConfirm";
 
 const OrderForm = () => {
   const { t } = useI18n();
-  const ALLOWED_COUNTRY_CODES = t("phoneCodes");
   const [cartItems, setCartItems] = useState([]);
   const { isModalOpen, setIsModalOpen } = useModals();
 
@@ -69,9 +68,8 @@ const OrderForm = () => {
         .required(t("validation.nameRequired"))
         .min(2, t("validation.nameMin")),
       phone: Yup.string()
-        .required(t("validation.phoneRequired")),
-
-
+        .required(t("validation.phoneRequired"))
+        .matches(/^\+\d+$/, t("validation.phoneInvalid")), // проверяем, что номер начинается с + и содержит только цифры
     }),
     onSubmit: async (values, { setSubmitting, resetForm }) => {
       try {
@@ -82,11 +80,10 @@ const OrderForm = () => {
         console.log("Odosielam dopyt:", payload);
         const data = await sendLead(payload);
 
-
         localStorage.setItem('cart', JSON.stringify([]));
         setCartItems([]);
         window.dispatchEvent(new Event('cartUpdated'));
-        setIsModalOpen("order-confirm")
+        setIsModalOpen("order-confirm");
         resetForm();
       } catch (error) {
         console.error("Chyba pri odosielaní:", error);
@@ -97,24 +94,19 @@ const OrderForm = () => {
     },
   });
 
-  const formatPhone = (input) => {
-    const digits = input.replace(/\D/g, "");
-    return `+421${digits}`;
-  };
-
   const handlePhoneChange = (e) => {
     const raw = e.target.value;
-    if (!raw.startsWith("+")) {
-      const formatted = formatPhone(raw);
-      formik.setFieldValue("phone", formatted);
-    } else {
-      formik.setFieldValue("phone", raw);
-    }
+    const digits = raw.replace(/\D/g, "");
+    // обрезаем до 14 цифр, так как + занимает один символ
+    const truncatedDigits = digits.slice(0, 14);
+    const newValue = truncatedDigits ? `+${truncatedDigits}` : "";
+    formik.setFieldValue("phone", newValue);
   };
 
-  const handlePhoneFocus = (e) => {
+
+  const handlePhoneFocus = () => {
     if (!formik.values.phone) {
-      formik.setFieldValue("phone", "+421");
+      formik.setFieldValue("phone", "+");
     }
   };
 
@@ -133,7 +125,7 @@ const OrderForm = () => {
 
         <div className="form-content">
           <p className="form-title">
-            {t("form.title")}<span>{t("form.titleSpan")}</span>
+            {t("form.title")}<span> {t("form.titleSpan")}</span>
           </p>
 
           <p className="form-prods">{t("form.products")}</p>
@@ -181,6 +173,7 @@ const OrderForm = () => {
               <input
                 id="phone"
                 type="tel"
+                inputMode="numeric" // подсказка для мобильных устройств - показывать цифровую клавиатуру
                 placeholder={t("form.phonePlaceholder")}
                 value={formik.values.phone}
                 onChange={handlePhoneChange}
@@ -212,8 +205,8 @@ const OrderForm = () => {
             </button>
           </form>
         </div>
-
-      </div> </>
+      </div>
+    </>
   );
 };
 

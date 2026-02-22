@@ -18,7 +18,7 @@ const BoxConfirm = () => {
                     />
 
                     <div className='box-confirm-modal'>
-                        <h1>{t("build-box.successfully_added")} <b>{t("build-box.successfully_added2")}</b></h1>
+                        <h1>{t("build-box.successfully_added")}<b>{t("build-box.successfully_added2")}</b></h1>
                         <button onClick={() => router.push("/")}>
                             {t("build-box.go_to_cart")}
                         </button>
