@@ -10,6 +10,8 @@ import {
 const ModalsContext = createContext();
 
 export const ModalsProvider = ({ children }) => {
+  const [curt, setIsCurt] =
+    useState([]);
   const [isModalOpen, setIsModalOpen] =
     useState(null);
   const [isProdModalId, setIsProdModalId] =
@@ -92,7 +94,7 @@ export const ModalsProvider = ({ children }) => {
 
         activeModalRef,
         registerModalRef,
-        clearModalRef,
+        clearModalRef, curt, setIsCurt
       }}
     >
       {children}

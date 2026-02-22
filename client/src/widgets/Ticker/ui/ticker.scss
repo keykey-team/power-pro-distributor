@@ -1,0 +1,49 @@
+.ticker {
+    position: relative;
+    margin-bottom: 137px;
+    overflow: hidden;
+
+    @media(max-width: 600px) {
+        margin-bottom: 40px;
+    }
+
+    &__bg {
+        position: absolute;
+        top: 27%;
+        background: var(--Accent-color-1, #E41F25);
+        padding: 40px 0;
+
+        span {
+            color: var(--White, #FEFEFE);
+            font-family: Unbounded;
+            font-size: 36px;
+            font-style: normal;
+            font-weight: 500;
+            line-height: normal;
+            text-transform: uppercase;
+
+            @media(max-width: 1000px) {
+                font-size: 24px;
+            }
+        }
+
+        @media(max-width: 1000px) {
+            padding: 24px 0;
+        }
+
+        @media(max-width: 600px) {
+            top: 33%;
+        }
+    }
+
+    &__bg-power {
+        margin: 0 auto;
+        max-width: 1578px;
+        width: 100%;
+
+        @media(max-width: 1000px) {
+            padding: 24px 0;
+            width: 1000px;
+        }
+    }
+}

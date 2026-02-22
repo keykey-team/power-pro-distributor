@@ -1,51 +1,25 @@
-import {
-  Plus_Jakarta_Sans,
-  Sofia_Sans_Condensed,
-} from "next/font/google";
+import { Inter, Unbounded } from "next/font/google";
 
-export const plusJakartaSans = Plus_Jakarta_Sans({
+// Для замены plusJakartaSans
+export const inter = Inter({
   subsets: ["latin", "cyrillic-ext"],
-  weight: [
-    "200",
-    "300",
-    "400",
-    "500",
-    "600",
-    "700",
-    "800",
-  ],
+  weight: ["200", "300", "400", "500", "600", "700", "800"],
   display: "swap",
-  variable: "--font-plus-jakarta-sans",
+  variable: "--font-plus-jakarta-sans", // оставляем старое имя переменной если нужно
 });
 
-export const sofiaSansCondensed =
-  Sofia_Sans_Condensed({
-    subsets: ["latin", "cyrillic-ext"],
-    weight: [
-      "300",
-      "400",
-      "500",
-      "600",
-      "700",
-      "800",
-      "900",
-    ],
-    display: "swap",
-    variable: "--font-sofia-sans-condensed",
-  });
-
-import { Manrope } from "next/font/google";
-
-export const manrope = Manrope({
-  subsets: ["latin", "cyrillic"],
-  weight: [
-    "300",
-    "400",
-    "500",
-    "600",
-    "700",
-    "800",
-  ],
+// Для замены sofiaSansCondensed
+export const unbounded = Unbounded({
+  subsets: ["latin", "cyrillic-ext"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
   display: "swap",
-  variable: "--font-main",
+  variable: "--font-sofia-sans-condensed", // оставляем старое имя переменной
 });
+
+// Удаляем manrope если он не нужен, или заменяем:
+// export const manrope = Inter({
+//   subsets: ["latin", "cyrillic"],
+//   weight: ["300", "400", "500", "600", "700", "800"],
+//   display: "swap",
+//   variable: "--font-main",
+// });

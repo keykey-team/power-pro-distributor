@@ -1,0 +1,310 @@
+.prod-modal {
+    animation: slideSpring 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-height: 100dvh;
+    overflow-y: auto;
+   
+    &::-webkit-scrollbar {
+        height: 200px;
+        width: 6px;
+    }
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: #D1D5DB;
+        /* светло-серый */
+        border-radius: 6px;
+        transition: background 0.2s ease;
+    }
+    &::-webkit-scrollbar-thumb:hover {
+        background: #9CA3AF;
+    }
+    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #D1D5DB transparent;
+    @keyframes slideSpring {
+        0% {
+            opacity: 0;
+            transform: translate(-50%, 80%);
+        }
+        100% {
+            opacity: 1;
+            transform: translate(-50%, 50%);
+        }
+    }
+    @media(max-width:900px) {
+        animation: fadeInUp 0.5s ease-out;
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(150%);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    }
+    /* Закрывающая скобка для @keyframes */
+    z-index: 10000;
+    position: fixed;
+    left: 50%;
+    bottom: 50%;
+    transform: translate(-50%, 50%);
+    border-radius: 32px;
+    border: 1px solid rgba(254, 254, 254, 0.10);
+    background: #0D0D0D;
+    backdrop-filter: blur(5px);
+    padding: 40px;
+    max-width: 1246px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    border-radius: 0;
+    @media(max-width:900px) {
+        transform: none;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: auto;
+        max-height: 99dvh;
+        overflow: auto;
+        /* Стилизация скроллбара */
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+        &::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        &::-webkit-scrollbar-thumb {
+            background: rgba(254, 254, 254, 0.3);
+            border-radius: 3px;
+        }
+        &::-webkit-scrollbar-thumb:hover {
+            background: rgba(254, 254, 254, 0.5);
+        }
+        /* Для Firefox */
+        scrollbar-width: thin;
+        scrollbar-color: rgba(254, 254, 254, 0.3) transparent;
+    }
+    @media(max-width:600px) {
+        padding: 45px 16px;
+    }
+    &__content {
+        display: flex;
+        position: relative;
+        gap: 40px;
+        @media(max-width:900px) {
+            flex-direction: column;
+            gap: 24px;
+        }
+        @media(max-width:600px) {
+            gap: 16px;
+        }
+    }
+    &__close {
+        cursor: pointer;
+        position: absolute;
+        right: 0;
+        top: 0;
+        transition: 0.3s;
+        &:hover {
+            transition: 0.3s;
+            opacity: 0.7;
+        }
+        @media(max-width:600px) {
+            width: 16px;
+            height: 16px;
+            top: -29px;
+            right: -5px;
+        }
+    }
+    &__preview {
+        width: 45%;
+        @media(max-width:900px) {
+            width: 100%;
+        }
+        @media(max-width:600px) {
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(107, 114, 128, 0.50);
+        }
+        &-img {
+            padding: 40px;
+            border-radius: 24px;
+            border: 1px solid #222;
+            background: var(--Dark, #0D0D0D);
+            overflow: hidden;
+            width: 100%;
+            height: 401px;
+            margin-bottom: 24px;
+            img {
+                width: 100%;
+                height: 100%;
+                border-radius: 12px;
+                object-fit: cover;
+            }
+            @media(max-width:600px) {
+                padding: 16px 16px 40px 16px;
+                height: 251px;
+            }
+        }
+        &-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        &-stats-item {
+            overflow: hidden;
+            padding: 8px 20px;
+            border-radius: 8px;
+            background: var(--Light-dark, #151515);
+            position: relative;
+            color: var(--White, #FEFEFE);
+            font-family: Inter;
+            font-size: 14px;
+            font-style: normal;
+            font-weight: 500;
+            line-height: normal;
+            &::after {
+                content: "";
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 4px;
+                background: var(--Accent-color-1, #E41F25);
+            }
+        }
+    }
+    &__data {
+        text-align: left;
+        width: 55%;
+        @media(max-width:900px) {
+            width: 100%;
+        }
+        &-title {
+            padding-right: 42px;
+            color: var(--White, var(--color-grey-100, #FEFEFE));
+            font-family: Unbounded;
+            font-size: 36px;
+            font-style: normal;
+            font-weight: 900;
+            line-height: normal;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            b {
+                color: #ff0000;
+            }
+            @media(max-width:900px) {
+                display: none;
+            }
+            @media(max-width:600px) {
+                font-size: 24px;
+                padding: 0;
+            }
+        }
+        &-description {
+            color: var(--Gray, #6B7280);
+            font-family: Inter;
+            font-size: 16px;
+            font-style: normal;
+            font-weight: 400;
+            margin-bottom: 16px;
+            line-height: normal;
+            &.bottom {
+                @media(max-width:900px) {
+                    display: block;
+                    margin-bottom: 0;
+                }
+            }
+            @media(max-width:900px) {
+                display: none;
+            }
+            @media(max-width:600px) {
+                font-size: 14px;
+            }
+        }
+        &-subtitle {
+            color: var(--White, #FEFEFE);
+            font-family: Inter;
+            font-size: 20px;
+            font-style: normal;
+            font-weight: 500;
+            line-height: normal;
+            margin-bottom: 24px;
+            &.bottom {
+                @media(max-width:900px) {
+                    margin-bottom: 8px;
+                }
+            }
+            @media(max-width:600px) {
+                font-size: 16px;
+            }
+        }
+        &-list {
+            margin-bottom: 24px;
+            max-height: 226px;
+            overflow: auto;
+            /* Chrome, Edge, Safari */
+        }
+        &-item {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(107, 114, 128, 0.50);
+            p {
+                color: var(--White, #FEFEFE);
+                font-family: Inter;
+                font-size: 16px;
+                font-style: normal;
+                font-weight: 400;
+                line-height: normal;
+                max-width: 170px;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                @media(max-width:600px) {
+                    font-size: 12px;
+                }
+            }
+            &.for-title {
+                p {
+                    color: var(--Gray, #6B7280);
+                    font-family: Inter;
+                    font-size: 14px;
+                    font-style: normal;
+                    font-weight: 400;
+                    line-height: normal;
+                    text-transform: uppercase;
+                }
+            }
+        }
+    }
+    &__main-btn {
+        padding-top: 24px;
+        margin-top: 24px;
+        border-top: 1px solid rgba(107, 114, 128, 0.50);
+    }
+}
+/* Закрывающая скобка для .prod-modal */
+.prod-modal-mobile {
+    text-align: center;
+    display: none;
+    @media(max-width:900px) {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    .prod-modal__data-title {
+        display: block;
+    }
+    .prod-modal__data-description {
+        display: block;
+    }
+    @media(max-width:600px) {
+        gap: 4px;
+    }
+}

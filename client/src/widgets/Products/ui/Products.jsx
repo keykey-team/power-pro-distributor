@@ -1,0 +1,18 @@
+import { getMessages } from '@shared/i18n/getMessages';
+import { createI18nServer } from '@shared/i18n/server';
+import React from 'react'
+import ProductsList from './common/ProductsList';
+import Link from 'next/link';
+
+export async function Products({ locale, data }) {
+  const messages = await getMessages(locale);
+  const { t } = createI18nServer(messages);
+  return (
+    <div className='products container' id='prods'>
+      <h2><span>{t('products.title1')}</span> {t('products.title2')}</h2>
+      <button className='preview__button'><Link href={"/build-box"}>{t('products.btn')}</Link></button>
+      <ProductsList data={data} locale={locale} />
+      {/* <button className='preview__button white'>{t('products.btn2')}</button> */}
+    </div>
+  )
+}

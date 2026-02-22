@@ -1,10 +1,111 @@
+// app/[locale]/page.tsx
 import { getMessages } from "@shared/i18n/getMessages";
 import { createI18nServer } from "@shared/i18n/server";
+import { getAllProducts } from "@shared/services/productsServices";
+import OrderForm from "@features/OrderForm/ui/OrderForm";
+import { Partners } from "@widgets/Partners/ui/Partners";
+import { Preview } from "@widgets/Preview/ui/Preview";
+import { Products } from "@widgets/Products/ui/Products";
+import Ticker from "@widgets/Ticker/ui/Ticker";
+
+// Метаданные для разных языков
+const metadataByLocale = {
+  ua: {
+    title: "ProteinBar – офіційний дистриб'ютор спортивного харчування",
+    description:
+      "Протеїнові батончики з чистим складом та високим вмістом білка. Бренди: PowerPro, FitWin. Здорові снеки без цукру. Швидка доставка по всій Україні.",
+    keywords:
+      "протеїнові батончики, спортивне харчування, ProteinBar, PowerPro, FitWin, здорові снеки, без цукру, купити в Україні",
+  },
+  ru: {
+    title: "ProteinBar – официальный дистрибьютор спортивного питания",
+    description:
+      "Лидер на украинском рынке спортивного питания с 2013 года. Протеиновые батончики с чистым составом и высоким содержанием белка. Бренды: PowerPro, FitWin. Здоровые снэки без сахара. Быстрая доставка по всей Украине.",
+    keywords:
+      "протеиновые батончики, спортивное питание, ProteinBar, PowerPro, FitWin, здоровые снэки, без сахара, купить в Украине",
+  },
+  sk: {
+    title: "ProteinBar – oficiálny distribútor športovej výživy",
+    description:
+      "Proteínové tyčinky s čistým zložením a vysokým obsahom bielkovín. Značky: PowerPro, FitWin. Zdravé snacky bez cukru. Rýchle doručenie po celej Ukrajine.",
+    keywords:
+      "proteínové tyčinky, športová výživa, ProteinBar, PowerPro, FitWin, zdravé snacky, bez cukru, kúpiť na Ukrajine",
+  },
+};
+
+// Генерация метаданных на основе локали
+export async function generateMetadata({ params }) {
+  const { locale = "ua" } = await params;
+  const meta = metadataByLocale[locale] || metadataByLocale.ua;
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://185.237.205.5:5002";
+
+  return {
+    title: meta.title,
+    description: meta.description,
+    keywords: meta.keywords,
+    metadataBase: new URL(baseUrl),
+    icons: {
+      icon: '/img/google.ico',          // <-- добавлено
+      // можно добавить и другие размеры:
+      // icon: [{ url: '/icon.png', sizes: '32x32' }],
+    },
+    alternates: {
+      canonical: locale === "ua" ? "/" : `/${locale}`,
+      languages: {
+        "uk": "/",
+        "ru": "/ru",
+        "sk": "/sk",
+      },
+    },
+    openGraph: {
+      title: meta.title,
+      description: meta.description,
+      url: locale === "ua" ? baseUrl : `${baseUrl}/${locale}`,
+      siteName: "ProteinBar",
+      images: [
+        {
+          url: 'https://travnitsaa.ua/img/google.png', // <-- заменено/добавлено
+          width: 1200,
+          height: 630,
+          alt: "ProteinBar - športová výživa",
+        },
+      ],
+      locale: locale === "ua" ? "uk_UA" : locale === "ru" ? "ru_RU" : "sk_SK",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: meta.title,
+      description: meta.description,
+      images: ["/twitter-image.jpg"],
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-video-preview": -1,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+      },
+    },
+  };
+}
 
 export default async function HomePage({ params }) {
   const { locale = "ua" } = await params;
   const messages = await getMessages(locale);
   const { t } = createI18nServer(messages);
+  const data = await getAllProducts();
 
-  return <div>hello</div>;
+  return (
+    <>
+      <Preview locale={locale} />
+      <Partners locale={locale} />
+      <Ticker locale={locale} />
+      <Products locale={locale} data={data} />
+      <OrderForm />
+    </>
+  );
 }

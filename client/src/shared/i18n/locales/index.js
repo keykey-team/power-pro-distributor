@@ -1,7 +1,8 @@
-import ua from "./ua.json";
+
+import sk from "./sk.json";
 import en from "./en.json";
 
 export const messagesMap = {
-  ua,
+  sk,
   en,
 };

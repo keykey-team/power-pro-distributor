@@ -1,0 +1,46 @@
+.products {
+    h2 {
+        text-align: center;
+        color: var(--White, var(--color-grey-100, #FEFEFE));
+        font-family: Unbounded;
+        font-size: 60px;
+        font-style: normal;
+        font-weight: 900;
+        line-height: normal;
+        text-transform: uppercase;
+        margin-bottom: 40px;
+
+        span {
+            color: var(--Accent-color-1, #E41F25);
+        }
+@media(max-width: 570px) {
+    font-size: 32px;
+}
+    }
+
+    button {
+        margin: 0 auto 40px auto;
+        display: block;
+    }
+.preview__button.white {
+    background-color: #FEFEFE;
+    box-shadow: 0 0 20px 1px rgba(255, 255, 255, 0.5);
+    margin: 0 auto 0 auto;
+
+    &::after {
+        border-color: white;
+    }
+
+    &:hover {
+        background-color: white;
+
+        &::after {
+            background-color: white;
+        }
+    }
+
+    @media(max-width: 570px) {
+        padding: 16px;
+    }
+}
+}

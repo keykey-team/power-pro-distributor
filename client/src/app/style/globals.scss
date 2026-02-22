@@ -2,10 +2,26 @@
 @import "../../shared/ui/styles/utilities.scss";
 @import "../../shared/ui/styles/reset.scss";
 
+//entities
+@import "../../entities/ProductItem/ui/ProductItem.scss";
 
 
 // widgets
-@import "../../widgets/header/style/header.scss";
+
+@import "../../widgets/header/ui/Header.scss";
+@import "../../widgets/header/ui/common/burgerMenu.scss";
+@import "../../widgets/Preview/ui/preview.scss";
+@import "../../widgets/Partners/ui/partners.scss";
+@import "../../widgets/Ticker/ui/ticker.scss";
+@import "../../widgets/Ticker/ui/common/scrollVelocity.scss";
+@import "../../widgets/Products/ui/Products.scss";
+@import "../../widgets/Products/ui/common/productsList.scss";
+@import "../../widgets/Footer/ui/footer.scss";
+@import "../../widgets/BuildBox/BuildBoxFunc/ui/buildBoxFunc.scss";
+@import "../../widgets/ProductModal/ui/productModal.scss";
+@import "../../widgets/BuildBox/BuildBoxList/ui/buildBoxList.scss";
+@import "../../widgets/BuildBox/BuildBoxConfirm/ui/buildBoxConfirm.scss";
 
 // features
-@import "../../features/language-switcher/style/languageDropdown.scss";
+@import "../../features/language-switcher/ui/languageDropdown.scss";
+@import "../../features/OrderForm/ui/OrderForm.scss";

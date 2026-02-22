@@ -3,13 +3,37 @@ body {
 }
 
 .container {
-  width: 100%;
-  max-width: $container-max;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 0 $container-padding;
-
-  @include down($bp-mobile) {
-    padding: 0 $container-padding-mobile;
+  max-width: 1530px;
+  padding: 0 15px;
+  margin: 0 auto;
   }
+body {
+  overflow-x: hidden;
+}
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: -1;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+  opacity: 1;
+  &.item {
+      z-index: 1000;
+    }
+}
+#order-form {
+  scroll-margin-top: 80px; 
+}
+#prev {
+  scroll-margin-top: 280px; 
+}
+#partners {
+  scroll-margin-top: 280px; 
+}
+#prods {
+  scroll-margin-top: 280px; 
 }

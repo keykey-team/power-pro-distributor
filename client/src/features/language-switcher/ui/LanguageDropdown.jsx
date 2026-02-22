@@ -1,12 +1,8 @@
 "use client"
 
-import {
-  useModals,
-  UkrFlag,
-  UKFlag,
-} from "@shared";
-import { MODALS } from "@shared/config/modals";
+
 import { useI18n } from "@shared/i18n/use-i18n";
+import { useModals } from "@shared/index";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 
@@ -18,13 +14,13 @@ const LanguageDropdown = () => {
     locale: "ua",
       label: t("language.ukrainian"),
     code: "UA",
-    Icon: UkrFlag,
+      Icon: "",
   },
   {
     locale: "en",
     label: t("language.english"),
     code: "EN",
-    Icon: UKFlag,
+    Icon: "",
   },
   ];
   const router = useRouter();
@@ -39,7 +35,7 @@ const LanguageDropdown = () => {
   };
 
   const currentLocale = getCurrentLocale();
-  const isOpen = isModalOpen === MODALS.LANGUAGE;
+  const isOpen = isModalOpen === "language-dropdown";
 
   const onSelect = (nextLocale) => {
     setIsModalOpen(null);
@@ -81,7 +77,7 @@ const LanguageDropdown = () => {
               onClick={() => onSelect(langLocale)}
               aria-current={langLocale === currentLocale ? "true" : "false"}
             >
-              <Icon />
+              {/* <Icon /> */}
               <span className="lang__text">
                 {label}
               </span>

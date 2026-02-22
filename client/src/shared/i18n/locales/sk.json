@@ -1,0 +1,98 @@
+{
+  "navigation": {
+    "header": {
+      "us": "O nás",
+      "partners": "Partneri",
+      "prods": "Produkty",
+      "contacts": "Kontakt",
+      "btn": "Môj výber"
+    }
+  },
+  "preview": {
+    "title1": "Energia pre",
+    "title2": "Víťazov",
+    "description": "Pridajte produkty do zoznamu a pošlite nám dopyt",
+    "btn": "Vybrať príchuť"
+  },
+  "language": {
+    "english": "Англійська",
+    "ukrainian": "Українська"
+  },
+  "partners": {
+    "title1": "Aliancia",
+    "title2": "Silných",
+    "powerpro": {
+      "info": "Hlavný Partner",
+      "title": "PowerPro",
+      "description": "Líder na ukrajinskom trhu športovej výživy. Od roku 2013 vytvárajú produkty na báze vysoko kvalitných európskych surovín. Ich tyčinky sú známe čistým zložením a vysokým obsahom bielkovín.",
+      "btn": "Web výrobcu →"
+    },
+    "fitwin": {
+      "info": "Inovácia",
+      "title": "FitWin",
+      "description": "Mladá a ambiciózna značka, ktorá mení pohľad na zdravé snacky. FitWin sa zameriava na dokonalú chuť bez pridaného cukru, čím pomáha športovcom dosahovať ciele s radosťou z každého sústa.",
+      "btn": "Web FitWin →"
+    }
+  },
+  "ticker": "\u00A0\u00A0\u00A0\u00A0NAJLEPŠIA BÍLKOVINA NA SLOVENSKU\u00A0\u00A0\u00A0\u00A0•\u00A0\u00A0\u00A0\u00A0ŽIADNY CUKOR\u00A0\u00A0\u00A0\u00A0•\u00A0\u00A0\u00A0\u00A0LEN ČISTÁ ENERGIA\u00A0\u00A0\u00A0\u00A0•",
+  "products": {
+    "title1": "Vyberte si",
+    "title2": "svoju chuť",
+    "btn": "Zostavte si svoj box",
+    "btn2": "Pozrieť si ďalšie produkty"
+  },
+  "form": {
+    "title": "Dokončiť",
+    "titleSpan": "dopyt",
+    "products": "Vybrané produkty:",
+    "noProducts": "Žiadne produkty",
+    "nameLabel": "Meno",
+    "namePlaceholder": "Meno a priezvisko",
+    "phoneLabel": "Telefón (WhatsApp/Telegram)",
+    "phonePlaceholder": "+421 901 234 567",
+    "submit": "Odoslať dopyt manažérovi",
+    "submitting": "Odosielam...",
+    "success": "Dopyt bol úspešne odoslaný!",
+    "error": "Nastala chyba. Skúste to prosím neskôr.",
+  "promoCodeLabel": "Promo kód",
+"promoCodePlaceholder": "Zadajte promo kód"
+  },
+  "validation": {
+    "nameRequired": "Meno je povinné",
+    "nameMin": "Meno musí mať aspoň 2 znaky",
+    "phoneRequired": "Telefónne číslo je povinné",
+    "phoneFormat": "Zadajte platné číslo vo formáte +421... (povinný kód krajiny)"
+  },
+  "phoneCodes": [
+    "+421",
+    "+380",
+    "+420",
+    "+48",
+    "+49",
+    "+36"
+  ],
+  "box": "Zostavte si svoj box",
+  "build-box": {
+    "title": "Zostav si svoj",
+    "title2": "Power Box",
+    "subtitle": "Vyber si veľkosť a naplň ju svojimi obľúbenými chuťami",
+    "block-txt1": {
+      "title": "STANDARD",
+      "subtitle": "5 TYČINIEK",
+      "desc": "Ideálne pre týždenný tréning"
+    },
+    "block-txt2": {
+      "title": "Performance",
+      "subtitle": "10 TYČINIEK",
+      "desc": "Pre náročných športovcov"
+    },
+    "range": "Tvoj Box : ",
+    "range-btn": "Doplňte box",
+    "confirm1": "Pridajte ďalšie",
+    "confirm2": "tyčinky",
+    "confirm-done": "Pridať Box do košíka",
+    "successfully_added": "Úspešne pridané",
+    "successfully_added2": "do košíka",
+    "go_to_cart": "Prejsť do košíka"
+  }
+}

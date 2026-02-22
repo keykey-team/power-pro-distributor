@@ -3,6 +3,10 @@ import { notFound } from "next/navigation";
 import { i18n } from "@shared/i18n/config";
 import Providers from "@shared/providers";
 import "../style/globals.scss";
+import { Header } from "@widgets/header/ui/Header";
+import { inter, unbounded } from "@shared/ui/styles/font";
+import { Footer } from "@widgets/Footer/ui/Footer";
+
 
 export default async function LocaleLayout({ children, params }) {
   const { locale = "ua" } = await params;
@@ -15,12 +19,16 @@ export default async function LocaleLayout({ children, params }) {
   const messages = await getMessages(locale);
 
   return (
-    <html lang={locale}>
-      <body>
+    <html
+      lang={locale}
+      className={`${inter.variable} ${unbounded.variable}`} // Добавляем переменные шрифтов
+    >
+      <body className={inter.className}> {/* Устанавливаем Inter как основной шрифт */}
         <Providers locale={locale} messages={messages}>
           <div className="layout">
-            {/* <Header locale={locale} /> */}
+            <Header locale={locale} />
             <main className="main">{children}</main>
+            <Footer locale={locale} />
           </div>
         </Providers>
       </body>
