@@ -30,7 +30,7 @@ const BuildBoxFunc = () => {
         <div className="build-func container">
             <h1>
                 {t("build-box.title")}
-                <b>{t("build-box.title2")}</b>
+                <b> {t("build-box.title2")}</b>
             </h1>
             <p className="build-func__subtitle">{t("build-box.subtitle")}</p>
 
