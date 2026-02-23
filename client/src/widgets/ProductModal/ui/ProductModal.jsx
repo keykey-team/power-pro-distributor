@@ -30,7 +30,7 @@ export function ProductModal({ locale }) {
       .finally(() => setLoading(false));
   }, [isProdModalId]);
 
-  if (!product) return null; // можно добавить состояние загрузки
+  if (!product) return null; 
 
   return <ProductModalContent locale={locale} product={product} />
 }

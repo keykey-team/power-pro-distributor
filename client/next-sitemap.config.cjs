@@ -1,89 +1,68 @@
-const {
-  getAllProducts,
-} = require("./src/shared/services/productService.cjs");
-const {
-  getAllCategory,
-} = require("./src/shared/services/categoryService.cjs");
 
-const config = {
-  siteUrl: "http:// 192.168.0.106:5002",
+const locales = ['sk'];
+const defaultLocale = '';
+
+
+const staticPagePaths = [
+  '/',              
+  '/build-box',      
+];
+
+module.exports = {
+  siteUrl: process.env.SITE_URL || 'https://fitwin-powerpro.com',
   generateRobotsTxt: true,
-  changefreq: "daily",
+  changefreq: 'daily',
   sitemapSize: 5000,
   exclude: [
-    "/admin/*",
-    "/api/*",
-    "/panel5587436/*",
-    "/dashboard/*",
-    "/placement/*",
-    "/cart/*",
+    '/admin/*',
+    '/api/*',
+    '/panel5587436/*',
+    '/dashboard/*',
+    '/placement/*',
+    '/cart/*',
   ],
-  additionalPaths: async () => {
-    const rawProducts = await getAllProducts();
-    const rawCategories = await getAllCategory();
 
-    const products = Array.isArray(rawProducts)
-      ? rawProducts
-      : rawProducts?.products || [];
+  
+  additionalPaths: async (config) => {
+    const paths = [];
 
-    const categories = Array.isArray(
-      rawCategories
-    )
-      ? rawCategories
-      : rawCategories?.categories || [];
-
-    // 📦 Пути к товарам
-    const productPaths = products
-      .filter(
-        (p) => p.categoryLink && p.titleLink
-      )
-      .map((p) => ({
-        loc: `/product/${p.categoryLink}/${
-          p.subcategoryLink || ""
-        }/${p.titleLink}`.replace(/\/+/g, "/"),
-      }));
-
-    // 📁 Пути к категориям и подкатегориям
-    const categoryPaths = categories.flatMap(
-      (cat) => {
-        const paths = [];
-
-        if (cat.linkName) {
-          // Категория
-          paths.push({
-            loc: `/catalog/${cat.linkName}`,
-          });
-
-          // Подкатегории
-          if (Array.isArray(cat.subcategories)) {
-            cat.subcategories.forEach((sub) => {
-              if (sub.linkName) {
-                paths.push({
-                  loc: `/catalog/${cat.linkName}/${sub.linkName}`,
-                });
-              }
-            });
-          }
+    for (const page of staticPagePaths) {
+ 
+      for (const locale of locales) {
+      
+        let locPath;
+        if (locale === defaultLocale) {
+       
+          locPath = page === '/' ? '/' : page; 
+        } else {
+       
+          locPath = `/${locale}${page}`;
         }
 
-        return paths;
+       
+        const alternateRefs = locales.map((l) => {
+          let href;
+          if (l === defaultLocale) {
+            href = page === '/' ? '/' : page;
+          } else {
+            href = `/${l}${page}`;
+          }
+          return {
+            href: `${config.siteUrl}${href}`,
+            hreflang: l === 'ua' ? 'uk' : l,
+          };
+        });
+
+        paths.push({
+          loc: locPath,                 
+          alternateRefs,                
+          changefreq: 'daily',
+          priority: page === '/' ? 1.0 : 0.8,
+          
+        });
       }
-    );
+    }
 
-    // 📄 Статические страницы
-    const staticPages = [
-      { loc: "/" },
-      { loc: "/info/aboutUs" },
-      { loc: "/info/delivery" },
-      { loc: "/info/exchange" },
-    ];
-
-    return [
-      ...staticPages,
-      ...categoryPaths,
-      ...productPaths,
-    ];
+    return paths;
   },
 };
-
-module.exports = config;

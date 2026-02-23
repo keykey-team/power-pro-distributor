@@ -6,7 +6,7 @@ export async function Partners({ locale }) {
     const messages = await getMessages(locale);
     const { t } = createI18nServer(messages);
     return (
-        <div className='partners container'>
+        <div className='partners container' id='partners'>
             <h2>{t("partners.title1")} <b>{t("partners.title2")}</b></h2>
             <div className="partners__list">
                 <div className="partners__item">
