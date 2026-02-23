@@ -3,11 +3,12 @@ import { useModals } from '@shared/index';
 import { formatProductTitle } from '@widgets/ProductModal/lib/formatProductTitle';
 import Image from 'next/image';
 import React from 'react'
+import ProductGallerySwiper from './ProductGallerySwiper';
 
 const ProductModalContent = ({ product, locale }) => {
     const { isModalOpen, setIsModalOpen, isProdModalId, setIsProdModalId } = useModals();
     const { firstPart, secondPart } = formatProductTitle(product.title?.[locale])
-    console.log(product)
+    console.log(product,"prod-modal")
     return (
         <>
             {(isModalOpen === "prod-modal") && (
@@ -32,7 +33,10 @@ const ProductModalContent = ({ product, locale }) => {
                         </button>
                         <div className="prod-modal__preview">
                             <div className="prod-modal__preview-img">
-                                <Image src={"/img/test.png"} alt='prod' width={480} height={480} />
+                              <ProductGallerySwiper 
+                                    images={product.gallery}
+                                    productTitle={product.title?.[locale]}
+                                />
                             </div>
                             <ul className="prod-modal__preview-stats">
                                 {product?.features?.[locale]?.map((prod, index) => (
