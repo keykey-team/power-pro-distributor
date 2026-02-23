@@ -128,7 +128,7 @@ const ProductSchema = new Schema(
 
     // media
     cover: { type: ImageSchema, default: null },
-    gallery: { type: [ImageSchema], default: [] },
+    gallery: { type: Array, default: [] },
 
     // ✅ dynamic badges for card (chips)
     cardBadges: { type: [BadgeSchema], default: [] },
