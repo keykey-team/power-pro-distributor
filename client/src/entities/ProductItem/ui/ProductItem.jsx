@@ -20,24 +20,22 @@ export function ProductItem({ product, locale }) {
                 <p className="products__item-subtitle">{product?.subtitle?.[locale]}</p>
                 <div className="products__item-info">
 
-                    {product.nutritionTable.rows.map((item) => {
-                        if (item.key === "protein" || item.key === "sugars" || item.key === "energy") {
-                           
-                            return (
-                                <div className="products__item-info-item" key={item.key}>
-                                    <p>
-                                        {item?.values?.per_100g?.value === "" || item?.values?.per_100g?.value === null || item?.values?.per_100g?.value === undefined
-                                            ? "NULL"
-                                            : `${item.values.per_100g.value} ${item.values.per_100g.unit || ''}`}
-                                    </p>
-                                    <p className='prod-some'>{item?.label?.[locale]}</p>
-                                </div>
-                            )
-                        }
-                        return null;
+                    {product.cardBadges.map((item) => {
+
+
+                        return (
+                            <div className="products__item-info-item" key={item.key}>
+                                <p>
+                                    {item?.valueNumber} {item?.unit}
+                                </p>
+                                <p className='prod-some'>{item?.label?.[locale]}</p>
+                            </div>
+                        )
+
+
                     })}
 
-                  
+
                 </div>
                 <ProductButton product={product} locale={locale} />
             </div>
