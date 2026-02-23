@@ -10,7 +10,7 @@ export function ProductItem({ product, locale }) {
             <div className='products__item'>
                 <div className="products__item-img">
                     <Image
-                        src={"/img/test.png"}
+                        src={product.gallery[0]}
                         alt={product?.title?.[locale]}
                         width={400}
                         height={400}

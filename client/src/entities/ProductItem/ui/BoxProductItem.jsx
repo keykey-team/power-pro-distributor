@@ -17,7 +17,7 @@ const BoxProductItem = ({ product, locale, quantity, onIncrement, onDecrement, i
     <div className="product-box">
       <div className="product-box__content">
         <Image
-          src={product.cover || "/img/test.png"} // заглушка, если cover отсутствует
+          src={product?.gallery?.[0] || "/img/test.png"} // заглушка, если cover отсутствует
           alt={title}
           width={125}
           height={125}
