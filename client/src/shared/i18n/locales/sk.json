@@ -94,5 +94,12 @@
     "successfully_added": "Úspešne pridané",
     "successfully_added2": "do košíka",
     "go_to_cart": "Prejsť do košíka"
+  },
+  "cart":{
+    "title":"VÁŠ KOŠÍK",
+    "cost":"SPOLU",
+    "btn":"POKRAČOVAŤ K PLATBE",
+    "currency":"€",
+    "empty":"Váš košík je prázdny"
   }
 }

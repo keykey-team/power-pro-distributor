@@ -30,7 +30,8 @@ const ProductButton = ({ product, locale }) => {
                 kind: 'product',
                 name: product?.title?.[locale],
                 productId: product._id,
-                quantity: 1
+                quantity: 1,
+                product:product
             };
             const updatedCart = [...currentCart, cartItem];
             localStorage.setItem('cart', JSON.stringify(updatedCart));

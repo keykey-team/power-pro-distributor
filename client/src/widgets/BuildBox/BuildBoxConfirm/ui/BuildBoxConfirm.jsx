@@ -9,10 +9,9 @@ import { scrollToOrderForm } from "@widgets/header/lib/scrollToOrderForm";
 
 // Ключи для localStorage
 const BOX_STORAGE_KEY = 'box-products';
-const MAIN_CART_KEY = 'cart'; // Уточните название ключа главной корзины
+const MAIN_CART_KEY = 'cart';
 
 const BuildBoxConfirm = () => {
-
     const router = useRouter();
     const { t } = useI18n();
     const { curt, setIsCurt, setIsModalOpen } = useModals();
@@ -24,32 +23,35 @@ const BuildBoxConfirm = () => {
     const totalItems = curt.reduce((sum, item) => sum + item.quantity, 0);
     const isLimitReached = totalItems === limit;
 
+    // Функция для вычисления общей стоимости бокса
+    const calculateTotalPrice = (boxItems) => {
+        return boxItems.reduce((total, item) => {
+            const product = products.find(p => p.key === item.key);
+            const price = product?.price || 0;
+            return total + price * item.quantity;
+        }, 0);
+    };
+
     // Функция для добавления товаров в главную корзину
     const addToMainCart = (boxItems) => {
         try {
-            // Получаем текущую главную корзину
             const mainCart = JSON.parse(localStorage.getItem(MAIN_CART_KEY) || '[]');
-            const quantity = boxItems.reduce((sum, el) => {
-                return sum + el.quantity;
-            }, 0);
+            const totalQuantity = boxItems.reduce((sum, el) => sum + el.quantity, 0);
+            const totalPrice = calculateTotalPrice(boxItems);
 
-
-            // Создаем объект бокса для главной корзины
             const boxProduct = {
                 kind: "custom_box",
-                name: `Tvoj Box ${quantity} tyčinky`,
-                size: quantity,
+                name: `Tvoj Box ${totalQuantity} tyčinky`,
+                size: totalQuantity,
                 items: boxItems.map(item => ({
-                   
                     productId: item.key,
                     quantity: item.quantity,
-                }))
+                })),
+                price: totalPrice,        // общая стоимость бокса
+                quantity: 1,               // бокс считается одним товаром
             };
 
-            // Добавляем бокс как один элемент в корзину (НЕ через ...)
             const updatedCart = [...mainCart, boxProduct];
-
-            // Сохраняем в главную корзину
             localStorage.setItem(MAIN_CART_KEY, JSON.stringify(updatedCart));
 
             console.log('Добавлено в корзину:', boxProduct);
@@ -76,26 +78,20 @@ const BuildBoxConfirm = () => {
                 throw new Error('Не удалось добавить товары в корзину');
             }
 
-
             setIsCurt([]);
-
-
             localStorage.removeItem(BOX_STORAGE_KEY);
 
-
-            scrollToOrderForm()
-
-
+            // Закрыть модалку, если она открыта
+            // setIsModalOpen(null);
+            // Плавный скролл к форме заказа
+            // scrollToOrderForm();
 
         } catch (error) {
             console.error("Ошибка:", error);
-
         } finally {
             setIsProcessing(false);
         }
     };
-
-
 
     return (
         <div className="box-confirme">
@@ -112,8 +108,6 @@ const BuildBoxConfirm = () => {
                         : `${t("build-box.confirm1")} ${limit - totalItems} ${t("build-box.confirm2")}`
                 )}
             </button>
-
-
         </div>
     );
 };
