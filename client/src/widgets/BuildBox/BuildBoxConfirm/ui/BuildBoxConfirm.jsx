@@ -4,14 +4,15 @@ import { useI18n } from "@shared/i18n/use-i18n";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
-import { products } from "@widgets/Products/ui/common/ProductsList";
+
 import { scrollToOrderForm } from "@widgets/header/lib/scrollToOrderForm";
 
 // Ключи для localStorage
 const BOX_STORAGE_KEY = 'box-products';
 const MAIN_CART_KEY = 'cart';
 
-const BuildBoxConfirm = () => {
+const BuildBoxConfirm = ({ products }) => {
+    console.log(products)
     const router = useRouter();
     const { t } = useI18n();
     const { curt, setIsCurt, setIsModalOpen } = useModals();
@@ -26,7 +27,7 @@ const BuildBoxConfirm = () => {
     // Функция для вычисления общей стоимости бокса
     const calculateTotalPrice = (boxItems) => {
         return boxItems.reduce((total, item) => {
-            const product = products.find(p => p.key === item.key);
+            const product = products.items.find(p => p.key === item.key);
             const price = product?.price || 0;
             return total + price * item.quantity;
         }, 0);

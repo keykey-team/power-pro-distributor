@@ -101,5 +101,10 @@
     "btn":"POKRAČOVAŤ K PLATBE",
     "currency":"€",
     "empty":"Váš košík je prázdny"
+  },
+  "order":{
+    "title1":"zaplaťte za",
+    "title2":"svoj tovar",
+    "desc":"Vyplňte svoje údaje a tovar dostanete v najbližšej dobe."
   }
 }

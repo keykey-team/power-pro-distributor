@@ -7,13 +7,13 @@ import Image from 'next/image';
 import React from 'react';
 
 const Curt = () => {
-    const { isModalOpen, setIsProdModalId,setIsModalOpen } = useModals();
+    const { isModalOpen, setIsProdModalId, setIsModalOpen } = useModals();
 
     const { t } = useI18n();
     const cart = useCart();
 
     const total = cart.reduce((acc, item) => {
-        const price = item.product.price || 0;
+        const price = item?.product?.price || item?.price || 0;
         const quantity = item.quantity || 1;
         return acc + price * quantity;
     }, 0);
@@ -58,7 +58,7 @@ const Curt = () => {
                                 }}>
                                     <div className="curt__item-content">
                                         <Image
-                                            src={item.product.gallery[0]}
+                                            src={item?.product?.gallery[0] || "/img/box.png"}
                                             alt={item.name}
                                             width={70}
                                             height={70}
@@ -67,10 +67,12 @@ const Curt = () => {
                                             <span className='curt__item-name'>{item.name}</span>
 
                                             {/* Блок управления количеством */}
-
-                                            <span className='curt__item-price'>
+                                            {item.size ? (<span className='curt__item-price'>
+                                                {item.price * (item.quantity || 1)} {t('cart.currency') || 'грн'}
+                                            </span>) : (<span className='curt__item-price'>
                                                 {item.product.price * (item.quantity || 1)} {t('cart.currency') || 'грн'}
-                                            </span>
+                                            </span>)}
+
                                         </div>
                                     </div>
                                     <div className="curt__item-quantity">

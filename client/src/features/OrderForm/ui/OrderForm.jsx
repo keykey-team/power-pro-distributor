@@ -48,14 +48,7 @@ const OrderForm = () => {
     };
   }, []);
 
-  // Удаление товара из корзины
-  const handleRemoveItem = (index) => {
-    const updatedCart = cartItems.filter((_, i) => i !== index);
-    setCartItems(updatedCart);
-    localStorage.setItem("cart", JSON.stringify(updatedCart));
-    // Диспатчим событие, чтобы другие компоненты (если есть) тоже обновились
-    window.dispatchEvent(new Event('cartUpdated'));
-  };
+
 
   const formik = useFormik({
     initialValues: {
@@ -75,7 +68,6 @@ const OrderForm = () => {
       try {
         const payload = {
           ...values,
-          items: cartItems,
         };
         console.log("Odosielam dopyt:", payload);
         const data = await sendLead(payload);
@@ -128,30 +120,8 @@ const OrderForm = () => {
             {t("form.title")}<span> {t("form.titleSpan")}</span>
           </p>
 
-          <p className="form-prods">{t("form.products")}</p>
-
-          {/* Список товаров из корзины */}
-          <div className="form-prods-list">
-            {cartItems.length === 0 ? (
-              <p>{t("form.noProducts")}</p>
-            ) : (
-              <ul className="cart-items">
-                {cartItems.map((item, index) => (
-                  <li key={index} className="cart-item">
-                    <span>{item.name}</span>
-                    <button
-                      type="button"
-                      className="remove-item"
-                      onClick={() => handleRemoveItem(index)}
-                      aria-label="Remove item"
-                    >
-                      ✕
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          
+          
 
           <form onSubmit={formik.handleSubmit} className="order-form">
             <div className="form-group">

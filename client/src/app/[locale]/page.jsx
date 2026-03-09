@@ -11,25 +11,25 @@ import Ticker from "@widgets/Ticker/ui/Ticker";
 // Метаданные для разных языков
 const metadataByLocale = {
   ua: {
-    title: "ProteinBar – офіційний дистриб'ютор спортивного харчування",
+    title: "SportNutrition – офіційний дистриб'ютор спортивного харчування",
     description:
       "Протеїнові батончики з чистим складом та високим вмістом білка. Бренди: PowerPro, FitWin. Здорові снеки без цукру. Швидка доставка по всій Україні.",
     keywords:
-      "протеїнові батончики, спортивне харчування, ProteinBar, PowerPro, FitWin, здорові снеки, без цукру, купити в Україні",
+      "протеїнові батончики, спортивне харчування, SportNutrition, PowerPro, FitWin, здорові снеки, без цукру, купити в Україні",
   },
   ru: {
-    title: "ProteinBar – официальный дистрибьютор спортивного питания",
+    title: "SportNutrition – официальный дистрибьютор спортивного питания",
     description:
       "Лидер на украинском рынке спортивного питания с 2013 года. Протеиновые батончики с чистым составом и высоким содержанием белка. Бренды: PowerPro, FitWin. Здоровые снэки без сахара. Быстрая доставка по всей Украине.",
     keywords:
-      "протеиновые батончики, спортивное питание, ProteinBar, PowerPro, FitWin, здоровые снэки, без сахара, купить в Украине",
+      "протеиновые батончики, спортивное питание, SportNutrition, PowerPro, FitWin, здоровые снэки, без сахара, купить в Украине",
   },
   sk: {
-    title: "ProteinBar – oficiálny distribútor športovej výživy",
+    title: "SportNutrition – oficiálny distribútor športovej výživy",
     description:
       "Proteínové tyčinky s čistým zložením a vysokým obsahom bielkovín. Značky: PowerPro, FitWin. Zdravé snacky bez cukru. Rýchle doručenie po celej Ukrajine.",
     keywords:
-      "proteínové tyčinky, športová výživa, ProteinBar, PowerPro, FitWin, zdravé snacky, bez cukru, kúpiť na Ukrajine",
+      "proteínové tyčinky, športová výživa, SportNutrition, PowerPro, FitWin, zdravé snacky, bez cukru, kúpiť na Ukrajine",
   },
 };
 
@@ -60,13 +60,13 @@ export async function generateMetadata({ params }) {
       title: meta.title,
       description: meta.description,
       url: locale === "ua" ? baseUrl : `${baseUrl}/${locale}`,
-      siteName: "ProteinBar",
+      siteName: "SportNutrition",
       images: [
         {
           url: 'https://fitwin-powerpro.com/img/google.png', // <-- заменено/добавлено
           width: 1200,
           height: 630,
-          alt: "ProteinBar - športová výživa",
+          alt: "SportNutrition - športová výživa",
         },
       ],
       locale: locale === "ua" ? "uk_UA" : locale === "ru" ? "ru_RU" : "sk_SK",
