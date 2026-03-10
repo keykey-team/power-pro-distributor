@@ -3,10 +3,11 @@
 
 import React, { forwardRef, useImperativeHandle, useRef, useId, useState } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
-import { cleanPhoneNumber, formatPhoneUA } from '../lib/phoneUtils';
+
 import { orderValidationSchema } from '../lib/orderValidation';
 import { useI18n } from '@shared/i18n/use-i18n';
 import DPDWidget from './DPD';
+import { formatPhone } from '../lib/phoneUtils';
 
 const OrderForm = forwardRef((props, ref) => {
   const [selectedPoint, setSelectedPoint] = useState(null);
@@ -39,10 +40,10 @@ const OrderForm = forwardRef((props, ref) => {
   };
 
   const handlePhoneChange = (e, setFieldValue) => {
-    const raw = e.target.value;
-    const formatted = formatPhoneUA(raw);
-    setFieldValue('phone', formatted);
-  };
+  const raw = e.target.value;
+  const formatted = formatPhone(raw); // тепер використовується formatPhone
+  setFieldValue('phone', formatted);
+};
 
   return (
     <section className="order-inputs">

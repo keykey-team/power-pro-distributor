@@ -1,22 +1,41 @@
-
-export const formatPhoneUA = (raw = '') => {
+// Форматує словацький номер у вигляді +421 XXX XXX XXX
+export const formatPhone = (raw = '') => {
   if (!raw) return '';
   let digits = String(raw).replace(/\D/g, '');
-  if (digits.startsWith('380')) digits = digits.slice(3);
-  if (digits.startsWith('0')) digits = digits.slice(1);
-  if (digits.length < 9) digits = digits.padEnd(9, '0');
-  const p2 = digits.slice(0, 2);
-  const p3 = digits.slice(2, 5);
-  const p4 = digits.slice(5, 7);
-  const p5 = digits.slice(7, 9);
-  return `+380 (${p2}) ${p3}-${p4}-${p5}`;
+  
+  // Видаляємо код країни або ведучий нуль, якщо вони є
+  if (digits.startsWith('421')) {
+    digits = digits.slice(3);
+  } else if (digits.startsWith('0')) {
+    digits = digits.slice(1);
+  }
+  
+  // Обмежуємо до 9 цифр (максимальна довжина національного номера)
+  digits = digits.slice(0, 9);
+  
+  // Форматуємо по групах 3-3-3
+  let formatted = '';
+  for (let i = 0; i < digits.length; i++) {
+    if (i === 3 || i === 6) formatted += ' ';
+    formatted += digits[i];
+  }
+  
+  return `+421 ${formatted}`.trim();
 };
 
-
+// Очищає номер і приводить до міжнародного формату (починається з 421)
 export const cleanPhoneNumber = (value) => {
   if (!value) return '';
   const numbers = value.replace(/\D/g, '');
-  if (numbers.startsWith('380')) return numbers;
-  if (numbers.startsWith('0')) return '38' + numbers;
-  return numbers;
+  
+  // Якщо номер починається з 0 → замінюємо на 421
+  if (numbers.startsWith('0')) {
+    return '421' + numbers.slice(1);
+  }
+  // Якщо вже містить 421 — залишаємо
+  if (numbers.startsWith('421')) {
+    return numbers;
+  }
+  // Інакше додаємо 421 (вважаємо, що введено національний номер без коду)
+  return '421' + numbers;
 };

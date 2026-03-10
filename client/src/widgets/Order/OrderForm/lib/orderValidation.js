@@ -1,24 +1,22 @@
-// @features/Order/validation/orderValidation.js
-
 import * as Yup from 'yup';
-import { cleanPhoneNumber } from './phoneUtils';
-
+import { cleanPhoneNumber } from './phoneUtils'; // шлях має відповідати реальному розташуванню
 
 export const orderValidationSchema = Yup.object({
   firstName: Yup.string()
-    .required("Ім'я обов'язкове")
-    .min(2, "Ім'я має містити щонайменше 2 символи"),
+    .required('Meno je povinné')
+    .min(2, 'Meno musí obsahovať aspoň 2 znaky'),
   lastName: Yup.string()
-    .required('Прізвище обов’язкове')
-    .min(2, 'Прізвище має містити щонайменше 2 символи'),
+    .required('Priezvisko je povinné')
+    .min(2, 'Priezvisko musí obsahovať aspoň 2 znaky'),
   email: Yup.string()
-    .email('Невірний формат email')
-    .required('Email обов’язковий'),
+    .email('Neplatný formát emailu')
+    .required('Email je povinný'),
   phone: Yup.string()
-    .required('Телефон обов’язковий')
-    .test('is-valid-phone', 'Невірний формат телефону', (value) => {
+    .required('Telefónne číslo je povinné')
+    .test('is-valid-phone', 'Neplatný formát telefónneho čísla', (value) => {
       if (!value) return false;
       const cleaned = cleanPhoneNumber(value);
-      return /^380\d{9}$/.test(cleaned);
+      // Перевіряємо, що після очищення номер має 12 цифр і починається з 421
+      return /^421\d{9}$/.test(cleaned);
     }),
 });
