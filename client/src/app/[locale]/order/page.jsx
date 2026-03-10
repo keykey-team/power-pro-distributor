@@ -21,9 +21,9 @@ export default async function BoxPage({ params }) {
         <h1>{t("order.title1")}<b>{t("order.title2")}</b></h1>
         <p>{t("order.desc")}</p>
       </section>
-      <div className="order-content">
+      <div className="order-content container">
         <OrderForm />
-        <OrderFunc />
+        <OrderFunc  />
       </div>
     </>
   );

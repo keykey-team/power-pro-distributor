@@ -54,8 +54,8 @@
     "submitting": "Odosielam...",
     "success": "Dopyt bol úspešne odoslaný!",
     "error": "Nastala chyba. Skúste to prosím neskôr.",
-  "promoCodeLabel": "Promo kód",
-"promoCodePlaceholder": "Zadajte promo kód"
+    "promoCodeLabel": "Promo kód",
+    "promoCodePlaceholder": "Zadajte promo kód"
   },
   "validation": {
     "nameRequired": "Meno je povinné",
@@ -95,16 +95,36 @@
     "successfully_added2": "do košíka",
     "go_to_cart": "Prejsť do košíka"
   },
-  "cart":{
-    "title":"VÁŠ KOŠÍK",
-    "cost":"SPOLU",
-    "btn":"POKRAČOVAŤ K PLATBE",
-    "currency":"€",
-    "empty":"Váš košík je prázdny"
+  "cart": {
+    "title": "VÁŠ KOŠÍK",
+    "cost": "SPOLU",
+    "btn": "POKRAČOVAŤ K PLATBE",
+    "currency": "€",
+    "empty": "Váš košík je prázdny"
   },
-  "order":{
-    "title1":"zaplaťte za",
-    "title2":"svoj tovar",
-    "desc":"Vyplňte svoje údaje a tovar dostanete v najbližšej dobe."
+  "order": {
+    "title1": "Zaplaťte za",
+    "title2": "svoj tovar",
+    "desc": "Vyplňte svoje údaje a tovar dostanete v najbližšom čase.",
+    "subtitle1": "Kontaktné údaje",
+    "subtitle2": "Adresa doručenia (DPD)",
+    "subtitle3": "Platba",
+    "firstNameLabel": "Meno",
+    "lastNameLabel": "Priezvisko",
+    "emailLabel": "Email",
+    "phoneLabel": "Telefón",
+    "firstNamePlaceholder": "Zadajte meno",
+    "lastNamePlaceholder": "Zadajte priezvisko",
+    "placement": "Platba kartou online (prostredníctvom platobnej služby)",
+    "func-title": "Tvoj Výber",
+    "promo":"APLIKOVAŤ",
+    "promo-placeholder":"Máte promo kod?",
+    "total":"Medzisúčet",
+    "total2":"CELKOM",
+    "delivery":"Doprava DPD",
+    "delivery-status":"Podľa dopravcu",
+    "btn":"ZAPLATIŤ TERAZ",
+    "quant":"kusy"
+    
   }
 }

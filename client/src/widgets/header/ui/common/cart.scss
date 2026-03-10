@@ -81,6 +81,10 @@
          line-height: normal;
          text-transform: uppercase;
          width: 100%;
+         &.disable {
+             pointer-events: none;
+             opacity: 0.6;
+         }
      }
      &__empty {
          text-align: center;
