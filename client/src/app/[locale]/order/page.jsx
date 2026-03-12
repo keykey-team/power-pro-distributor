@@ -1,4 +1,5 @@
 // app/[locale]/box/page.tsx
+import OrderConfirm from "@features/OrderForm/OrderConfirm";
 import { getMessages } from "@shared/i18n/getMessages";
 import { createI18nServer } from "@shared/i18n/server";
 import { getAllProducts } from "@shared/services/productsServices";
@@ -17,13 +18,14 @@ export default async function BoxPage({ params }) {
 
   return (
     <>
+      <OrderConfirm locale={"cart"} title1={"Objednávka bola úspešne"} title2={"odoslaná!"} subtitle={"Vaša objednávka bola úspešne odoslaná nášmu manažérovi.Čoskoro vás budeme kontaktovať, aby sme potvrdili detaily a dohodli termín doručenia."} />
       <section className="order-preview">
         <h1>{t("order.title1")}<b>{t("order.title2")}</b></h1>
         <p>{t("order.desc")}</p>
       </section>
       <div className="order-content container">
         <OrderForm />
-        <OrderFunc  />
+        <OrderFunc />
       </div>
     </>
   );

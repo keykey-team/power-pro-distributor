@@ -20,7 +20,7 @@ const BuildBoxConfirm = ({ products }) => {
     const [isProcessing, setIsProcessing] = useState(false);
 
     const limit = Number(searchParams.get('limit')) || 5;
-
+    const totalPriceForCart = curt.reduce((sum, item) => sum + item.product.price, 0);
     const totalItems = curt.reduce((sum, item) => sum + item.quantity, 0);
     const isLimitReached = totalItems === limit;
 
@@ -32,13 +32,14 @@ const BuildBoxConfirm = ({ products }) => {
             return total + price * item.quantity;
         }, 0);
     };
-
+    console.log(calculateTotalPrice(curt))
     // Функция для добавления товаров в главную корзину
     const addToMainCart = (boxItems) => {
         try {
             const mainCart = JSON.parse(localStorage.getItem(MAIN_CART_KEY) || '[]');
             const totalQuantity = boxItems.reduce((sum, el) => sum + el.quantity, 0);
             const totalPrice = calculateTotalPrice(boxItems);
+
 
             const boxProduct = {
                 kind: "custom_box",
@@ -49,14 +50,14 @@ const BuildBoxConfirm = ({ products }) => {
                     productId: item.key,
                     quantity: item.quantity,
                 })),
-                price: totalPrice,        // общая стоимость бокса
+                price: totalPriceForCart.toFixed(2),        // общая стоимость бокса
                 quantity: 1,               // бокс считается одним товаром
             };
 
             const updatedCart = [...mainCart, boxProduct];
             localStorage.setItem(MAIN_CART_KEY, JSON.stringify(updatedCart));
 
-           
+
 
             return true;
         } catch (error) {

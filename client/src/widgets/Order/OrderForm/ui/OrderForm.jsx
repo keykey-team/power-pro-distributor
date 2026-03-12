@@ -7,8 +7,12 @@ import { useI18n } from '@shared/i18n/use-i18n';
 import DPDWidget from './DPD';
 import { formatPhone } from '../lib/phoneUtils';
 import { useCart } from '@widgets/header/model/useCart';
+import { upload } from '@testing-library/user-event/dist/upload';
+import { useModals } from '@shared/index';
+import { createOrder } from '@shared/services/orderServices';
 
 const OrderForm = forwardRef((props, ref) => {
+  const { isModalOpen, setIsModalOpen } = useModals();
   const [selectedPoint, setSelectedPoint] = useState(null);
   const [isDeliveryChoose, setIsDeliveryChoose] = useState(false);
   const { t } = useI18n();
@@ -46,7 +50,7 @@ const OrderForm = forwardRef((props, ref) => {
 
   console.log(selectedPoint)
 
-  const handleSubmit = (values, { setSubmitting }) => {
+  const handleSubmit = async (values, { setSubmitting }) => {
     if (selectedPoint) {
       const cleanPhoneNumber = (phone) => phone.replace(/[^\d+]/g, '');
       const cleanedPhone = cleanPhoneNumber(values.phone);
@@ -84,8 +88,14 @@ const OrderForm = forwardRef((props, ref) => {
         },
 
       };
-      console.log('Форма отправлена:', payload);
-      alert('Заказ оформлен! (демо)');
+      try {
+        const data = await createOrder(payload)
+        setIsModalOpen("order-confirm")
+        console.log(data)
+      } catch (error) {
+        console.log(error)
+      }
+
       setSubmitting(false);
     }
     else { alert("Vyberte pobočku"); }

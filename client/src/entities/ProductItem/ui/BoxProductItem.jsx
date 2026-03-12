@@ -11,7 +11,7 @@ const BoxProductItem = ({ product, locale, quantity, onIncrement, onDecrement, i
   // Числовые поля
   const weight = product.weightG ? `${product.weightG} г` : null;
   const protein = product.proteinG ? `Протеин ${product.proteinG} г` : null;
-  const price = product.price
+  const price = product.price.toFixed(2)
 
   return (
     <div className="product-box">
