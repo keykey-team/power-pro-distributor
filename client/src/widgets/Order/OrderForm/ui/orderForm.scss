@@ -42,7 +42,6 @@
         width: 100%;
     }
     .order__container {
-        
         padding: 40px;
         border-radius: 32px;
         border: 1px solid rgba(21, 21, 21, 0.50);
@@ -51,7 +50,6 @@
         @media(max-width:630px) {
             padding: 24px;
         }
-        
     }
     .order__title {
         display: flex;
@@ -147,6 +145,7 @@
             left: 5px;
             font-size: 10px;
             color: #E41F25;
+            font-weight: 800;
         }
     }
     .order__pay {
@@ -186,4 +185,10 @@
             font-weight: 800;
         }
     }
+}
+.order__title__error {
+    font-size: 10px !important;
+    color: #E41F25 !important;
+    margin-left: 15px;
+    font-weight: 800;
 }

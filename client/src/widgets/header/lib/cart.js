@@ -16,24 +16,6 @@ export const getCart = () => {
   return [];
 };
 
-export const updateQuantity = (id, delta) => {
-  const cart = getCart();
-  const index = cart.findIndex(item => item.id === id);
-  if (index === -1) return;
-
-  const currentQuantity = cart[index].quantity || 1;
-  const newQuantity = currentQuantity + delta;
-
-  if (newQuantity <= 0) {
-    // удаляем товар
-    cart.splice(index, 1);
-  } else {
-    cart[index].quantity = newQuantity;
-  }
-
-  setCart(cart);
-};
-
 // Сохранить корзину и уведомить об изменении
 export const setCart = (cart) => {
   localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
@@ -43,7 +25,8 @@ export const setCart = (cart) => {
 // Добавить товар (если уже есть – увеличить quantity)
 export const addItem = (item) => {
   const cart = getCart();
-  const existingIndex = cart.findIndex(i => i.id === item.id);
+  // Используем productId для поиска существующего товара
+  const existingIndex = cart.findIndex(i => i.productId === item.productId);
   if (existingIndex !== -1) {
     cart[existingIndex].quantity = (cart[existingIndex].quantity || 1) + 1;
   } else {
@@ -52,18 +35,27 @@ export const addItem = (item) => {
   setCart(cart);
 };
 
-// Удалить товар по индексу
-export const removeItemByIndex = (index) => {
+// Обновить количество товара (delta = +1 или -1)
+export const updateQuantity = (productId, delta) => {
   const cart = getCart();
-  if (index >= 0 && index < cart.length) {
-    cart.splice(index, 1);
-    setCart(cart);
+  const index = cart.findIndex(item => item.productId === productId);
+  if (index === -1) return;
+
+  const currentQuantity = cart[index].quantity || 1;
+  const newQuantity = currentQuantity + delta;
+
+  if (newQuantity <= 0) {
+    cart.splice(index, 1); // удаляем товар
+  } else {
+    cart[index].quantity = newQuantity;
   }
+
+  setCart(cart);
 };
 
-// Удалить товар по id
-export const removeItemById = (id) => {
-  const cart = getCart().filter(item => item.id !== id);
+// Удалить товар по productId
+export const removeItemById = (productId) => {
+  const cart = getCart().filter(item => item.productId !== productId);
   setCart(cart);
 };
 

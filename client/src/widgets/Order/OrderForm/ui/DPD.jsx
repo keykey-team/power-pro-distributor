@@ -38,7 +38,7 @@ export default function DPDWidget({ selectedPoint, setSelectedPoint }) {
 
             <iframe
                 ref={iframeRef}
-                src="https://api.dpd.cz/widget/latest/index.html?lang=ru&countries=SK&center=48.669,19.699&zoom=7" // добавлен параметр country=SK
+                src="https://api.dpd.cz/widget/latest/index.html?lang=sk&&countries=SK"  // добавлен параметр country=SK
                 width="100%"
                 height="600px"
                 style={{ border: '1px solid #ff0000', borderRadius: "30px" }}
