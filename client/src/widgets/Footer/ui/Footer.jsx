@@ -79,7 +79,7 @@ export function Footer() {
             </div>
             <div className="footer__under">
                 <div className="footer__under-cont container">
-                    <p>© 2026 Proteinbar. VŠETKY PRÁVA VYHRADENÉ</p>
+                    <p>© 2026 SportNutrition. VŠETKY PRÁVA VYHRADENÉ</p>
                     <ul>
                         <li><Link href="/about">Verejná ponuka</Link></li>
                         <li><Link href="/about">Zásady ochrany osobných údajov</Link></li>

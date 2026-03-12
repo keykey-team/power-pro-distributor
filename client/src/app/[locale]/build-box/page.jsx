@@ -10,21 +10,21 @@ import BuildBoxList from "@widgets/BuildBox/BuildBoxList/ui/BuildBoxList";
 // Метаданные для разных языков
 const metadataByLocale = {
   ua: {
-    title: "Зібрати бокс – ProteinBar | Конструктор протеїнових наборів",
+    title: "Зібрати бокс – SportNutrition | Конструктор протеїнових наборів",
     description:
       "Створіть власний бокс з протеїновими батончиками PowerPro та FitWin. Оберіть улюблені смаки, без цукру, з високим вмістом білка. Зручна доставка по Україні.",
     keywords:
       "зібрати бокс, конструктор наборів, протеїнові батончики, PowerPro, FitWin, бокс з батончиками, замовити",
   },
   ru: {
-    title: "Собрать бокс – ProteinBar | Конструктор протеиновых наборов",
+    title: "Собрать бокс – SportNutrition | Конструктор протеиновых наборов",
     description:
       "Создайте собственный бокс с протеиновыми батончиками PowerPro и FitWin. Выберите любимые вкусы, без сахара, с высоким содержанием белка. Удобная доставка по Украине.",
     keywords:
       "собрать бокс, конструктор наборов, протеиновые батончики, PowerPro, FitWin, бокс с батончиками, заказать",
   },
   sk: {
-    title: "Zostaviť box – ProteinBar | Konštruktér proteínových setov",
+    title: "Zostaviť box – SportNutrition | Konštruktér proteínových setov",
     description:
       "Vytvorte si vlastný box s proteínovými tyčinkami PowerPro a FitWin. Vyberte si obľúbené príchute, bez cukru, s vysokým obsahom bielkovín. Pohodlné doručenie po celej Ukrajine.",
     keywords:
@@ -58,13 +58,13 @@ export async function generateMetadata({ params }) {
       title: meta.title,
       description: meta.description,
       url: locale === "ua" ? `${baseUrl}/box` : `${baseUrl}/${locale}/box`,
-      siteName: "ProteinBar",
+      siteName: "SportNutrition",
       images: [
         {
           url: "https://fitwin-powerpro.com/img/google.png", // замените на актуальное изображение для страницы бокса
           width: 1200,
           height: 630,
-          alt: "ProteinBar",
+          alt: "SportNutrition",
         },
       ],
       locale: locale === "ua" ? "uk_UA" : locale === "ru" ? "ru_RU" : "sk_SK",
@@ -101,7 +101,7 @@ export default async function BoxPage({ params }) {
       <BoxConfirm locale={locale} />
       <BuildBoxFunc locale={locale} />
       <BuildBoxList locale={locale} data={data} />
-      <BuildBoxConfirm locale={locale} />
+      <BuildBoxConfirm locale={locale} products={data} />
     </>
   );
 }
