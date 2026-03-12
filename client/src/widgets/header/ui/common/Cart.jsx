@@ -69,7 +69,7 @@ const Curt = () => {
                                             <span className='curt__item-name'>{item.name}</span>
                                             {item.size ? (
                                                 <span className='curt__item-price'>
-                                                    {item.price * (item.quantity || 1)} {t('cart.currency') || 'грн'}
+                                                    {(item.price * (item.quantity || 1)).toFixed(2)} {t('cart.currency') || 'грн'}
                                                 </span>
                                             ) : (
                                                 <span className='curt__item-price'>
@@ -111,7 +111,7 @@ const Curt = () => {
                     <div className="curt__func-data">
                         <p>{t('cart.cost')}</p>
                         <p>
-                            {total} {t('cart.currency') || 'грн'}
+                            {total.toFixed(2)} {t('cart.currency') || 'грн'}
                         </p>
                     </div>
                     <div

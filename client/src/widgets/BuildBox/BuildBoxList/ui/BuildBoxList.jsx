@@ -130,33 +130,39 @@ const ProductList = ({ data, locale }) => {
       {fitwinItems.length > 0 && (
         <div className="products__box-list">
           <h2>FitWin</h2>
-          {fitwinItems.map((product) => (
-            <BoxProductItem
-              key={product._id}
-              product={product}
-              locale={locale}
-              quantity={getQuantity(product)}
-              onIncrement={() => updateQuantity(product, 1)}
-              onDecrement={() => updateQuantity(product, -1)}
-              isMaxLimit={totalItems >= limit}
-            />
-          ))}
+          {fitwinItems.map((product) => {
+            if (product.isBar && product.brand.title.sk === "fitwin")
+              return (
+                <BoxProductItem
+                  key={product._id}
+                  product={product}
+                  locale={locale}
+                  quantity={getQuantity(product)}
+                  onIncrement={() => updateQuantity(product, 1)}
+                  onDecrement={() => updateQuantity(product, -1)}
+                  isMaxLimit={totalItems >= limit}
+                />
+              )
+          })}
         </div>
       )}
       {otherItems.length > 0 && (
         <div className="products__box-list">
           <h2>PowerPro (High Protein)</h2>
-          {otherItems.map((product) => (
-            <BoxProductItem
-              key={product._id}
-              product={product}
-              locale={locale}
-              quantity={getQuantity(product)}
-              onIncrement={() => updateQuantity(product, 1)}
-              onDecrement={() => updateQuantity(product, -1)}
-              isMaxLimit={totalItems >= limit}
-            />
-          ))}
+          {otherItems.map((product) => {
+            if (product.isBar && product.brand.title.sk === "powerpro")
+              return (
+                <BoxProductItem
+                  key={product._id}
+                  product={product}
+                  locale={locale}
+                  quantity={getQuantity(product)}
+                  onIncrement={() => updateQuantity(product, 1)}
+                  onDecrement={() => updateQuantity(product, -1)}
+                  isMaxLimit={totalItems >= limit}
+                />
+              )
+          })}
         </div>
       )}
     </div>

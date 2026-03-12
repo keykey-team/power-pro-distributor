@@ -72,8 +72,7 @@ const OrderForm = () => {
         console.log("Odosielam dopyt:", payload);
         const data = await sendLead(payload);
 
-        localStorage.setItem('cart', JSON.stringify([]));
-        setCartItems([]);
+      
         window.dispatchEvent(new Event('cartUpdated'));
         setIsModalOpen("order-confirm");
         resetForm();
@@ -104,7 +103,7 @@ const OrderForm = () => {
 
   return (
     <>
-      <OrderConfirm />
+      <OrderConfirm locale={"form"} title1={"Ďakujeme za "} title2={"váš dopyt!"} subtitle={"Vaša žiadosť bola úspešne odoslaná.Náš manažér vás čoskoro kontaktuje, aby odpovedal na všetky vaše otázky a poskytol potrebné informácie."} />
 
       <div id="order-form" className="form container">
         <Image

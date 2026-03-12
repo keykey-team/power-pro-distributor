@@ -55,7 +55,7 @@ const BuildBoxFunc = () => {
             <div className="build-func__range">
                 <div className="build-func__range-txt">
                     <p>{t("build-box.range")} {totalItems} / {limit}</p>
-                    <span>{totalPrice}</span>
+                    <span>{totalPrice.toFixed(2)} €</span>
                 </div>
                 <div className="progress-bar">
                     <div

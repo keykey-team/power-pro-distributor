@@ -39,7 +39,8 @@ const OrderFunc = ({ onSubmit }) => {
                 <p className='order-func__item-quantity'>{item.quantity} {t("order.quant")}</p>
               </div>
             </div>
-            <div className="order-func__item-price">{item?.product?.price} €</div>
+            {console.log(item)}
+            <div className="order-func__item-price">{item?.product?.price.toFixed(2) * item?.quantity || item?.price.toFixed(2) * item?.quantity} €</div>
           </div>
         ))}
       </div>
