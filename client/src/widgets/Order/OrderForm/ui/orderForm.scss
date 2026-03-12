@@ -14,6 +14,9 @@
         b {
             color: #FFED00;
         }
+        @media(max-width:600px) {
+             font-size: 48px;
+        }
     }
     p {
         color: var(--Gray-Chateau, var(--color-azure-65, #9CA3AF));
