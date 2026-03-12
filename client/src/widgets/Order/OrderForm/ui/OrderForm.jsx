@@ -1,20 +1,19 @@
-// @widgets/Order/OrderForm/ui/OrderForm.jsx
 'use client';
 
-import React, { forwardRef, useImperativeHandle, useRef, useId, useState } from 'react';
+import React, { forwardRef, useImperativeHandle, useRef, useId, useState, useEffect } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
-
 import { orderValidationSchema } from '../lib/orderValidation';
 import { useI18n } from '@shared/i18n/use-i18n';
 import DPDWidget from './DPD';
 import { formatPhone } from '../lib/phoneUtils';
+import { useCart } from '@widgets/header/model/useCart';
 
 const OrderForm = forwardRef((props, ref) => {
   const [selectedPoint, setSelectedPoint] = useState(null);
+  const [isDeliveryChoose, setIsDeliveryChoose] = useState(false);
   const { t } = useI18n();
   const formikRef = useRef();
-
-  // Генеруємо унікальні ID для полів
+  const cart = useCart();
   const firstNameId = useId();
   const lastNameId = useId();
   const emailId = useId();
@@ -28,22 +27,77 @@ const OrderForm = forwardRef((props, ref) => {
     }
   }));
 
-  const handleSubmit = (values, { setSubmitting }) => {
-    const cleanedPhone = cleanPhoneNumber(values.phone);
-    const payload = {
-      ...values,
-      phone: cleanedPhone,
+
+  useEffect(() => {
+    if ((selectedPoint?.id && selectedPoint?.location?.address?.country && selectedPoint?.location?.address?.city && selectedPoint?.location?.address?.street && selectedPoint?.id)) { setIsDeliveryChoose(true) }
+    else setIsDeliveryChoose(false)
+  }, [selectedPoint])
+  useEffect(() => {
+    const handleSubmitEvent = () => {
+      if (formikRef.current) {
+        formikRef.current.submitForm();
+      }
     };
-    console.log('Форма відправлена:', payload);
-    alert('Замовлення оформлено! (демо)');
-    setSubmitting(false);
+    window.addEventListener('submit-order-form', handleSubmitEvent);
+    return () => {
+      window.removeEventListener('submit-order-form', handleSubmitEvent);
+    };
+  }, []);
+
+  console.log(selectedPoint)
+
+  const handleSubmit = (values, { setSubmitting }) => {
+    if (selectedPoint) {
+      const cleanPhoneNumber = (phone) => phone.replace(/[^\d+]/g, '');
+      const cleanedPhone = cleanPhoneNumber(values.phone);
+      const payload = {
+        name: values.firstName,
+        surname: values.lastName,
+        phone: cleanedPhone,
+        email: values.email,
+        items: cart.map((el) => {
+          if (el?.kind === "product") {
+            return {
+              kind: el.kind,
+              productId: el?.product?._id || 1,
+              quantity: el?.quantity,
+            };
+          } else {
+            return {
+              kind: el?.kind,
+              size: el?.size,
+              quantity: el?.quantity,
+              items: el.items.map((el_box) => {
+                return {
+                  _id: el_box.productId,
+                  quantity: el_box.quantity
+                }
+              })
+            };
+          }
+        }),
+        delivery: {
+          country: selectedPoint.location.address.country,
+          city: selectedPoint.location.address.city,
+          address: selectedPoint.location.address.street,
+          psc: selectedPoint.id
+        },
+
+      };
+      console.log('Форма отправлена:', payload);
+      alert('Заказ оформлен! (демо)');
+      setSubmitting(false);
+    }
+    else { alert("Vyberte pobočku"); }
+
+
   };
 
   const handlePhoneChange = (e, setFieldValue) => {
-  const raw = e.target.value;
-  const formatted = formatPhone(raw); // тепер використовується formatPhone
-  setFieldValue('phone', formatted);
-};
+    const raw = e.target.value;
+    const formatted = formatPhone(raw);
+    setFieldValue('phone', formatted);
+  };
 
   return (
     <section className="order-inputs">
@@ -60,38 +114,38 @@ const OrderForm = forwardRef((props, ref) => {
       >
         {({ setFieldValue }) => (
           <Form className="order-form">
-            {/* Блок 1: Персональні дані */}
+            {/* Блок 1: Персональные данные */}
             <div className="order__container">
               <div className="order__title">
                 <div className="order__number">1</div>
                 <p>{t('order.subtitle1')}</p>
               </div>
               <div className="order__form__side">
-                {/* Поле Ім'я */}
+                {/* Поле Имя */}
                 <div className="input-wrapper">
                   <label htmlFor={firstNameId} className="input-label">
-                    {t('order.firstNameLabel') || "Ім'я"}
+                    {t('order.firstNameLabel') || "Имя"}
                   </label>
                   <Field
                     type="text"
                     name="firstName"
                     id={firstNameId}
-                    placeholder={t('order.firstNamePlaceholder') || "Введіть ім'я"}
+                    placeholder={t('order.firstNamePlaceholder') || "Введите имя"}
                     className="input-field"
                   />
                   <ErrorMessage name="firstName" component="div" className="error-message" />
                 </div>
 
-                {/* Поле Прізвище */}
+                {/* Поле Фамилия */}
                 <div className="input-wrapper">
                   <label htmlFor={lastNameId} className="input-label">
-                    {t('order.lastNameLabel') || 'Прізвище'}
+                    {t('order.lastNameLabel') || 'Фамилия'}
                   </label>
                   <Field
                     type="text"
                     name="lastName"
                     id={lastNameId}
-                    placeholder={t('order.lastNamePlaceholder') || 'Введіть прізвище'}
+                    placeholder={t('order.lastNamePlaceholder') || 'Введите фамилию'}
                     className="input-field"
                   />
                   <ErrorMessage name="lastName" component="div" className="error-message" />
@@ -141,7 +195,10 @@ const OrderForm = forwardRef((props, ref) => {
                 <p>{t('order.subtitle2')}</p>
               </div>
               <DPDWidget selectedPoint={selectedPoint} setSelectedPoint={setSelectedPoint} />
-              
+              {isDeliveryChoose === false && (
+                <div className="order__title">
+                  <p className='order__title__error'>Vyberte pobočku</p></div>
+              )}
             </div>
 
             {/* Блок 3: Оплата */}

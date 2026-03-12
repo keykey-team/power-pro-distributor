@@ -11,7 +11,7 @@ const BoxProductItem = ({ product, locale, quantity, onIncrement, onDecrement, i
   // Числовые поля
   const weight = product.weightG ? `${product.weightG} г` : null;
   const protein = product.proteinG ? `Протеин ${product.proteinG} г` : null;
-  const price = product.price ? `${product.price} ${product.currency || ''}` : null;
+  const price = product.price
 
   return (
     <div className="product-box">
@@ -24,10 +24,9 @@ const BoxProductItem = ({ product, locale, quantity, onIncrement, onDecrement, i
         />
         <div className="variant">
           <p>{title}</p>
-          <span>
-            {weight && `${weight} • `}{protein}
-          </span>
-          {price && <span className="price">{price}</span>}
+          
+          
+          <span className="price">{price} €</span>
           {/* Мобильный счётчик */}
           <div className="product-box__counter mobile">
             <button

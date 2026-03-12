@@ -1,4 +1,3 @@
-// @widgets/Order/OrderFunc/ui/OrderFunc.tsx
 'use client';
 
 import { useI18n } from '@shared/i18n/use-i18n';
@@ -15,7 +14,15 @@ const OrderFunc = ({ onSubmit }) => {
     const quantity = item.quantity || 1;
     return acc + price * quantity;
   }, 0);
-  console.log(cart)
+
+  const handleButtonClick = () => {
+    // Диспатчим событие, на которое подписана форма
+    window.dispatchEvent(new CustomEvent('submit-order-form'));
+    // Если передан проп onSubmit, вызываем его
+    if (onSubmit) {
+      onSubmit();
+    }
+  };
 
   return (
     <section className="order-func">
@@ -55,12 +62,11 @@ const OrderFunc = ({ onSubmit }) => {
         </div>
         <button
           className="order-submit-button"
-          onClick={onSubmit}
+          onClick={handleButtonClick}
         >
-          {t('order.btn') || 'Підтвердити замовлення'}
+          {t('order.btn') || 'Подтвердить заказ'}
         </button>
       </div>
-
     </section>
   );
 };

@@ -42,6 +42,7 @@ const BuildBoxConfirm = ({ products }) => {
 
             const boxProduct = {
                 kind: "custom_box",
+                productId: Math.random().toString(36).slice(2),
                 name: `Tvoj Box ${totalQuantity} tyčinky`,
                 size: totalQuantity,
                 items: boxItems.map(item => ({
@@ -55,8 +56,7 @@ const BuildBoxConfirm = ({ products }) => {
             const updatedCart = [...mainCart, boxProduct];
             localStorage.setItem(MAIN_CART_KEY, JSON.stringify(updatedCart));
 
-            console.log('Добавлено в корзину:', boxProduct);
-            console.log('Обновленная корзина:', updatedCart);
+           
 
             return true;
         } catch (error) {
@@ -81,11 +81,7 @@ const BuildBoxConfirm = ({ products }) => {
 
             setIsCurt([]);
             localStorage.removeItem(BOX_STORAGE_KEY);
-
-            // Закрыть модалку, если она открыта
-            // setIsModalOpen(null);
-            // Плавный скролл к форме заказа
-            // scrollToOrderForm();
+            window.location.href = '/';
 
         } catch (error) {
             console.error("Ошибка:", error);
