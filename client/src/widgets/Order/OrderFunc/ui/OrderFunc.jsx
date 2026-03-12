@@ -10,18 +10,22 @@ const OrderFunc = ({ onSubmit }) => {
   const cart = useCart();
 
   const total = cart.reduce((acc, item) => {
-    const price = item?.product?.price || item?.price || 0;
-    const quantity = item.quantity || 1;
+    const price = Number(item?.product?.price || item?.price || 0);
+    const quantity = Number(item.quantity || 1);
     return acc + price * quantity;
   }, 0);
 
   const handleButtonClick = () => {
-    // Диспатчим событие, на которое подписана форма
     window.dispatchEvent(new CustomEvent('submit-order-form'));
-    // Если передан проп onSubmit, вызываем его
     if (onSubmit) {
       onSubmit();
     }
+  };
+
+  // Функция для безопасного форматирования цены
+  const formatPrice = (price) => {
+    const numPrice = Number(price);
+    return isNaN(numPrice) ? '0.00' : numPrice.toFixed(2);
   };
 
   return (
@@ -30,19 +34,31 @@ const OrderFunc = ({ onSubmit }) => {
         {t("order.func-title")}
       </div>
       <div className="order-func__list">
-        {cart.map((item, index) => (
-          <div key={index} className='order-func__item'>
-            <div className="order-func__item-cont">
-              <Image width={71} height={71} alt='404' src={item?.product?.gallery?.[0] || "/img/box.png"} />
-              <div className="order-func__item-txt">
-                <p className='order-func__item-title'>{item.name}</p>
-                <p className='order-func__item-quantity'>{item.quantity} {t("order.quant")}</p>
+        {cart.map((item, index) => {
+          const price = Number(item?.product?.price || item?.price || 0);
+          const quantity = Number(item.quantity || 1);
+          const itemTotal = price * quantity;
+          
+          return (
+            <div key={index} className='order-func__item'>
+              <div className="order-func__item-cont">
+                <Image 
+                  width={71} 
+                  height={71} 
+                  alt='404' 
+                  src={item?.product?.gallery?.[0] || "/img/box.png"} 
+                />
+                <div className="order-func__item-txt">
+                  <p className='order-func__item-title'>{item.name}</p>
+                  <p className='order-func__item-quantity'>{quantity} {t("order.quant")}</p>
+                </div>
+              </div>
+              <div className="order-func__item-price">
+                {itemTotal.toFixed(2)} €
               </div>
             </div>
-            {console.log(item)}
-            <div className="order-func__item-price">{item?.product?.price.toFixed(2) * item?.quantity || item?.price.toFixed(2) * item?.quantity} €</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <div className="order-func__promo">
         <input type="text" name="" id="" placeholder={t("order.promo-placeholder")} />
@@ -51,7 +67,7 @@ const OrderFunc = ({ onSubmit }) => {
       <div className="order-func__data">
         <div className='order-func__data-txt'>
           <p>{t("order.total")}</p>
-          <p>{total} €</p>
+          <p>{total.toFixed(2)} €</p>
         </div>
         <div className='order-func__data-txt'>
           <p>{t("order.delivery")}</p>
@@ -59,7 +75,7 @@ const OrderFunc = ({ onSubmit }) => {
         </div>
         <div className='order-func__data-txt bold'>
           <p>{t("order.total2")}</p>
-          <p>{total} €</p>
+          <p>{total.toFixed(2)} €</p>
         </div>
         <button
           className="order-submit-button"
