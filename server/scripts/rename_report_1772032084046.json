@@ -1,0 +1,94 @@
+{
+  "rootDir": "C:/Users/uvaro/OneDrive/Desktop/FitWin-Power distrib Photo",
+  "dryRun": true,
+  "conflictMode": "skip",
+  "processedAt": "2026-02-25T15:08:04.042Z",
+  "renamed": [
+    {
+      "from": "Coconut Bar 50 g",
+      "to": "coconut-bar-50g"
+    },
+    {
+      "from": "Coconut Bar Vegan Chia 50 g",
+      "to": "coconut-bar-vegan-chia-50g"
+    },
+    {
+      "from": "Crunch Bar LIČI JAHODA 50 g",
+      "to": "crunch-bar-lici-jahoda-50g"
+    },
+    {
+      "from": "Crunch Bar ZMRZLINA SLANÝ KARAMEL 50 g",
+      "to": "crunch-bar-zmrzlina-slany-karamel-50g"
+    },
+    {
+      "from": "Crunch Bar ČOKOLÁDA MLIEČNY KARAMEL 50 g",
+      "to": "crunch-bar-cokolada-mliecny-karamel-50g"
+    },
+    {
+      "from": "FitWin CARAMEL&PEANUTS 60g",
+      "to": "fitwin-caramel-peanuts-60g"
+    },
+    {
+      "from": "FitWin COOKIES&CREAM 60g",
+      "to": "fitwin-cookies-cream-60g"
+    },
+    {
+      "from": "FitWin PISTACHIO&CREAM 60g",
+      "to": "fitwin-pistachio-cream-60g"
+    },
+    {
+      "from": "Proteínová tyčinka 32% bielkovín, príchuť makadamia , 60 g (bez cukru)",
+      "to": "protein-bar-makadamia-60g"
+    },
+    {
+      "from": "Proteínová tyčinka 32% bielkovín, príchuť orech , 60 g",
+      "to": "protein-bar-orech-60g"
+    },
+    {
+      "from": "Proteínová tyčinka Brisee s arašidmi v karameli 55 g",
+      "to": "brisee-arasidy-v-karameli-55g"
+    },
+    {
+      "from": "Proteínová tyčinka Brisee s jahodovým konfitom 55 g",
+      "to": "brisee-jahodove-konfit-55g"
+    },
+    {
+      "from": "Proteínová tyčinka Brisee s kokosom 55 g",
+      "to": "brisee-kokos-55g"
+    },
+    {
+      "from": "Proteínová tyčinka Brisee s višňovým konfitom 55 g",
+      "to": "brisee-visnove-konfit-55g"
+    },
+    {
+      "from": "Proteínová tyčinka Paste Bar s mandľovou pastou, 45 g",
+      "to": "paste-bar-mandlova-pasta-45g"
+    },
+    {
+      "from": "Proteínová tyčinka Vegan 32% bielkovín s orechmi, sušeným ovocím a cereáliami, 60 g (bez cukru)",
+      "to": "protein-bar-vegan-32-60g"
+    },
+    {
+      "from": "Tyčinka Paste Bar s pastou z vlašských orechov a bielkovinami, 45 g",
+      "to": "paste-bar-vlasske-orechy-45g"
+    },
+    {
+      "from": "Tyčinka Paste Bar so sezamovou pastou (tahini) a bielkovinami, 45 g",
+      "to": "paste-bar-sezamova-pasta-45g"
+    }
+  ],
+  "skipped": [],
+  "ambiguous": [],
+  "notFound": [
+    {
+      "folder": "BCAA 0,5 kg"
+    },
+    {
+      "folder": "Gainer 1 kg"
+    },
+    {
+      "folder": "Whey proteín 1 kg"
+    }
+  ],
+  "conflicts": []
+}
