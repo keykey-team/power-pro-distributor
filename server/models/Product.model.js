@@ -152,6 +152,8 @@ const ProductSchema = new Schema(
 
     isActive: { type: Boolean, default: true },
     sort: { type: Number, default: 0 },
+    isBar: { type: Boolean, default: true },
+    brand: { title: { type: LocalizedString, default: () => ({}) } }
   },
   { timestamps: true }
 );
