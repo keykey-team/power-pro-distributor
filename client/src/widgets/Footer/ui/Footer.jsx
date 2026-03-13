@@ -52,8 +52,8 @@ export function Footer() {
                         </div>
                     </div>
                     <div className="footer__partners">
-                        <Image src="/img/Fit.svg" alt='PowerPro' width={260} height={64} />
-                        <Image src="/img/Power.webp" alt='FitWin' width={264} height={118} />
+                        <Image onClick={() => { window.open("https://powerpro.in.ua", '_blank'); }} src="/img/Fit.svg" alt='PowerPro' width={260} height={64} />
+                        <Image onClick={() => { window.open("https://fit-win.com.ua", '_blank'); }} src="/img/Power.webp" alt='FitWin' width={264} height={118} />
                     </div>
                     <div className="footer__list">
                         <p>NAVIGÁCIA</p>
