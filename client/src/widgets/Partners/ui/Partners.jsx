@@ -1,6 +1,7 @@
 import { getMessages } from '@shared/i18n/getMessages';
 import { createI18nServer } from '@shared/i18n/server';
 import React from 'react'
+import PartnerBtn from './common/PartnerBtn';
 
 export async function Partners({ locale }) {
     const messages = await getMessages(locale);
@@ -14,7 +15,7 @@ export async function Partners({ locale }) {
                         <div className="partners__item-info">{t("partners.powerpro.info")}</div>
                         <div className="partners__item-title">{t("partners.powerpro.title")}</div>
                         <div className="partners__item-description">{t("partners.powerpro.description")}</div>
-                        <div className="partners__item-button">{t("partners.powerpro.btn")}</div>
+                        <PartnerBtn link={"https://powerpro.in.ua"} title={t("partners.powerpro.btn")} />
 
                     </div>
                     <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" fill="none">
@@ -26,8 +27,8 @@ export async function Partners({ locale }) {
                         <div className="partners__item-info">{t("partners.fitwin.info")}</div>
                         <div className="partners__item-title">{t("partners.fitwin.title")}</div>
                         <div className="partners__item-description">{t("partners.fitwin.description")}</div>
-                        <div className="partners__item-button">{t("partners.fitwin.btn")}</div>
 
+                        <PartnerBtn link={"https://fit-win.com.ua"} title={t("partners.fitwin.btn")} />
                     </div>
                     <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" fill="none">
                         <path d="M65 50V15L20 70H55V105L100 50H65Z" fill="#FEFEFE" />
