@@ -1,4 +1,4 @@
-import { Router } from "express";
+import express from "express";
 import {
   createOrder,
   createOrderPayment,
@@ -10,12 +10,8 @@ import {
   deleteOrder,
 } from "../controllers/orders.controller.js";
 
-const router = Router();
+const router = express.Router();
 
-// Comgate callback ОБЯЗАТЕЛЬНО выше динамических роутов
-router.post("/payments/comgate/callback", comgateCallback);
-
-// orders
 router.post("/", createOrder);
 router.post("/:id/pay", createOrderPayment);
 
@@ -24,6 +20,10 @@ router.get("/:id", getOrderById);
 
 router.put("/:id", updateOrder);
 router.patch("/:id/status", updateOrderStatus);
+
 router.delete("/:id", deleteOrder);
+
+// callback можно вынести и в отдельный payment.routes.js
+router.post("/payments/comgate/callback", comgateCallback);
 
 export default router;

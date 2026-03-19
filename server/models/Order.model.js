@@ -42,7 +42,6 @@ const OrderPositionSchema = new mongoose.Schema(
       required: true,
     },
 
-    // product
     id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
@@ -58,7 +57,6 @@ const OrderPositionSchema = new mongoose.Schema(
     img: { type: String, default: "" },
     multiplicity: { type: Number, default: 1 },
 
-    // custom_box
     box: {
       type: OrderBoxSchema,
       default: null,
@@ -80,6 +78,11 @@ const DeliverySchema = new mongoose.Schema(
 
 const PaymentSchema = new mongoose.Schema(
   {
+    provider: {
+      type: String,
+      default: "",
+      trim: true,
+    },
     method: {
       type: String,
       enum: ["cash", "card", "online", "bank_transfer", "other"],
@@ -87,10 +90,43 @@ const PaymentSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "paid", "failed", "refunded"],
+      enum: ["pending", "paid", "failed", "refunded", "cancelled"],
       default: "pending",
     },
-    transactionId: { type: String, default: "" },
+    transactionId: {
+      type: String,
+      default: "",
+      trim: true,
+      index: true,
+    },
+    refId: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    redirectUrl: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    amount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    currency: {
+      type: String,
+      default: "EUR",
+      trim: true,
+    },
+    paidAt: {
+      type: Date,
+      default: null,
+    },
+    rawCallback: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
   },
   { _id: false }
 );
