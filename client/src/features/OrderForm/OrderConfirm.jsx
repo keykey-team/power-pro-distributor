@@ -11,7 +11,7 @@ const OrderConfirm = ({ locale, title1, title2, subtitle }) => {
     // 3. Добавляем useEffect для проверки параметров при загрузке компонента
     useEffect(() => {
         const comgateStatus = searchParams.get('comgate'); // получаем значение ?comgate=...
-        
+
         if (comgateStatus === 'pending') {
             setIsModalOpen("order-confirm");
         }
@@ -19,8 +19,9 @@ const OrderConfirm = ({ locale, title1, title2, subtitle }) => {
 
     const handleClose = () => {
         setIsModalOpen(null);
+        clearCart();
         window.location.href = '/';
-        if (locale === "home") { clearCart(); }
+
     };
 
     return (
