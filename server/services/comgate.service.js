@@ -45,15 +45,15 @@ export async function createComgatePayment({
 
   params.append(
     "url_paid",
-    `${process.env.APP_URL}/checkout/success?comgate=paid&id=\${id}&refId=\${refId}`
+    `${process.env.APP_URL}?comgate=paid&id=\${id}&refId=\${refId}`
   );
   params.append(
     "url_cancelled",
-    `${process.env.APP_URL}/checkout/fail?comgate=cancelled&id=\${id}&refId=\${refId}`
+    `${process.env.APP_URL}?comgate=cancelled&id=\${id}&refId=\${refId}`
   );
   params.append(
     "url_pending",
-    `${process.env.APP_URL}/checkout/pending?comgate=pending&id=\${id}&refId=\${refId}`
+    `${process.env.APP_URL}?comgate=pending&id=\${id}&refId=\${refId}`
   );
 
   const { data } = await axios.post(
