@@ -18,7 +18,7 @@ export default async function BoxPage({ params }) {
 
   return (
     <>
-      <OrderConfirm locale={"cart"} title1={"OBJEDNÁVKA "} title2={"PRIJATÁ!"} subtitle={"Platba bola úspešne spracovaná. Začíname balenie vašej objednávky. Sledujte svoj e-mail, kde nájdete podrobné informácie o doručení."} />
+     
       <section className="order-preview">
         <h1>{t("order.title1")}<b>{t("order.title2")}</b></h1>
         <p>{t("order.desc")}</p>
