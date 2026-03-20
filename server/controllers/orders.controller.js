@@ -87,15 +87,15 @@ async function createComgatePayment({
 
   body.append(
     "url_paid",
-    `${APP_URL}/checkout/success?comgate=paid&id=\${id}&refId=\${refId}`
+    `${APP_URL}?comgate=paid&id=\${id}&refId=\${refId}`
   );
   body.append(
     "url_cancelled",
-    `${APP_URL}/checkout/fail?comgate=cancelled&id=\${id}&refId=\${refId}`
+    `${APP_URL}?comgate=cancelled&id=\${id}&refId=\${refId}`
   );
   body.append(
     "url_pending",
-    `${APP_URL}/checkout/pending?comgate=pending&id=\${id}&refId=\${refId}`
+    `${APP_URL}?comgate=pending&id=\${id}&refId=\${refId}`
   );
 
   const { data } = await axios.post(`${COMGATE_BASE_URL}/create`, body.toString(), {

@@ -158,6 +158,7 @@ const OrderForm = forwardRef((props, ref) => {
       // setIsModalOpen("order-error");
     } finally {
       setSubmitting(false);
+      setIsModalOpen("order-confirm")
     }
   };
 
