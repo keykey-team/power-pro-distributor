@@ -12,7 +12,7 @@ const OrderConfirm = ({ locale, title1, title2, subtitle }) => {
     useEffect(() => {
         const comgateStatus = searchParams.get('comgate'); // получаем значение ?comgate=...
 
-        if (comgateStatus === 'pending') {
+        if (comgateStatus === 'paid') {
             setIsModalOpen("order-confirm");
         }
     }, [searchParams, setIsModalOpen]);
