@@ -16,16 +16,11 @@ const OrderFunc = ({ onSubmit }) => {
   }, 0);
 
   const handleButtonClick = () => {
+    // Триггерим событие сабмита формы, которая находится в соседнем компоненте OrderForm
     window.dispatchEvent(new CustomEvent('submit-order-form'));
     if (onSubmit) {
       onSubmit();
     }
-  };
-
-  // Функция для безопасного форматирования цены
-  const formatPrice = (price) => {
-    const numPrice = Number(price);
-    return isNaN(numPrice) ? '0.00' : numPrice.toFixed(2);
   };
 
   return (
@@ -33,6 +28,7 @@ const OrderFunc = ({ onSubmit }) => {
       <div className="order-func__title">
         {t("order.func-title")}
       </div>
+      
       <div className="order-func__list">
         {cart.map((item, index) => {
           const price = Number(item?.product?.price || item?.price || 0);
@@ -45,11 +41,11 @@ const OrderFunc = ({ onSubmit }) => {
                 <Image 
                   width={71} 
                   height={71} 
-                  alt='404' 
+                  alt='product' 
                   src={item?.product?.gallery?.[0] || "/img/box.png"} 
                 />
                 <div className="order-func__item-txt">
-                  <p className='order-func__item-title'>{item.name}</p>
+                  <p className='order-func__item-title'>{item.name || item?.product?.name}</p>
                   <p className='order-func__item-quantity'>{quantity} {t("order.quant")}</p>
                 </div>
               </div>
@@ -60,10 +56,23 @@ const OrderFunc = ({ onSubmit }) => {
           );
         })}
       </div>
+
+      {/* БЛОК ПРОМОКОДА */}
       <div className="order-func__promo">
-        <input type="text" name="" id="" placeholder={t("order.promo-placeholder")} />
-        <button>{t("order.promo")}</button>
+        {/* <p className='lab'>{t("order.promo")}</p>
+        <div className="promo-input-group" style={{ display: 'flex', gap: '8px' }}>
+          <input 
+            type="text" 
+            placeholder={t("order.promo-placeholder")} 
+            className="promo-input"
+            style={{ flex: 1, padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+          />
+          <button className="promo-apply-btn" style={{ padding: '8px 16px', background: '#000', color: '#fff', borderRadius: '4px' }}>
+            {t("order.promo-btn") || "APLIKOVAŤ"}
+          </button>
+        </div> */}
       </div>
+
       <div className="order-func__data">
         <div className='order-func__data-txt'>
           <p>{t("order.total")}</p>
@@ -77,11 +86,12 @@ const OrderFunc = ({ onSubmit }) => {
           <p>{t("order.total2")}</p>
           <p>{total.toFixed(2)} €</p>
         </div>
+        
         <button
           className="order-submit-button"
           onClick={handleButtonClick}
         >
-          {t('order.btn') || 'Подтвердить заказ'}
+          {t('order.btn') || 'Potvrdiť objednávku'}
         </button>
       </div>
     </section>

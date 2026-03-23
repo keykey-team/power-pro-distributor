@@ -118,7 +118,7 @@
                 font-size: 12px;
             }
         }
-        input {
+        input,textarea {resize: none;
             padding: 16px;
             border-radius: 15px;
             border: 1px solid rgba(107, 114, 128, 0.10);

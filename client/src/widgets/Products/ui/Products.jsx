@@ -10,9 +10,19 @@ export async function Products({ locale, data }) {
   return (
     <div className='products container' id='prods'>
       <h2><span>{t('products.title1')}</span> {t('products.title2')}</h2>
-      <button className='preview__button'><Link href={"/build-box"}>{t('products.btn')}</Link></button>
+
+      <div className="preview__button-wrappper">
+        {/* Добавляем query параметры к ссылкам */}
+        <Link href={{ pathname: "/build-box", query: { limit: 5 } }} className='preview__button'>
+          {t('products.btn-5')}
+        </Link>
+
+        <Link href={{ pathname: "/build-box", query: { limit: 10 } }} className='preview__button'>
+          {t('products.btn-10')}
+        </Link>
+      </div>
+
       <ProductsList data={data} locale={locale} />
-      {/* <button className='preview__button white'>{t('products.btn2')}</button> */}
     </div>
   )
 }

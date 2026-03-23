@@ -39,11 +39,13 @@
     "title1": "Vyberte si",
     "title2": "svoju chuť",
     "btn": "Zostavte si svoj box",
+    "btn-5": "Zostavte box (5 tyčiniek)",
+    "btn-10": "Zostavte box (10 tyčiniek)",
     "btn2": "Pozrieť si ďalšie produkty"
   },
   "form": {
-    "title": "Dokončiť",
-    "titleSpan": "dopyt",
+    "title": "Vaše",
+    "titleSpan": "otázky",
     "products": "Vybrané produkty:",
     "noProducts": "Žiadne produkty",
     "nameLabel": "Meno",
@@ -117,14 +119,20 @@
     "lastNamePlaceholder": "Zadajte priezvisko",
     "placement": "Platba kartou online (prostredníctvom platobnej služby)",
     "func-title": "Tvoj Výber",
-    "promo":"APLIKOVAŤ",
-    "promo-placeholder":"Máte promo kod?",
+    "promo":"Poznámka k objednávke",
+    "promo-placeholder":"Chcete nám niečo odkázať?",
     "total":"Medzisúčet",
     "total2":"CELKOM",
     "delivery":"Doprava DPD",
     "delivery-status":"Podľa dopravcu",
     "btn":"ZAPLATIŤ TERAZ",
-    "quant":"kusy"
-    
+    "quant":"kusy",
+    "form-placeholder": {
+      "firstName": "Zadajte svoje meno",
+      "lastName": "Zadajte svoje priezvisko",
+      "email": "example@mail.com",
+      "phone": "+421 ___ ___ ___",
+      "comment": "Napíšte nám vašu správu alebo špeciálne požiadavky..."
+    }
   }
 }

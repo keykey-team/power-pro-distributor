@@ -65,7 +65,7 @@ export function Footer() {
                         </ul>
                     </div>
                     <div className="footer__list">
-                        <p>Spojenie</p>
+                        <p>Kontakt</p>
                         <ul>
                             <li>
                                 <a href="mailto:objednavkyfitwinpowerpro@gmail.com">objednavkyfitwinpowerpro@gmail.com</a>
