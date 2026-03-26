@@ -2,6 +2,71 @@ import { Product } from "../models/Product.model.js";
 import { calcDiscountedTotal } from "./pricing.js";
 import { toTitleString } from "./title.js";
 
+function getProductImage(product) {
+  if (product?.cover?.url) return product.cover.url;
+  if (typeof product?.cover === "string") return product.cover;
+  if (Array.isArray(product?.gallery) && product.gallery.length) {
+    const first = product.gallery[0];
+    if (typeof first === "string") return first;
+    if (first?.url) return first.url;
+  }
+  if (Array.isArray(product?.imageURL) && product.imageURL.length) {
+    return product.imageURL[0];
+  }
+  return "";
+}
+
+function getProductBarcode(product) {
+  return product?.barcode || "";
+}
+
+function getProductMultiplicity(product) {
+  return Number(product?.multiplicity || 1);
+}
+
+function normalizePurchaseMode(value) {
+  const mode = String(value || "unit").trim().toLowerCase();
+  if (mode === "unit" || mode === "box") return mode;
+  throw new Error("product_purchase_mode_invalid");
+}
+
+function resolveUnitPrice(dbProduct) {
+  const purchaseUnitPrice = Number(dbProduct?.purchaseOptions?.unit?.price);
+  if (Number.isFinite(purchaseUnitPrice) && purchaseUnitPrice > 0) {
+    return purchaseUnitPrice;
+  }
+
+  const fallbackPrice = Number(dbProduct?.cost ?? dbProduct?.price ?? 0);
+  if (Number.isFinite(fallbackPrice) && fallbackPrice >= 0) {
+    return fallbackPrice;
+  }
+
+  return 0;
+}
+
+function resolveBoxPrice(dbProduct) {
+  const enabled = dbProduct?.purchaseOptions?.box?.enabled === true;
+  const price = Number(dbProduct?.purchaseOptions?.box?.price);
+  const quantity = Number(dbProduct?.purchaseOptions?.box?.quantity);
+
+  if (!enabled) {
+    throw new Error("product_box_not_available");
+  }
+
+  if (!Number.isFinite(price) || price <= 0) {
+    throw new Error("product_box_not_available");
+  }
+
+  if (!Number.isFinite(quantity) || quantity <= 0) {
+    throw new Error("product_box_not_available");
+  }
+
+  return {
+    price,
+    quantity,
+  };
+}
+
 export async function buildCustomBoxPosition(boxPayload) {
   const { size, items } = boxPayload || {};
 
@@ -29,7 +94,7 @@ export async function buildCustomBoxPosition(boxPayload) {
     const p = byId.get(String(x.id));
     if (!p) throw new Error("box_product_not_found");
 
-    const unitPrice = Number(p.cost ?? p.price ?? 0);
+    const unitPrice = resolveUnitPrice(p);
     const qty = x.quantity;
 
     const total = +(qty * unitPrice).toFixed(2);
@@ -37,19 +102,19 @@ export async function buildCustomBoxPosition(boxPayload) {
 
     return {
       id: p._id,
-      barcode: p.barcode || "",
+      barcode: getProductBarcode(p),
       title: toTitleString(p.title),
       quantity: qty,
       unitPrice: +unitPrice.toFixed(2),
       total,
       discountedTotal,
-      img: (p.imageURL && p.imageURL[0]) || "",
-      multiplicity: p.multiplicity || 1,
+      img: getProductImage(p),
+      multiplicity: getProductMultiplicity(p),
     };
   });
 
   const boxTotal = boxItems.reduce(
-    (s, it) => s + Number(it.discountedTotal || 0),
+    (sum, item) => sum + Number(item.discountedTotal || 0),
     0
   );
 
@@ -62,7 +127,12 @@ export async function buildCustomBoxPosition(boxPayload) {
     discountedTotal: +boxTotal.toFixed(2),
     img: boxItems[0]?.img || "",
     multiplicity: 1,
-    box: { size: boxSize, items: boxItems },
+    purchaseMode: "unit",
+    packQuantity: null,
+    box: {
+      size: boxSize,
+      items: boxItems,
+    },
   };
 }
 
@@ -71,13 +141,25 @@ export async function buildProductPosition(item) {
   if (!productId) throw new Error("product_invalid");
 
   const qty = Number(item.quantity || item.qty || 1);
-  if (qty <= 0) throw new Error("product_invalid_qty");
+  if (!Number.isFinite(qty) || qty <= 0) throw new Error("product_invalid_qty");
+
+  const purchaseMode = normalizePurchaseMode(item?.purchaseMode);
 
   const dbProduct = await Product.findById(productId).lean();
   if (!dbProduct) throw new Error("product_not_found");
 
-  const unitPrice = Number(dbProduct.cost ?? dbProduct.price ?? 0);
   const discount = Number(dbProduct.discount || 0);
+
+  let unitPrice = 0;
+  let packQuantity = null;
+
+  if (purchaseMode === "box") {
+    const boxData = resolveBoxPrice(dbProduct);
+    unitPrice = boxData.price;
+    packQuantity = boxData.quantity;
+  } else {
+    unitPrice = resolveUnitPrice(dbProduct);
+  }
 
   const total = +(qty * unitPrice).toFixed(2);
   const discountedTotal = calcDiscountedTotal(total, discount);
@@ -85,14 +167,16 @@ export async function buildProductPosition(item) {
   return {
     kind: "product",
     id: dbProduct._id,
-    barcode: dbProduct.barcode || "",
+    barcode: getProductBarcode(dbProduct),
     title: toTitleString(dbProduct.title),
     quantity: qty,
     unitPrice: +unitPrice.toFixed(2),
     total,
     discountedTotal,
-    img: (dbProduct.imageURL && dbProduct.imageURL[0]) || "",
-    multiplicity: dbProduct.multiplicity || 1,
+    img: getProductImage(dbProduct),
+    multiplicity: getProductMultiplicity(dbProduct),
+    purchaseMode,
+    packQuantity,
   };
 }
 
@@ -104,6 +188,7 @@ export async function buildOrderPositions(items = []) {
       if (item?.kind === "custom_box") {
         return await buildCustomBoxPosition(item);
       }
+
       return await buildProductPosition(item);
     })
   );
@@ -111,12 +196,12 @@ export async function buildOrderPositions(items = []) {
 
 export function calcOrderTotals(positions = []) {
   const subtotal = positions.reduce(
-    (sum, p) => sum + Number(p.total || 0),
+    (sum, position) => sum + Number(position.total || 0),
     0
   );
 
   const total = positions.reduce(
-    (sum, p) => sum + Number(p.discountedTotal || 0),
+    (sum, position) => sum + Number(position.discountedTotal || 0),
     0
   );
 

@@ -57,6 +57,17 @@ const OrderPositionSchema = new mongoose.Schema(
     img: { type: String, default: "" },
     multiplicity: { type: Number, default: 1 },
 
+    purchaseMode: {
+      type: String,
+      enum: ["unit", "box"],
+      default: "unit",
+    },
+
+    packQuantity: {
+      type: Number,
+      default: null,
+    },
+
     box: {
       type: OrderBoxSchema,
       default: null,
