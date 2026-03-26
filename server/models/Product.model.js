@@ -105,6 +105,36 @@ const NutritionTableSchema = new Schema(
   { _id: false }
 );
 
+const PurchaseUnitSchema = new Schema(
+  {
+    enabled: { type: Boolean, default: true },
+    price: { type: Number, default: null },
+  },
+  { _id: false }
+);
+
+const PurchaseBoxSchema = new Schema(
+  {
+    enabled: { type: Boolean, default: false },
+    price: { type: Number, default: null },
+    quantity: { type: Number, default: null },
+  },
+  { _id: false }
+);
+
+const PurchaseOptionsSchema = new Schema(
+  {
+    unit: { type: PurchaseUnitSchema, default: () => ({}) },
+    box: { type: PurchaseBoxSchema, default: () => ({}) },
+    defaultMode: {
+      type: String,
+      enum: ["unit", "box"],
+      default: "unit",
+    },
+  },
+  { _id: false }
+);
+
 /** =========================
  *  Product
  * ========================= */
@@ -153,7 +183,15 @@ const ProductSchema = new Schema(
     isActive: { type: Boolean, default: true },
     sort: { type: Number, default: 0 },
     isBar: { type: Boolean, default: true },
-    brand: { title: { type: LocalizedString, default: () => ({}) } }
+    brand: { title: { type: LocalizedString, default: () => ({}) } },
+    purchaseOptions: {
+      type: PurchaseOptionsSchema,
+      default: () => ({
+        unit: { enabled: true, price: null },
+        box: { enabled: false, price: null, quantity: null },
+        defaultMode: "unit",
+      }),
+    },
   },
   { timestamps: true }
 );

@@ -10,6 +10,8 @@ const safeMap = {
   product_invalid: "Некоректний товар у замовленні.",
   product_invalid_qty: "Некоректна кількість товару.",
   product_not_found: "Товар не знайдено.",
+  product_purchase_mode_invalid: "Некоректний режим покупки товару.",
+  product_box_not_available: "Для цього товару бокс недоступний.",
 };
 
 function handleOrderError(res, error) {

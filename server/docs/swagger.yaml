@@ -1,783 +1,486 @@
 openapi: 3.0.3
 info:
   title: FitWin Shop API
-  version: 1.0.5
-  description: >
-    API для CRUD товаров, отправки заявок (leads) в Telegram и работы с заказами (orders).
-    В БД заявка (lead) сохраняет только: name, phone, promoCode.
+  version: 1.1.0
+  description: |
+    API інтернет-магазину з підтримкою:
+    - звичайних товарів
+    - покупки товару поштучно або боксом
+    - кастомних боксів
+    - створення замовлень
+    - запуску оплати Comgate
+    - callback'ів від Comgate
+
 servers:
-  - url: /api
+  - url: http://localhost:5000/api
+    description: Local
+  - url: https://example.com/api
+    description: Production
 
 tags:
   - name: Products
-    description: CRUD товаров
-  - name: Leads
-    description: >
-      Заявки (отправка в Telegram). В БД сохраняются только name/phone/promoCode.
-      В сообщение можно передавать товары и/или кастомные боксы. Можно и без товаров.
   - name: Orders
-    description: CRUD замовлень
+  - name: Payments
 
 paths:
   /products:
     get:
       tags: [Products]
-      summary: Список товаров
-      parameters:
-        - in: query
-          name: page
-          schema: { type: integer, minimum: 1, default: 1 }
-        - in: query
-          name: limit
-          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
-        - in: query
-          name: q
-          schema: { type: string }
-          description: Текстовый поиск ($text) по title.* (ua/ru/en/sk)
-        - in: query
-          name: isActive
-          schema: { type: boolean }
-        - in: query
-          name: inStock
-          schema: { type: boolean }
+      summary: Отримати список товарів
+      description: Повертає список товарів з можливими варіантами покупки `unit/box`.
       responses:
         "200":
-          description: OK
+          description: Успішно
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProductListResponse"
 
-    post:
-      tags: [Products]
-      summary: Создать товар
-      description: Обычно должен быть защищён админ-авторизацией.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/ProductCreate" }
-            example:
-              slug: "fitwin-pistachio-cream-60g"
-              title: { sk: "PISTÁCIA A KRÉM", ua: "", ru: "", en: "" }
-              subtitle:
-                {
-                  sk: "FitWin tyčinka s náplňou. 60 g.",
-                  ua: "",
-                  ru: "",
-                  en: "",
-                }
-              description:
-                {
-                  sk: "<p>Krémová pistáciová tyčinka.</p>",
-                  ua: "",
-                  ru: "",
-                  en: "",
-                }
-              ingredients: { sk: "Zloženie: ...", ua: "", ru: "", en: "" }
-              features:
-                sk:
-                  - "20 g bielkovín v každej tyčinke"
-                  - "Bez pridaného cukru"
-                ua: []
-                ru: []
-                en: []
-              cover:
-                url: "https://cdn.site/fitwin/pistachio.jpg"
-                alt: { sk: "FitWin Pistácia a krém", ua: "", ru: "", en: "" }
-                sort: 0
-              gallery:
-                - url: "https://cdn.site/fitwin/pistachio-2.jpg"
-                  alt: { sk: "Balenie produktu", ua: "", ru: "", en: "" }
-                  sort: 1
-              cardBadges:
-                - key: "protein_percent"
-                  valueNumber: 33
-                  unit: "%"
-                  display: "value"
-                  sort: 1
-                  isHighlighted: true
-                - key: "kcal"
-                  valueNumber: 218
-                  unit: "kcal"
-                  display: "value"
-                  sort: 2
-                - key: "weight"
-                  valueNumber: 60
-                  unit: "g"
-                  display: "value"
-                  sort: 3
-              nutritionTable:
-                title: { sk: "Výživové údaje", ua: "", ru: "", en: "" }
-                columns:
-                  - key: "per_100g"
-                    label: { sk: "NA 100 G", ua: "", ru: "", en: "" }
-                    meta: { grams: 100 }
-                    sort: 1
-                  - key: "per_60g"
-                    label: { sk: "NA 60 G", ua: "", ru: "", en: "" }
-                    meta: { grams: 60 }
-                    sort: 2
-                rows:
-                  - key: "energy"
-                    label: { sk: "Energia", ua: "", ru: "", en: "" }
-                    sort: 1
-                    values:
-                      per_100g: { text: "1436 kJ / 364 kcal", unit: "" }
-                      per_60g: { text: "862 kJ / 218 kcal", unit: "" }
-                  - key: "protein"
-                    label: { sk: "Bielkoviny", ua: "", ru: "", en: "" }
-                    sort: 10
-                    values:
-                      per_100g: { value: 33, unit: "g" }
-                      per_60g: { value: 20, unit: "g" }
-              currency: "EUR"
-              price: 2.49
-              oldPrice: 2.99
-              inStock: true
-              weightG: 60
-              proteinG: 20
-              seoTitle: { sk: "FitWin Pistácia a krém", ua: "", ru: "", en: "" }
-              seoDescription:
-                { sk: "Proteínová tyčinka 60 g.", ua: "", ru: "", en: "" }
-              isActive: true
-              sort: 10
-      responses:
-        "201":
-          description: Created
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/Product" }
-
-  /products/{idOrSlug}:
+  /products/{id}:
     get:
       tags: [Products]
-      summary: Получить товар по id или slug
+      summary: Отримати товар по ID
       parameters:
-        - in: path
-          name: idOrSlug
+        - name: id
+          in: path
           required: true
-          schema: { type: string }
+          schema:
+            type: string
       responses:
         "200":
-          description: OK
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/Product" }
-        "404":
-          description: Not found
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorResponse" }
-
-  /products/{id}:
-    put:
-      tags: [Products]
-      summary: Обновить товар по id
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema: { type: string }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/ProductUpdate" }
-            example:
-              price: 2.49
-              oldPrice: 2.99
-              inStock: true
-              cardBadges:
-                - key: "protein_percent"
-                  valueNumber: 33
-                  unit: "%"
-                  sort: 1
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/Product" }
-        "404":
-          description: Not found
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorResponse" }
-
-    delete:
-      tags: [Products]
-      summary: Удалить товар по id
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/OkResponse" }
-        "404":
-          description: Not found
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorResponse" }
-
-  /leads/send:
-    post:
-      tags: [Leads]
-      summary: Отправить lead в Telegram (товары и/или кастомные боксы). Можно без товаров.
-      description: |
-        **Важно:** в БД сохраняются только `name`, `phone`, `promoCode`.
-        Поле `items` используется только для формирования сообщения в Telegram.
-
-        ## items может быть пустым или отсутствовать
-        Можно отправить заявку без товаров:
-        ```json
-        { "name":"Andrej", "phone":"+421900000000", "promoCode":"" }
-        ```
-
-        ## Как формировать кастомный бокс (custom_box)
-        В массив `items` можно добавить объект:
-        ```json
-        {
-          "kind": "custom_box",
-          "size": 5,
-          "items": [
-            { "productId": "PRODUCT_ID_1", "qty": 2 },
-            { "productId": "PRODUCT_ID_2", "qty": 3 }
-          ]
-        }
-        ```
-
-        ### Правила:
-        - `kind` = `"custom_box"`
-        - `size` ∈ **{5, 10}**
-        - `items[]` — массив выбранных товаров
-        - каждый элемент `items[]` должен иметь:
-          - `productId` **или** `_id` **или** `id`
-          - `qty` **или** `quantity` (число > 0)
-        - **сумма всех qty/quantity должна быть ровно равна `size`**
-          - иначе сервер вернёт `box_invalid_total_qty`
-
-        ### Что делает сервер:
-        - подтягивает товары из Mongo по id
-        - считает стоимость по цене товара (`cost` или `price`) * qty
-        - применяет скидку товара (`discount`) если есть (если в схеме присутствует)
-        - формирует позицию `custom_box` и отправляет в Telegram
-
-        Ошибки:
-        - `box_invalid_size`, `box_empty`, `box_invalid_total_qty`, `box_product_not_found`
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/LeadSendRequest" }
-            examples:
-              lead_without_items:
-                summary: Lead — без товаров (только имя/телефон/промокод)
-                value:
-                  name: "Andrej"
-                  phone: "+421900000000"
-                  promoCode: ""
-              lead_only_products:
-                summary: Lead — только товары
-                value:
-                  name: "Ivan"
-                  phone: "+421901234567"
-                  promoCode: "SALE10"
-                  items:
-                    - kind: "product"
-                      productId: "65f0aaaaaaaaaaaaaaaaaaaaaaa1"
-                      quantity: 2
-                    - kind: "product"
-                      _id: "65f0aaaaaaaaaaaaaaaaaaaaaaa2"
-                      qty: 1
-              lead_only_custom_box_5:
-                summary: Lead — только custom_box (size=5, сумма qty=5)
-                value:
-                  name: "Marek"
-                  phone: "+421900000000"
-                  promoCode: ""
-                  items:
-                    - kind: "custom_box"
-                      size: 5
-                      items:
-                        - productId: "65f0aaaaaaaaaaaaaaaaaaaaaaa1"
-                          qty: 2
-                        - productId: "65f0aaaaaaaaaaaaaaaaaaaaaaa2"
-                          qty: 3
-              lead_custom_box_10_plus_product:
-                summary: Lead — custom_box (10) + отдельный товар
-                value:
-                  name: "Oksana"
-                  phone: "+380501112233"
-                  promoCode: "FIT5"
-                  items:
-                    - kind: "custom_box"
-                      size: 10
-                      items:
-                        - _id: "65f0aaaaaaaaaaaaaaaaaaaaaaa1"
-                          quantity: 4
-                        - _id: "65f0aaaaaaaaaaaaaaaaaaaaaaa2"
-                          quantity: 6
-                    - kind: "product"
-                      productId: "65f0aaaaaaaaaaaaaaaaaaaaaaa3"
-                      quantity: 1
-              lead_invalid_custom_box_total:
-                summary: ❌ Ошибка — сумма qty не равна size
-                value:
-                  name: "Test"
-                  phone: "+421900111222"
-                  promoCode: "X"
-                  items:
-                    - kind: "custom_box"
-                      size: 10
-                      items:
-                        - productId: "65f0aaaaaaaaaaaaaaaaaaaaaaa1"
-                          qty: 3
-                        - productId: "65f0aaaaaaaaaaaaaaaaaaaaaaa2"
-                          qty: 3
-      responses:
-        "201":
-          description: OK (sent to Telegram)
+          description: Успішно
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  ok: { type: boolean, example: true }
-                  leadId:
-                    { type: string, example: "65f0bbbbbbbbbbbbbbbbbbbbbbb" }
-                  totalCost: { type: number, example: 0 }
-                  itemsCount: { type: integer, example: 0 }
-        "400":
-          description: Bad request (validation / wrong box / wrong items)
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorResponse" }
-        "500":
-          description: Failed to send lead
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorResponse" }
+                $ref: "#/components/schemas/ProductSingleResponse"
+        "404":
+          description: Товар не знайдено
 
   /orders:
     post:
       tags: [Orders]
       summary: Створити замовлення
       description: |
-        Створює нове замовлення.
+        Створює замовлення.
 
-        Підтримуються позиції:
-        - `kind=product`
-        - `kind=custom_box`
+        Підтримує позиції:
+        - `kind: product`
+        - `kind: custom_box`
 
-        Для `custom_box` діють ті самі правила, що і для lead:
-        - `size` тільки `5` або `10`
-        - сума `qty/quantity` всередині боксу має дорівнювати `size`
+        Для `product` можна передати:
+        - `purchaseMode: unit`
+        - `purchaseMode: box`
 
-        Якщо `orderNumber` не передано, він генерується автоматично на бекенді.
+        Якщо `purchaseMode = box`, то:
+        - `quantity` = кількість боксів
+        - ціна береться з `product.purchaseOptions.box.price`
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/OrderCreateRequest"
+              $ref: "#/components/schemas/CreateOrderRequest"
             examples:
-              order_only_products:
-                summary: Замовлення тільки з товарами
+              unit_order:
+                summary: Замовлення з поштучним товаром
                 value:
-                  name: "Andrej"
-                  surname: "Novak"
-                  phone: "+421900000000"
-                  email: "andrej@example.com"
-                  promoCode: "SALE10"
-                  items:
-                    - kind: "product"
-                      productId: "65f0aaaaaaaaaaaaaaaaaaaaaaa1"
-                      quantity: 2
-                    - kind: "product"
-                      _id: "65f0aaaaaaaaaaaaaaaaaaaaaaa2"
-                      qty: 1
+                  name: "Anna"
+                  surname: "Kovacs"
+                  phone: "+421900111222"
+                  email: "anna@example.com"
+                  promoCode: ""
+                  comment: "Будь ласка, зателефонуйте перед доставкою"
                   delivery:
                     country: "Slovakia"
-                    method: "courier"
                     city: "Bratislava"
-                    address: "Test street 1"
-                    note: "Call before delivery"
-                    psc: "811 01"
+                    address: "Main street 12"
+                    psc: "81101"
+                    note: ""
                   payment:
                     method: "online"
-                    status: "pending"
-                  comment: "Please deliver tomorrow"
-                  status: "new"
-              order_custom_box_and_product:
-                summary: Замовлення з custom_box і окремим товаром
-                value:
-                  name: "Oksana"
-                  phone: "+380501112233"
-                  email: "oksana@example.com"
-                  promoCode: "FIT5"
                   items:
-                    - kind: "custom_box"
-                      size: 10
-                      items:
-                        - _id: "65f0aaaaaaaaaaaaaaaaaaaaaaa1"
-                          quantity: 4
-                        - _id: "65f0aaaaaaaaaaaaaaaaaaaaaaa2"
-                          quantity: 6
                     - kind: "product"
-                      productId: "65f0aaaaaaaaaaaaaaaaaaaaaaa3"
-                      quantity: 1
+                      id: "65f0c0c7c4a1111111111111"
+                      quantity: 3
+                      purchaseMode: "unit"
+
+              box_order:
+                summary: Замовлення товару боксом
+                value:
+                  name: "Martin"
+                  surname: "Novak"
+                  phone: "+421900555444"
+                  email: "martin@example.com"
+                  promoCode: "FIT10"
+                  comment: ""
                   delivery:
-                    method: "nova_poshta"
-                    city: "Київ"
-                    warehouse: "Відділення №12"
+                    country: "Slovakia"
+                    city: "Kosice"
+                    address: "Hlavna 8"
+                    psc: "04001"
+                    note: ""
                   payment:
-                    method: "card"
-                    status: "pending"
+                    method: "online"
+                  items:
+                    - kind: "product"
+                      id: "65f0c0c7c4a1222222222222"
+                      quantity: 2
+                      purchaseMode: "box"
+
+              mixed_order:
+                summary: Змішане замовлення unit + box + custom_box
+                value:
+                  name: "Petra"
+                  surname: "Svitkova"
+                  phone: "+421901222333"
+                  email: "petra@example.com"
+                  promoCode: ""
+                  comment: "Доставка після 18:00"
+                  delivery:
+                    country: "Slovakia"
+                    city: "Zilina"
+                    address: "Green 5"
+                    psc: "01001"
+                    note: "Ring the bell"
+                  payment:
+                    method: "online"
+                  items:
+                    - kind: "product"
+                      id: "65f0c0c7c4a1333333333333"
+                      quantity: 2
+                      purchaseMode: "unit"
+                    - kind: "product"
+                      id: "65f0c0c7c4a1444444444444"
+                      quantity: 1
+                      purchaseMode: "box"
+                    - kind: "custom_box"
+                      size: 5
+                      items:
+                        - id: "65f0c0c7c4a1555555555555"
+                          quantity: 2
+                        - id: "65f0c0c7c4a1666666666666"
+                          quantity: 3
       responses:
         "201":
-          description: Created
+          description: Замовлення створено
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  ok: { type: boolean, example: true }
-                  order:
-                    $ref: "#/components/schemas/Order"
+                $ref: "#/components/schemas/CreateOrderResponse"
         "400":
-          description: Bad request
+          description: Помилка валідації
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ErrorResponse" }
-        "500":
-          description: Failed to create order
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorResponse" }
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
     get:
       tags: [Orders]
       summary: Отримати список замовлень
       parameters:
-        - in: query
-          name: page
-          schema: { type: integer, minimum: 1, default: 1 }
-        - in: query
-          name: limit
-          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
-        - in: query
-          name: status
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
           schema:
             type: string
             enum: [new, processing, confirmed, shipped, completed, cancelled]
-        - in: query
-          name: phone
-          schema: { type: string }
-          description: Пошук по customer.phone через regex
-        - in: query
-          name: q
-          schema: { type: string }
-          description: Пошук по orderNumber, customer.name, customer.phone, promoCode
-        - in: query
-          name: sort
-          schema: { type: string, default: "-createdAt" }
-          description: Сортування для Mongoose, наприклад `-createdAt` або `createdAt`
+        - name: phone
+          in: query
+          schema:
+            type: string
+        - name: q
+          in: query
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+            example: "-createdAt"
       responses:
         "200":
-          description: OK
+          description: Успішно
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/OrderListResponse"
-        "500":
-          description: Failed to get orders
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorResponse" }
 
   /orders/{id}:
     get:
       tags: [Orders]
-      summary: Отримати замовлення по id
+      summary: Отримати замовлення по ID
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
           required: true
-          schema: { type: string }
+          schema:
+            type: string
       responses:
         "200":
-          description: OK
+          description: Успішно
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  ok: { type: boolean, example: true }
-                  data:
-                    $ref: "#/components/schemas/Order"
+                $ref: "#/components/schemas/OrderSingleResponse"
         "404":
-          description: Order not found
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorResponse" }
-        "500":
-          description: Failed to get order
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorResponse" }
+          description: Замовлення не знайдено
 
     put:
       tags: [Orders]
       summary: Оновити замовлення
       description: |
-        Оновлює замовлення по id.
+        Якщо передані `items`, позиції замовлення будуть перераховані заново.
 
-        Якщо передати `items`, вони повністю перебудовуються через `buildOrderPositions()`,
-        а `totals` перераховуються автоматично.
-
-        Якщо `items` не передавати, оновляться тільки інші поля.
+        Для `product` підтримується:
+        - `purchaseMode: unit`
+        - `purchaseMode: box`
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
           required: true
-          schema: { type: string }
+          schema:
+            type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/OrderUpdateRequest"
+              $ref: "#/components/schemas/UpdateOrderRequest"
             examples:
-              update_status_comment:
-                summary: Оновити статус і коментар
+              update_order:
                 value:
                   status: "processing"
-                  comment: "Customer confirmed by phone"
-              update_items_delivery_payment:
-                summary: Оновити товари, доставку та оплату
-                value:
+                  comment: "Оновлений коментар"
                   items:
                     - kind: "product"
-                      productId: "65f0aaaaaaaaaaaaaaaaaaaaaaa1"
-                      quantity: 3
-                    - kind: "custom_box"
-                      size: 5
-                      items:
-                        - productId: "65f0aaaaaaaaaaaaaaaaaaaaaaa2"
-                          qty: 2
-                        - productId: "65f0aaaaaaaaaaaaaaaaaaaaaaa3"
-                          qty: 3
-                  delivery:
-                    method: "courier"
-                    city: "Brno"
-                    address: "New address 25"
-                  payment:
-                    method: "bank_transfer"
-                    status: "pending"
+                      id: "65f0c0c7c4a1111111111111"
+                      quantity: 1
+                      purchaseMode: "box"
       responses:
         "200":
-          description: OK
+          description: Замовлення оновлено
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  ok: { type: boolean, example: true }
-                  data:
-                    $ref: "#/components/schemas/Order"
+                $ref: "#/components/schemas/OrderSingleResponse"
         "400":
-          description: Bad request
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorResponse" }
+          description: Помилка валідації
         "404":
-          description: Order not found
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorResponse" }
-        "500":
-          description: Failed to update order
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorResponse" }
+          description: Замовлення не знайдено
 
     delete:
       tags: [Orders]
       summary: Видалити замовлення
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
           required: true
-          schema: { type: string }
+          schema:
+            type: string
       responses:
         "200":
-          description: OK
+          description: Замовлення видалено
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  ok: { type: boolean, example: true }
-                  message: { type: string, example: "Замовлення видалено" }
+                $ref: "#/components/schemas/DeleteOrderResponse"
         "404":
-          description: Order not found
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorResponse" }
-        "500":
-          description: Failed to delete order
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorResponse" }
+          description: Замовлення не знайдено
 
   /orders/{id}/status:
     patch:
       tags: [Orders]
       summary: Оновити статус замовлення
-      description: |
-        Часткове оновлення статусів замовлення.
-
-        Можна передати:
-        - `status` — статус замовлення
-        - `paymentStatus` — статус оплати
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
           required: true
-          schema: { type: string }
+          schema:
+            type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/OrderStatusPatchRequest"
-            examples:
-              update_order_status:
-                summary: Оновити тільки статус замовлення
-                value:
-                  status: "confirmed"
-              update_payment_status:
-                summary: Оновити тільки статус оплати
-                value:
-                  paymentStatus: "paid"
-              update_both:
-                summary: Оновити обидва статуси
-                value:
-                  status: "completed"
-                  paymentStatus: "paid"
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [new, processing, confirmed, shipped, completed, cancelled]
+                paymentStatus:
+                  type: string
+                  enum: [pending, paid, failed, refunded, cancelled]
+      responses:
+        "200":
+          description: Статус оновлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderSingleResponse"
+        "404":
+          description: Замовлення не знайдено
+
+  /orders/{id}/payment:
+    post:
+      tags: [Payments]
+      summary: Створити оплату Comgate для існуючого замовлення
+      description: |
+        Створює платіжну сесію Comgate для вже створеного замовлення.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Платіж успішно створено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateOrderPaymentResponse"
+        "400":
+          description: Неможливо створити оплату
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Замовлення не знайдено
+
+  /payments/comgate/callback:
+    post:
+      tags: [Payments]
+      summary: Callback від Comgate
+      description: |
+        Endpoint для callback'ів Comgate.
+
+        Очікувані status:
+        - PAID
+        - CANCELLED
+        - AUTHORIZED
+        - PENDING
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComgateCallbackRequest"
       responses:
         "200":
           description: OK
           content:
-            application/json:
+            text/plain:
               schema:
-                type: object
-                properties:
-                  ok: { type: boolean, example: true }
-                  data:
-                    $ref: "#/components/schemas/Order"
+                type: string
+                example: OK
+        "400":
+          description: Відсутні обов'язкові поля
         "404":
-          description: Order not found
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorResponse" }
+          description: Замовлення не знайдено
         "500":
-          description: Failed to update order status
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ErrorResponse" }
+          description: Помилка обробки callback
 
 components:
   schemas:
-    OkResponse:
-      type: object
-      properties:
-        ok: { type: boolean, example: true }
-
-    ErrorResponse:
-      type: object
-      properties:
-        message: { type: string, example: "Bad request" }
-        error: { type: string, example: "box_invalid_total_qty" }
-
-    ObjectId:
-      type: string
-      example: "65f0aaaaaaaaaaaaaaaaaaaaaaa1"
-
     LocalizedString:
       type: object
       properties:
-        ua: { type: string, default: "" }
-        ru: { type: string, default: "" }
-        en: { type: string, default: "" }
-        sk: { type: string, default: "" }
-
-    LocalizedStringArray:
-      type: object
-      properties:
         ua:
-          type: array
-          items: { type: string }
-          default: []
+          type: string
+          default: ""
         ru:
-          type: array
-          items: { type: string }
-          default: []
+          type: string
+          default: ""
         en:
-          type: array
-          items: { type: string }
-          default: []
+          type: string
+          default: ""
         sk:
-          type: array
-          items: { type: string }
-          default: []
+          type: string
+          default: ""
 
-    Image:
+    ProductImage:
       type: object
       properties:
-        url: { type: string, example: "https://cdn.site/img.jpg" }
-        alt: { $ref: "#/components/schemas/LocalizedString" }
-        sort: { type: integer, example: 0 }
-      required: [url]
+        url:
+          type: string
+          format: uri
+        alt:
+          $ref: "#/components/schemas/LocalizedString"
+        sort:
+          type: number
+          default: 0
+
+    PurchaseOptionUnit:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          example: true
+        price:
+          type: number
+          format: float
+          nullable: true
+          example: 2.5
+
+    PurchaseOptionBox:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          example: true
+        price:
+          type: number
+          format: float
+          nullable: true
+          example: 30
+        quantity:
+          type: integer
+          nullable: true
+          example: 12
+
+    PurchaseOptions:
+      type: object
+      properties:
+        unit:
+          $ref: "#/components/schemas/PurchaseOptionUnit"
+        box:
+          $ref: "#/components/schemas/PurchaseOptionBox"
+        defaultMode:
+          type: string
+          enum: [unit, box]
+          example: unit
 
     Badge:
       type: object
       properties:
         key:
           type: string
-          example: "protein_percent"
-          description: "Технический ключ бейджа (например protein_percent, kcal, sugar, weight)"
         label:
           $ref: "#/components/schemas/LocalizedString"
-          description: "Необязательно. Если display=label_value — будет использоваться."
         valueNumber:
           type: number
           nullable: true
-          example: 33
         valueText:
           type: string
-          example: ""
-          description: "Если нужно отдать строкой (например '1436 kJ / 364 kcal')"
         unit:
           type: string
-          example: "%"
         display:
           type: string
           enum: [value, label_value]
-          default: value
         sort:
           type: integer
-          default: 0
         isHighlighted:
           type: boolean
-          default: false
-      required: [key]
 
     NutritionCell:
       type: object
@@ -785,59 +488,40 @@ components:
         value:
           type: number
           nullable: true
-          example: 33
         text:
           type: string
-          example: "1436 kJ / 364 kcal"
         unit:
           type: string
-          example: "g"
-
-    NutritionColumnMeta:
-      type: object
-      properties:
-        grams:
-          type: number
-          nullable: true
-          example: 100
 
     NutritionColumn:
       type: object
       properties:
         key:
           type: string
-          example: "per_100g"
         label:
           $ref: "#/components/schemas/LocalizedString"
         meta:
-          $ref: "#/components/schemas/NutritionColumnMeta"
+          type: object
+          properties:
+            grams:
+              type: number
+              nullable: true
         sort:
           type: integer
-          default: 0
-      required: [key]
 
     NutritionRow:
       type: object
       properties:
         key:
           type: string
-          example: "protein"
         label:
           $ref: "#/components/schemas/LocalizedString"
         values:
           type: object
-          description: >
-            Map<columnKey, NutritionCell>.
-            Ключи должны соответствовать NutritionTable.columns[].key
           additionalProperties:
             $ref: "#/components/schemas/NutritionCell"
-          example:
-            per_100g: { value: 33, unit: "g" }
-            per_60g: { value: 20, unit: "g" }
         sort:
           type: integer
-          default: 0
-      required: [key]
 
     NutritionTable:
       type: object
@@ -846,283 +530,186 @@ components:
           $ref: "#/components/schemas/LocalizedString"
         columns:
           type: array
-          items: { $ref: "#/components/schemas/NutritionColumn" }
-          default: []
+          items:
+            $ref: "#/components/schemas/NutritionColumn"
         rows:
           type: array
-          items: { $ref: "#/components/schemas/NutritionRow" }
-          default: []
+          items:
+            $ref: "#/components/schemas/NutritionRow"
 
     Product:
       type: object
       properties:
-        _id: { $ref: "#/components/schemas/ObjectId" }
-
-        slug: { type: string, example: "fitwin-pistachio-cream-60g" }
-
-        title: { $ref: "#/components/schemas/LocalizedString" }
-        subtitle: { $ref: "#/components/schemas/LocalizedString" }
+        _id:
+          type: string
+        slug:
+          type: string
+        title:
+          $ref: "#/components/schemas/LocalizedString"
+        subtitle:
+          $ref: "#/components/schemas/LocalizedString"
         description:
           $ref: "#/components/schemas/LocalizedString"
-          description: "Можно HTML"
         ingredients:
           $ref: "#/components/schemas/LocalizedString"
-          description: "Состав (Zloženie)"
         features:
-          $ref: "#/components/schemas/LocalizedStringArray"
-          description: "Буллеты/фичи"
-
+          type: object
+          properties:
+            ua:
+              type: array
+              items: { type: string }
+            ru:
+              type: array
+              items: { type: string }
+            en:
+              type: array
+              items: { type: string }
+            sk:
+              type: array
+              items: { type: string }
         cover:
-          allOf:
-            - $ref: "#/components/schemas/Image"
-          nullable: true
+          oneOf:
+            - $ref: "#/components/schemas/ProductImage"
+            - type: string
+              format: uri
         gallery:
           type: array
-          items: { $ref: "#/components/schemas/Image" }
-          default: []
-
-        cardBadges:
-          type: array
-          items: { $ref: "#/components/schemas/Badge" }
-          default: []
-
-        nutritionTable:
-          allOf:
-            - $ref: "#/components/schemas/NutritionTable"
-          nullable: true
-
-        currency: { type: string, example: "EUR", default: "EUR" }
-        price: { type: number, example: 2.49 }
-        oldPrice: { type: number, nullable: true, example: 2.99 }
-        inStock: { type: boolean, example: true }
-
-        weightG: { type: number, nullable: true, example: 60 }
-        proteinG: { type: number, nullable: true, example: 20 }
-
-        seoTitle: { $ref: "#/components/schemas/LocalizedString" }
-        seoDescription: { $ref: "#/components/schemas/LocalizedString" }
-
-        isActive: { type: boolean, example: true }
-        sort: { type: integer, example: 0 }
-
-        createdAt: { type: string, format: date-time }
-        updatedAt: { type: string, format: date-time }
-
-      required: [slug, title, price]
-
-    ProductCreate:
-      type: object
-      required: [slug, title, price]
-      properties:
-        slug: { type: string }
-
-        title: { $ref: "#/components/schemas/LocalizedString" }
-        subtitle: { $ref: "#/components/schemas/LocalizedString" }
-        description: { $ref: "#/components/schemas/LocalizedString" }
-        ingredients: { $ref: "#/components/schemas/LocalizedString" }
-        features: { $ref: "#/components/schemas/LocalizedStringArray" }
-
-        cover:
-          allOf:
-            - $ref: "#/components/schemas/Image"
-          nullable: true
-        gallery:
-          type: array
-          items: { $ref: "#/components/schemas/Image" }
-          default: []
-
-        cardBadges:
-          type: array
-          items: { $ref: "#/components/schemas/Badge" }
-          default: []
-
-        nutritionTable:
-          allOf:
-            - $ref: "#/components/schemas/NutritionTable"
-          nullable: true
-
-        currency: { type: string, default: "EUR" }
-        price: { type: number }
-        oldPrice: { type: number, nullable: true }
-        inStock: { type: boolean, default: true }
-
-        weightG: { type: number, nullable: true }
-        proteinG: { type: number, nullable: true }
-
-        seoTitle: { $ref: "#/components/schemas/LocalizedString" }
-        seoDescription: { $ref: "#/components/schemas/LocalizedString" }
-
-        isActive: { type: boolean, default: true }
-        sort: { type: integer, default: 0 }
-
-    ProductUpdate:
-      type: object
-      description: >
-        Частичное обновление (PUT у тебя, но можно трактовать как patch-like).
-        Передавай только те поля, которые нужно изменить.
-      properties:
-        slug: { type: string }
-
-        title: { $ref: "#/components/schemas/LocalizedString" }
-        subtitle: { $ref: "#/components/schemas/LocalizedString" }
-        description: { $ref: "#/components/schemas/LocalizedString" }
-        ingredients: { $ref: "#/components/schemas/LocalizedString" }
-        features: { $ref: "#/components/schemas/LocalizedStringArray" }
-
-        cover:
-          allOf:
-            - $ref: "#/components/schemas/Image"
-          nullable: true
-        gallery:
-          type: array
-          items: { $ref: "#/components/schemas/Image" }
-
-        cardBadges:
-          type: array
-          items: { $ref: "#/components/schemas/Badge" }
-
-        nutritionTable:
-          allOf:
-            - $ref: "#/components/schemas/NutritionTable"
-          nullable: true
-
-        currency: { type: string }
-        price: { type: number }
-        oldPrice: { type: number, nullable: true }
-        inStock: { type: boolean }
-
-        weightG: { type: number, nullable: true }
-        proteinG: { type: number, nullable: true }
-
-        seoTitle: { $ref: "#/components/schemas/LocalizedString" }
-        seoDescription: { $ref: "#/components/schemas/LocalizedString" }
-
-        isActive: { type: boolean }
-        sort: { type: integer }
-
-    ProductListResponse:
-      type: object
-      properties:
-        items:
-          type: array
-          items: { $ref: "#/components/schemas/Product" }
-        page: { type: integer, example: 1 }
-        limit: { type: integer, example: 20 }
-        total: { type: integer, example: 123 }
-        pages: { type: integer, example: 7 }
-      required: [items, page, limit, total, pages]
-
-    LeadSendRequest:
-      type: object
-      required: [name, phone]
-      properties:
-        name: { type: string, example: "Andrej" }
-        phone: { type: string, example: "+421900000000" }
-        promoCode: { type: string, example: "SALE10" }
-        items:
-          type: array
-          nullable: true
-          description: >
-            Позиции лида. Необязательное поле.
-            Поддерживает:
-            - kind=product
-            - kind=custom_box (size=5|10, сумма qty должна равняться size)
           items:
             oneOf:
-              - $ref: "#/components/schemas/LeadItemProduct"
-              - $ref: "#/components/schemas/LeadItemCustomBox"
-
-    LeadItemProduct:
-      type: object
-      required: [kind]
-      properties:
-        kind: { type: string, enum: [product], example: product }
-        productId:
-          type: string
-          description: Можно также прислать _id или id — на бэке это нормализуется
-          example: "65f0aaaaaaaaaaaaaaaaaaaaaaa1"
-        _id: { type: string, example: "65f0aaaaaaaaaaaaaaaaaaaaaaa1" }
-        id: { type: string, example: "65f0aaaaaaaaaaaaaaaaaaaaaaa1" }
-        quantity: { type: integer, minimum: 1, example: 2 }
-        qty: { type: integer, minimum: 1, example: 2 }
-
-    LeadItemCustomBox:
-      type: object
-      required: [kind, size, items]
-      properties:
-        kind: { type: string, enum: [custom_box], example: custom_box }
-        size:
-          type: integer
-          description: Размер бокса (строго 5 или 10)
-          enum: [5, 10]
-          example: 10
-        items:
+              - type: string
+                format: uri
+              - $ref: "#/components/schemas/ProductImage"
+        cardBadges:
           type: array
-          minItems: 1
-          description: >
-            Список выбранных товаров для бокса.
-            Сумма qty/quantity по всем items должна быть равна size.
           items:
-            $ref: "#/components/schemas/CustomBoxItem"
-
-    CustomBoxItem:
-      type: object
-      properties:
-        productId: { type: string, example: "65f0aaaaaaaaaaaaaaaaaaaaaaa1" }
-        _id: { type: string, example: "65f0aaaaaaaaaaaaaaaaaaaaaaa1" }
-        id: { type: string, example: "65f0aaaaaaaaaaaaaaaaaaaaaaa1" }
-        quantity: { type: integer, minimum: 1, example: 4 }
-        qty: { type: integer, minimum: 1, example: 4 }
-      oneOf:
-        - required: [productId, qty]
-        - required: [_id, qty]
-        - required: [id, qty]
-        - required: [productId, quantity]
-        - required: [_id, quantity]
-        - required: [id, quantity]
+            $ref: "#/components/schemas/Badge"
+        nutritionTable:
+          $ref: "#/components/schemas/NutritionTable"
+        currency:
+          type: string
+          example: EUR
+        price:
+          type: number
+          format: float
+          example: 2.5
+        oldPrice:
+          type: number
+          format: float
+          nullable: true
+        inStock:
+          type: boolean
+        purchaseOptions:
+          $ref: "#/components/schemas/PurchaseOptions"
+        weightG:
+          type: number
+          nullable: true
+        proteinG:
+          type: number
+          nullable: true
+        seoTitle:
+          $ref: "#/components/schemas/LocalizedString"
+        seoDescription:
+          $ref: "#/components/schemas/LocalizedString"
+        isActive:
+          type: boolean
+        sort:
+          type: integer
+        isBar:
+          type: boolean
+        brand:
+          type: object
+          properties:
+            title:
+              $ref: "#/components/schemas/LocalizedString"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
 
     Delivery:
       type: object
       properties:
-        method:
+        country:
           type: string
-          enum: [pickup, courier, nova_poshta, other]
-          default: other
-        country: { type: string, default: "" }
-        city: { type: string, default: "" }
-        psc: { type: string, default: "" }
-        address: { type: string, default: "" }
-        note: { type: string, default: "" }
+          example: Slovakia
+        city:
+          type: string
+          example: Bratislava
+        address:
+          type: string
+          example: Main street 12
+        psc:
+          type: string
+          example: "81101"
+        note:
+          type: string
+          example: ""
 
     Payment:
       type: object
       properties:
+        provider:
+          type: string
+          example: comgate
         method:
           type: string
           enum: [cash, card, online, bank_transfer, other]
-          default: other
         status:
           type: string
-          enum: [pending, paid, failed, refunded]
-          default: pending
-        transactionId: { type: string, default: "" }
+          enum: [pending, paid, failed, refunded, cancelled]
+        transactionId:
+          type: string
+        refId:
+          type: string
+        redirectUrl:
+          type: string
+          format: uri
+        amount:
+          type: number
+          format: float
+        currency:
+          type: string
+          example: EUR
+        paidAt:
+          type: string
+          format: date-time
+          nullable: true
+        rawCallback:
+          nullable: true
 
     OrderBoxItem:
       type: object
       properties:
         id:
-          allOf:
-            - $ref: "#/components/schemas/ObjectId"
-          description: ID товару
-        barcode: { type: string, default: "" }
-        title: { type: string, example: "FitWin Bar Pistachio" }
-        quantity: { type: integer, minimum: 1, example: 2 }
-        unitPrice: { type: number, minimum: 0, example: 2.49 }
-        total: { type: number, minimum: 0, example: 4.98 }
-        discountedTotal: { type: number, minimum: 0, example: 4.50 }
-        img: { type: string, default: "" }
-        multiplicity: { type: integer, default: 1, example: 1 }
-      required: [id, title, quantity, unitPrice, total, discountedTotal]
+          type: string
+        barcode:
+          type: string
+        title:
+          type: string
+        quantity:
+          type: integer
+        unitPrice:
+          type: number
+          format: float
+        total:
+          type: number
+          format: float
+        discountedTotal:
+          type: number
+          format: float
+        img:
+          type: string
+        multiplicity:
+          type: number
+      required:
+        - id
+        - title
+        - quantity
+        - unitPrice
+        - total
+        - discountedTotal
 
     OrderBox:
       type: object
@@ -1130,13 +717,13 @@ components:
         size:
           type: integer
           enum: [5, 10]
-          example: 10
         items:
           type: array
           items:
             $ref: "#/components/schemas/OrderBoxItem"
-          default: []
-      required: [size, items]
+      required:
+        - size
+        - items
 
     OrderPosition:
       type: object
@@ -1144,57 +731,107 @@ components:
         kind:
           type: string
           enum: [product, custom_box]
-          example: product
         id:
-          allOf:
-            - $ref: "#/components/schemas/ObjectId"
+          type: string
           nullable: true
-        barcode: { type: string, default: "" }
-        title: { type: string, example: "FitWin Bar Pistachio" }
-        quantity: { type: integer, minimum: 1, example: 2 }
-        unitPrice: { type: number, minimum: 0, example: 2.49 }
-        total: { type: number, minimum: 0, example: 4.98 }
-        discountedTotal: { type: number, minimum: 0, example: 4.50 }
-        img: { type: string, default: "" }
-        multiplicity: { type: integer, default: 1, example: 1 }
+        barcode:
+          type: string
+        title:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+        unitPrice:
+          type: number
+          format: float
+        total:
+          type: number
+          format: float
+        discountedTotal:
+          type: number
+          format: float
+        img:
+          type: string
+        multiplicity:
+          type: number
+        purchaseMode:
+          type: string
+          enum: [unit, box]
+          default: unit
+          description: |
+            Для `kind=product`:
+            - `unit` = покупка поштучно
+            - `box` = покупка боксом
+
+            Для `kind=custom_box` значення зберігається як `unit`.
+        packQuantity:
+          type: integer
+          nullable: true
+          description: |
+            Кількість штук у боксі на момент покупки.
+            Має значення тільки якщо `purchaseMode=box`.
+            Для `unit` = null.
         box:
           allOf:
             - $ref: "#/components/schemas/OrderBox"
           nullable: true
-      required: [kind, title, quantity, unitPrice, total, discountedTotal]
+      required:
+        - kind
+        - title
+        - quantity
+        - unitPrice
+        - total
+        - discountedTotal
 
-    OrderTotals:
+    Totals:
       type: object
       properties:
-        subtotal: { type: number, minimum: 0, example: 29.9 }
-        discountTotal: { type: number, minimum: 0, example: 3.5 }
-        total: { type: number, minimum: 0, example: 26.4 }
-        currency: { type: string, default: "EUR", example: "EUR" }
+        subtotal:
+          type: number
+          format: float
+        discountTotal:
+          type: number
+          format: float
+        total:
+          type: number
+          format: float
+        currency:
+          type: string
+          example: EUR
 
-    OrderCustomer:
+    Customer:
       type: object
       properties:
-        name: { type: string, example: "Andrej" }
-        surname: { type: string, example: "Novak" }
-        phone: { type: string, example: "+421900000000" }
-        email: { type: string, example: "andrej@example.com", default: "" }
-      required: [name, phone]
+        name:
+          type: string
+        surname:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+      required:
+        - name
+        - phone
 
     Order:
       type: object
       properties:
-        _id: { $ref: "#/components/schemas/ObjectId" }
-        orderNumber: { type: string, example: "ORD-12345678-4567" }
+        _id:
+          type: string
+        orderNumber:
+          type: string
+          example: ORD-12345678-1234
         customer:
-          $ref: "#/components/schemas/OrderCustomer"
-        promoCode: { type: string, example: "SALE10", default: "" }
+          $ref: "#/components/schemas/Customer"
+        promoCode:
+          type: string
         items:
           type: array
           items:
             $ref: "#/components/schemas/OrderPosition"
-          default: []
         totals:
-          $ref: "#/components/schemas/OrderTotals"
+          $ref: "#/components/schemas/Totals"
         delivery:
           $ref: "#/components/schemas/Delivery"
         payment:
@@ -1202,24 +839,84 @@ components:
         status:
           type: string
           enum: [new, processing, confirmed, shipped, completed, cancelled]
-          default: new
-        comment: { type: string, default: "" }
-        createdAt: { type: string, format: date-time }
-        updatedAt: { type: string, format: date-time }
-      required: [orderNumber, customer, items, totals, status]
+        comment:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
 
-    OrderCreateRequest:
+    LeadItemProduct:
       type: object
-      required: [name, phone, items]
       properties:
-        name: { type: string, example: "Andrej" }
-        surname: { type: string, example: "Novak" }
-        phone: { type: string, example: "+421900000000" }
-        email: { type: string, example: "andrej@example.com", default: "" }
-        promoCode: { type: string, example: "SALE10", default: "" }
+        kind:
+          type: string
+          enum: [product]
+        id:
+          type: string
+          description: ID товару
+        quantity:
+          type: integer
+          minimum: 1
+          description: |
+            Якщо `purchaseMode=unit` — кількість штук.
+            Якщо `purchaseMode=box` — кількість боксів.
+        purchaseMode:
+          type: string
+          enum: [unit, box]
+          default: unit
+      required:
+        - kind
+        - id
+        - quantity
+
+    LeadItemCustomBoxProduct:
+      type: object
+      properties:
+        id:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+      required:
+        - id
+        - quantity
+
+    LeadItemCustomBox:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum: [custom_box]
+        size:
+          type: integer
+          enum: [5, 10]
         items:
           type: array
-          minItems: 1
+          items:
+            $ref: "#/components/schemas/LeadItemCustomBoxProduct"
+      required:
+        - kind
+        - size
+        - items
+
+    CreateOrderRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        surname:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        promoCode:
+          type: string
+        items:
+          type: array
           items:
             oneOf:
               - $ref: "#/components/schemas/LeadItemProduct"
@@ -1227,26 +924,38 @@ components:
         delivery:
           $ref: "#/components/schemas/Delivery"
         payment:
-          $ref: "#/components/schemas/Payment"
-        comment: { type: string, default: "" }
+          type: object
+          properties:
+            method:
+              type: string
+              enum: [cash, card, online, bank_transfer, other]
+              default: online
+        comment:
+          type: string
         status:
           type: string
           enum: [new, processing, confirmed, shipped, completed, cancelled]
           default: new
+      required:
+        - name
+        - phone
+        - items
 
-    OrderUpdateRequest:
+    UpdateOrderRequest:
       type: object
       properties:
-        name: { type: string, example: "Andrej" }
-        surname: { type: string, example: "Novak" }
-        phone: { type: string, example: "+421900000000" }
-        email: { type: string, example: "andrej@example.com" }
-        promoCode: { type: string, example: "SALE10" }
+        name:
+          type: string
+        surname:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        promoCode:
+          type: string
         items:
           type: array
-          minItems: 1
-          description: >
-            Якщо передати items, вони повністю замінять поточні позиції замовлення.
           items:
             oneOf:
               - $ref: "#/components/schemas/LeadItemProduct"
@@ -1254,26 +963,84 @@ components:
         delivery:
           $ref: "#/components/schemas/Delivery"
         payment:
-          $ref: "#/components/schemas/Payment"
-        comment: { type: string }
+          type: object
+          properties:
+            provider:
+              type: string
+            method:
+              type: string
+              enum: [cash, card, online, bank_transfer, other]
+            status:
+              type: string
+              enum: [pending, paid, failed, refunded, cancelled]
+            transactionId:
+              type: string
+            refId:
+              type: string
+            redirectUrl:
+              type: string
+            amount:
+              type: number
+            currency:
+              type: string
+            paidAt:
+              type: string
+              format: date-time
+              nullable: true
+            rawCallback:
+              nullable: true
+        comment:
+          type: string
         status:
           type: string
           enum: [new, processing, confirmed, shipped, completed, cancelled]
 
-    OrderStatusPatchRequest:
+    CreateOrderResponse:
       type: object
       properties:
-        status:
-          type: string
-          enum: [new, processing, confirmed, shipped, completed, cancelled]
-        paymentStatus:
-          type: string
-          enum: [pending, paid, failed, refunded]
+        ok:
+          type: boolean
+          example: true
+        order:
+          $ref: "#/components/schemas/Order"
+
+    CreateOrderPaymentResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            orderId:
+              type: string
+            orderNumber:
+              type: string
+            transactionId:
+              type: string
+            redirectUrl:
+              type: string
+              format: uri
+            paymentStatus:
+              type: string
+              enum: [pending, paid, failed, refunded, cancelled]
+
+    OrderSingleResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+        data:
+          $ref: "#/components/schemas/Order"
 
     OrderListResponse:
       type: object
       properties:
-        ok: { type: boolean, example: true }
+        ok:
+          type: boolean
+          example: true
         data:
           type: array
           items:
@@ -1281,7 +1048,74 @@ components:
         pagination:
           type: object
           properties:
-            page: { type: integer, example: 1 }
-            limit: { type: integer, example: 20 }
-            total: { type: integer, example: 125 }
-            pages: { type: integer, example: 7 }
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            pages:
+              type: integer
+
+    ProductSingleResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+        data:
+          $ref: "#/components/schemas/Product"
+
+    ProductListResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+
+    DeleteOrderResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Замовлення видалено
+
+    ComgateCallbackRequest:
+      type: object
+      properties:
+        transId:
+          type: string
+          example: "ABC123456"
+        refId:
+          type: string
+          example: "65f0c0c7c4a1111111111111"
+        status:
+          type: string
+          example: "PAID"
+        curr:
+          type: string
+          example: "EUR"
+        price:
+          type: number
+          example: 3000
+      required:
+        - transId
+        - refId
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Не вдалося обробити замовлення
+        error:
+          type: string
+          example: product_not_found
