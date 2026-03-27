@@ -5,6 +5,7 @@ import ProductsList from './common/ProductsList';
 import Link from 'next/link';
 
 export async function Products({ locale, data }) {
+  
   const messages = await getMessages(locale);
   const { t } = createI18nServer(messages);
   return (
@@ -13,11 +14,11 @@ export async function Products({ locale, data }) {
 
       <div className="preview__button-wrappper">
         {/* Добавляем query параметры к ссылкам */}
-        <Link href={{ pathname: "/build-box", query: { limit: 5 } }} className='preview__button'>
+        <Link href={{ pathname: `/${locale}/build-box`, query: { limit: 5 } }} className='preview__button'>
           {t('products.btn-5')}
         </Link>
 
-        <Link href={{ pathname: "/build-box", query: { limit: 10 } }} className='preview__button'>
+        <Link href={{ pathname: `/${locale}/build-box`, query: { limit: 10 } }} className='preview__button'>
           {t('products.btn-10')}
         </Link>
       </div>
