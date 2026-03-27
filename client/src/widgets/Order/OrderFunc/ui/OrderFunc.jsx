@@ -10,7 +10,7 @@ const OrderFunc = ({ onSubmit }) => {
   const cart = useCart();
 
   const total = cart.reduce((acc, item) => {
-    const price = Number(item?.product?.price || item?.price || 0);
+    const price = Number(item?.price || item?.price || 0);
     const quantity = Number(item.quantity || 1);
     return acc + price * quantity;
   }, 0);
@@ -31,7 +31,7 @@ const OrderFunc = ({ onSubmit }) => {
       
       <div className="order-func__list">
         {cart.map((item, index) => {
-          const price = Number(item?.product?.price || item?.price || 0);
+          const price = Number(item?.price || item?.price || 0);
           const quantity = Number(item.quantity || 1);
           const itemTotal = price * quantity;
           

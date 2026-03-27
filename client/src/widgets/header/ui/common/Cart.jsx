@@ -16,7 +16,7 @@ const Curt = () => {
         const locale = params.locale;
 
     const total = cart.reduce((acc, item) => {
-        const price = item?.product?.price || item?.price || 0;
+        const price = item?.price || item?.price || 0;
         const quantity = item.quantity || 1;
         return acc + price * quantity;
     }, 0);
@@ -75,7 +75,7 @@ const Curt = () => {
                                                 </span>
                                             ) : (
                                                 <span className='curt__item-price'>
-                                                    {(item.product.price * (item.quantity || 1)).toFixed(2)} {t('cart.currency') || 'грн'}
+                                                    {(item.price * (item.quantity || 1)).toFixed(2)} {t('cart.currency') || 'грн'}
                                                 </span>
                                             )}
                                         </div>

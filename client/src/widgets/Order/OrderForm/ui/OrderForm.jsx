@@ -89,6 +89,7 @@ const OrderForm = forwardRef((props, ref) => {
               kind: 'product',
               productId: el?.product?._id,
               quantity: el?.quantity,
+              purchaseMode: el?.purchaseMode
             };
           }
           return {
@@ -108,6 +109,7 @@ const OrderForm = forwardRef((props, ref) => {
           psc: selectedPoint.id,
         },
       };
+     
 
       const orderResponse = await createOrder(payload);
       const orderId = orderResponse?.order?._id || orderResponse?.data?._id || orderResponse?._id;
