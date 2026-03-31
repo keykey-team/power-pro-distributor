@@ -1,24 +1,163 @@
 {
-  "title": "Hello",
   "navigation": {
     "header": {
-      "catalog": "Catalog",
-      "about": "About us",
-      "content": "Content",
-      "principles": "Principles",
-      "contacts": "Contacts"
-    },
-    "footer": {
-      "catalog": "Product catalog",
-      "aboutUs": "About us",
-      "laboratory": "Laboratory",
-      "library": "Library",
-      "paymentDelivery": "Payment and delivery",
-      "warrantyReturns": "Warranty and returns"
+      "us": "About Us",
+      "partners": "Partners",
+      "prods": "Products",
+      "contacts": "Contact",
+      "btn": "My Selection"
     }
+  },
+  "preview": {
+    "title1": "Energy for",
+    "title2": "Winners",
+    "description": "Add products to your list and send us a request",
+    "btn": "Choose Flavor"
   },
   "language": {
     "english": "English",
     "ukrainian": "Ukrainian"
+  },
+  "partners": {
+    "title1": "Alliance of the",
+    "title2": "Strong",
+    "powerpro": {
+      "info": "Main Partner",
+      "title": "PowerPro",
+      "description": "Leader in the Ukrainian sports nutrition market. Since 2013, they have been creating products based on high-quality European ingredients. Their bars are known for their clean composition and high protein content.",
+      "btn": "Manufacturer's Website →"
+    },
+    "fitwin": {
+      "info": "Innovation",
+      "title": "FitWin",
+      "description": "A young and ambitious brand that is changing the perspective on healthy snacks. FitWin focuses on perfect taste with no added sugar, helping athletes achieve their goals with joy in every bite.",
+      "btn": "FitWin Website →"
+    }
+  },
+  "ticker": "\u00A0\u00A0\u00A0\u00A0THE BEST PROTEIN IN SLOVAKIA\u00A0\u00A0\u00A0\u00A0•\u00A0\u00A0\u00A0\u00A0ZERO SUGAR\u00A0\u00A0\u00A0\u00A0•\u00A0\u00A0\u00A0\u00A0PURE ENERGY\u00A0\u00A0\u00A0\u00A0•",
+  "products": {
+    "title1": "Choose your",
+    "title2": "flavor",
+    "btn": "Build your box",
+    "btn-5": "Build box (5 bars)",
+    "btn-10": "Build box (10 bars)",
+    "btn2": "View more products"
+  },
+  "form": {
+    "title": "Your",
+    "titleSpan": "questions",
+    "products": "Selected products:",
+    "noProducts": "No products",
+    "nameLabel": "Name",
+    "namePlaceholder": "First and Last Name",
+    "phoneLabel": "Phone (WhatsApp/Telegram)",
+    "phonePlaceholder": "+421 901 234 567",
+    "submit": "Send request to manager",
+    "submitting": "Sending...",
+    "success": "Request successfully sent!",
+    "error": "An error occurred. Please try again later.",
+    "promoCodeLabel": "Promo code",
+    "promoCodePlaceholder": "Enter promo code"
+  },
+  "validation": {
+    "nameRequired": "Name is required",
+    "nameMin": "Name must be at least 2 characters",
+    "phoneRequired": "Phone number is required",
+    "phoneFormat": "Enter a valid number in the format +421... (country code required)"
+  },
+  "phoneCodes": [
+    "+421",
+    "+380",
+    "+420",
+    "+48",
+    "+49",
+    "+36"
+  ],
+  "box": "Build your box",
+  "build-box": {
+    "title": "Build your",
+    "title2": "Power Box",
+    "subtitle": "Choose a size and fill it with your favorite flavors",
+    "block-txt1": {
+      "title": "STANDARD",
+      "subtitle": "5 BARS",
+      "desc": "Perfect for a week's training"
+    },
+    "block-txt2": {
+      "title": "Performance",
+      "subtitle": "10 BARS",
+      "desc": "For demanding athletes"
+    },
+    "range": "Your Box: ",
+    "range-btn": "Fill the box",
+    "confirm1": "Add more",
+    "confirm2": "bars",
+    "confirm-done": "Add Box to cart",
+    "successfully_added": "Successfully added",
+    "successfully_added2": "to the cart",
+    "go_to_cart": "Go to cart"
+  },
+  "cart": {
+    "title": "YOUR CART",
+    "cost": "TOTAL",
+    "btn": "PROCEED TO PAYMENT",
+    "currency": "€",
+    "empty": "Your cart is empty"
+  },
+  "order": {
+    "title1": "Pay for",
+    "title2": "your items",
+    "desc": "Fill in your details and receive your items shortly.",
+    "subtitle1": "Contact Details",
+    "subtitle2": "Delivery Address (DPD)",
+    "subtitle3": "Payment",
+    "firstNameLabel": "First Name",
+    "lastNameLabel": "Last Name",
+    "emailLabel": "Email",
+    "phoneLabel": "Phone",
+    "firstNamePlaceholder": "Enter first name",
+    "lastNamePlaceholder": "Enter last name",
+    "placement": "Online card payment (via payment service)",
+    "func-title": "Your Selection",
+    "promo": "Order Note",
+    "promo-placeholder": "Would you like to leave us a message?",
+    "total": "Subtotal",
+    "total2": "TOTAL",
+    "delivery": "DPD Delivery",
+    "delivery-status": "Calculated by carrier",
+    "btn": "PAY NOW",
+    "quant": "pieces",
+    "form-placeholder": {
+      "firstName": "Enter your first name",
+      "lastName": "Enter your last name",
+      "email": "example@mail.com",
+      "phone": "+421 ___ ___ ___",
+      "comment": "Write your message or special requests here..."
+    }
+  },
+  "quant": {
+    "title": "Select box size:",
+    "q": "PCS"
+  },
+  "cart1": "V zozname",
+  "cart2": "Pridať do výberu",
+  "footer": {
+    "description": "We create fuel for your success. No compromises, only results.",
+    "nav": {
+      "title": "NAVIGATION",
+      "about": "About Us",
+      "partners": "Partners",
+      "products": "Products",
+      "contact": "Contact"
+    },
+    "contact": {
+      "title": "Contact"
+    },
+    "bottom": {
+      "rights": "ALL RIGHTS RESERVED",
+      "offer": "Public offer",
+      "privacy": "Privacy Policy",
+      "dev": "Website development and support: KeyKey"
+    }
   }
 }

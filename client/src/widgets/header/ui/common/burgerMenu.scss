@@ -39,19 +39,30 @@
         }
     }
     &__language {
+       
         padding: 16px 0;
         border-top: 1px solid rgba(107, 114, 128, 0.50);
         border-bottom: 1px solid rgba(107, 114, 128, 0.50);
         margin: 24px 0;
     }
     .language {
-        width: 54px;
-        display: block !important;
+        width: fit-content;
+        
+         display: flex !important;
+        gap: 16px;
         margin: 0 auto;
         padding: 8px;
         border-radius: 4px;
         border: 1px solid rgba(107, 114, 128, 0.50);
         background: #0E0E0E;
+        .language-main{
+            background: none;
+            &.active{
+                  background: var(--Accent-color-1, #E41F25);
+            }
+           
+        }
+    
         &::after {
             display: none;
         }
