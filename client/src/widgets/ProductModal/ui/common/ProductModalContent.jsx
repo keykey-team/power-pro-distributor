@@ -12,7 +12,7 @@ const ProductModalContent = ({ product, locale }) => {
     const [cart, setCart] = useState([]);
     const { t } = useI18n()
 
-    // НОВОЕ: Состояние для выбранного варианта покупки. По умолчанию 'unit' (поштучно).
+    // Состояние для выбранного варианта покупки. По умолчанию 'unit' (поштучно).
     const [selectedMode, setSelectedMode] = useState('unit');
 
     console.log(product, "prod-modal")
@@ -33,7 +33,7 @@ const ProductModalContent = ({ product, locale }) => {
         return () => window.removeEventListener('cartUpdated', loadCart);
     }, []);
 
-    // НОВОЕ: Достаем опции и вычисляем текущую цену
+    // Достаем опции и вычисляем текущую цену
     const boxOptions = product?.purchaseOptions?.box;
     const unitOptions = product?.purchaseOptions?.unit;
     const isBoxEnabled = boxOptions?.enabled;
@@ -87,11 +87,16 @@ const ProductModalContent = ({ product, locale }) => {
         }
     };
 
-    // НОВОЕ: Проверяем наличие именно выбранной версии товара (штука/коробка)
+    // Проверяем наличие именно выбранной версии товара (штука/коробка)
     const isInCart = () => {
         if (!product?._id) return false;
         return cart.some(item => item.productId === `${product._id}-${selectedMode}`);
     };
+
+    // НОВОЕ: Проверяем, есть ли хотя бы в одной строке данные для 60 грамм
+    const has60gData = product?.nutritionTable?.rows?.some(
+        (el) => el?.values?.per_60g?.text?.trim()
+    );
 
     return (
         <>
@@ -136,20 +141,27 @@ const ProductModalContent = ({ product, locale }) => {
                             <p className='prod-modal__data-title'>{firstPart}<b> {secondPart}</b></p>
                             <p className='prod-modal__data-description'>FitWin tyčinka s náplňou. Obsahuje sladidlo. (60 g)</p>
                             <p className='prod-modal__data-subtitle'>{product?.nutritionTable?.title?.[locale]}</p>
+                            
                             <ul className="prod-modal__data-list">
-                                <li className="prod-modal__data-item for-title">
+                                {/* Заголовок таблицы */}
+                                <li className={`prod-modal__data-item for-title ${!has60gData ? 'two-columns' : ''}`}>
                                     <p>Parameter</p>
-                                    <p>NA 60G</p>
+                                    {has60gData && <p>NA 60G</p>}
                                     <p>NA 100G</p>
                                 </li>
-                                {product?.nutritionTable?.rows.map((el, index) => (
-                                    <li key={index} className="prod-modal__data-item">
+                                
+                                {/* Строки таблицы */}
+                                {product?.nutritionTable?.rows?.map((el, index) => (
+                                    <li key={index} className={`prod-modal__data-item ${!has60gData ? 'two-columns' : ''}`}>
                                         <p>{el?.label?.[locale]}</p>
-                                        <p>{el?.values?.per_60g?.text?.trim() || "-"}</p>
+                                        {has60gData && (
+                                            <p>{el?.values?.per_60g?.text?.trim() || "-"}</p>
+                                        )}
                                         <p>{el?.values?.per_100g?.text?.trim() || "-"}</p>
                                     </li>
                                 ))}
                             </ul>
+
                             <p className='prod-modal__data-subtitle bottom'>Zloženie</p>
                             <p className='prod-modal__data-description bottom'>{product?.ingredients?.[locale]}</p>
                         </div>
@@ -158,7 +170,6 @@ const ProductModalContent = ({ product, locale }) => {
                     <div className="prod-modal__main-quantity">
                         <p className='quantity-title'>{t("quant.title")}</p>
                         <div className="prod-modal__main-quantity-btns">
-                            {/* НОВОЕ: Логика выбора единицы */}
                             <button 
                                 className={`prod-modal__main-quantity-btn ${selectedMode === 'unit' ? 'active' : ''}`}
                                 onClick={() => setSelectedMode('unit')}
@@ -167,7 +178,6 @@ const ProductModalContent = ({ product, locale }) => {
                                 <p className='q'>{t("quant.q")}</p>
                             </button>
                             
-                            {/* НОВОЕ: Показываем кнопку коробки только если она доступна в данных */}
                             {isBoxEnabled && (
                                 <button 
                                     className={`prod-modal__main-quantity-btn ${selectedMode === 'box' ? 'active' : ''}`}
@@ -181,13 +191,11 @@ const ProductModalContent = ({ product, locale }) => {
                     </div>
 
                     <div className="prod-modal__main-btn">
-                        {/* НОВОЕ: Кнопка отображает currentPrice, который меняется в зависимости от выбора */}
                         <button
                             className={`products__item-button ${isInCart() ? 'in-cart' : ''}`}
                             onClick={handleAddToCart}
                         >
                             {isInCart() ? `${t("cart1")} ✓` : `${t("cart2")} • € ${currentPrice}`}
-                       
                         </button>
                     </div>
                 </div>
@@ -196,4 +204,4 @@ const ProductModalContent = ({ product, locale }) => {
     )
 }
 
-export default ProductModalContent
+export default ProductModalContent;
