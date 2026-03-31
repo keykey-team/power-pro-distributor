@@ -56,8 +56,8 @@
     "submitting": "Sending...",
     "success": "Request successfully sent!",
     "error": "An error occurred. Please try again later.",
-    "promoCodeLabel": "Promo code",
-    "promoCodePlaceholder": "Enter promo code"
+    "promoCodeLabel": "Your comment",
+    "promoCodePlaceholder": "Enter your comment"
   },
   "validation": {
     "nameRequired": "Name is required",
@@ -159,5 +159,9 @@
       "privacy": "Privacy Policy",
       "dev": "Website development and support: KeyKey"
     }
+  },
+  "cart-q": {
+    "title": "Quantity",
+    "type": "pcs"
   }
 }

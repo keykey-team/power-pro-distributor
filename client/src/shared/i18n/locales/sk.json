@@ -56,8 +56,8 @@
     "submitting": "Odosielam...",
     "success": "Dopyt bol úspešne odoslaný!",
     "error": "Nastala chyba. Skúste to prosím neskôr.",
-    "promoCodeLabel": "Promo kód",
-    "promoCodePlaceholder": "Zadajte promo kód"
+    "promoCodeLabel": "Váš komentár",
+    "promoCodePlaceholder": "Zadajte váš komentár"
   },
   "validation": {
     "nameRequired": "Meno je povinné",
@@ -159,5 +159,9 @@
       "privacy": "Zásady ochrany osobných údajov",
       "dev": "Vývoj a podpora webových stránok: KeyKey"
     }
+  },
+  "cart-q": {
+    "title": "Množství",
+    "type": "ks"
   }
 }
