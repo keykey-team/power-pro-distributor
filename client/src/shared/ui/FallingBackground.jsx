@@ -7,7 +7,6 @@ import { loadFull } from "tsparticles";
 export default function FallingBackground() {
   const [init, setInit] = useState(false);
 
-  // В новой версии движок инициализируется один раз через useEffect
   useEffect(() => {
     initParticlesEngine(async (engine) => {
       await loadFull(engine);
@@ -16,7 +15,6 @@ export default function FallingBackground() {
     });
   }, []);
 
-  // Пока движок не загрузился, ничего не рендерим, чтобы не было ошибок
   if (!init) {
     return null;
   }
@@ -27,7 +25,6 @@ export default function FallingBackground() {
       options={{
         fullScreen: {
           enable: true,
-          // Убедитесь, что zIndex установлен в -1, чтобы контент был поверх фона
           zIndex: -1,   
         },
         background: {
@@ -35,7 +32,6 @@ export default function FallingBackground() {
         },
         particles: {
           number: {
-            // Увеличиваем количество до 40 для большей насыщенности
             value: 20, 
           },
           shape: {
@@ -49,7 +45,6 @@ export default function FallingBackground() {
                 { src: "/img/bg/cocon.png", width: 56, height: 56 },
                 { src: "/img/bg/strowb.png", width: 56, height: 80 },
                 { src: "/img/bg/nuts3.png", width: 56, height: 80 },
-                // { src: "/img/bg/lil.png", width: 56, height: 80 },
               ],
             },
           },
@@ -57,8 +52,7 @@ export default function FallingBackground() {
             value: 0.8,
           },
           size: {
-            // Значительно увеличиваем диапазон размеров: от 50 до 100
-            value: { min: 50, max: 100 }, 
+            value: { min: 50, max: 100 },
           },
           move: {
             enable: true,
@@ -78,6 +72,26 @@ export default function FallingBackground() {
           }
         },
         detectRetina: true,
+        
+       
+        responsive: [
+          {
+            maxWidth: 768, 
+            options: {
+              particles: {
+                size: {
+                 
+                  value: { min: 20, max: 45 }, 
+                },
+                number: {
+                  
+                  value: 12, 
+                }
+              }
+            }
+          }
+        ]
+      
       }}
     />
   );
