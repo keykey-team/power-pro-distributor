@@ -69,6 +69,9 @@ const Curt = () => {
                                         />
                                         <div className="curt__item-content-text">
                                             <span className='curt__item-name'>{item.name}</span>
+                                            {item.itemsInPackage && (
+                                                <span className='curt__item-type'>( {`${t("cart-q.title")}: ${item.itemsInPackage} ${t("cart-q.type")}`} )</span>
+                                            )}
                                             {item.size ? (
                                                 <span className='curt__item-price'>
                                                     {(item.price * (item.quantity || 1)).toFixed(2)} {t('cart.currency') || 'грн'}

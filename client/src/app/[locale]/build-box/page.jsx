@@ -2,6 +2,7 @@
 import { getMessages } from "@shared/i18n/getMessages";
 import { createI18nServer } from "@shared/i18n/server";
 import { getAllProducts } from "@shared/services/productsServices";
+import FallingBackground from "@shared/ui/FallingBackground";
 import BoxConfirm from "@widgets/BuildBox/BuildBoxConfirm/ui/BoxConfirm";
 import BuildBoxConfirm from "@widgets/BuildBox/BuildBoxConfirm/ui/BuildBoxConfirm";
 import BuildBoxFunc from "@widgets/BuildBox/BuildBoxFunc/ui/BuildBoxFunc";
@@ -98,6 +99,7 @@ export default async function BoxPage({ params }) {
 
   return (
     <>
+      <FallingBackground />
       <BoxConfirm locale={locale} />
       <BuildBoxFunc locale={locale} />
       <BuildBoxList locale={locale} data={data} />
