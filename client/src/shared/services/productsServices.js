@@ -2,7 +2,7 @@
 async function getAllProducts() {
     try {
         const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/products`
+            `${process.env.NEXT_PUBLIC_API_URL}/api/products?limit=1000`
         );
         if (!response.ok) {
             throw new Error("Failed to fetch products");

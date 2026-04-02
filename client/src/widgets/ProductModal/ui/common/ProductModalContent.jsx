@@ -8,7 +8,7 @@ import { useI18n } from '@shared/i18n/use-i18n';
 
 const ProductModalContent = ({ product, locale }) => {
     const { isModalOpen, setIsModalOpen, isProdModalId, setIsProdModalId } = useModals();
-    const { firstPart, secondPart } = formatProductTitle(product.title?.[locale])
+    const { firstPart, secondPart } = formatProductTitle(product?.title?.[locale]) || { firstPart: product?.subtitle?.[locale] || 'Product', secondPart: '' };
     const [cart, setCart] = useState([]);
     const { t } = useI18n()
 
@@ -38,17 +38,17 @@ const ProductModalContent = ({ product, locale }) => {
     const unitOptions = product?.purchaseOptions?.unit;
     const isBoxEnabled = boxOptions?.enabled;
     const boxQuantity = boxOptions?.quantity || 1;
-    
+
     // Определяем цену в зависимости от выбранного мода (с фоллбэком на старую цену, если новых данных нет)
-    const currentPrice = selectedMode === 'unit' 
-        ? (unitOptions?.price || product.price) 
+    const currentPrice = selectedMode === 'unit'
+        ? (unitOptions?.price || product.price)
         : (boxOptions?.price || product.price);
 
-   const handleAddToCart = (e) => {
+    const handleAddToCart = (e) => {
         e.stopPropagation();
         try {
             const currentCart = JSON.parse(localStorage.getItem('cart') || '[]');
-            
+
             const compositeId = `${product._id}-${selectedMode}`;
             const existingItemIndex = currentCart.findIndex(item => item.productId === compositeId);
             let updatedCart;
@@ -60,24 +60,24 @@ const ProductModalContent = ({ product, locale }) => {
             } else {
                 // ТОВАРА НЕТ: Создаем новый объект
                 const baseName = product?.title?.[locale];
-                const nameWithQuantity = selectedMode === 'box' 
-                    ? `${baseName} (Balenie ${boxQuantity} ks)` 
+                const nameWithQuantity = selectedMode === 'box'
+                    ? `${baseName} (Balenie ${boxQuantity} ks)`
                     : baseName;
 
                 const cartItem = {
                     kind: 'product',
                     name: nameWithQuantity,
-                    productId: compositeId, 
-                    baseProductId: product._id, 
+                    productId: compositeId,
+                    baseProductId: product._id,
                     quantity: 1,
-                    price: currentPrice, 
-                    purchaseMode: selectedMode, 
+                    price: currentPrice,
+                    purchaseMode: selectedMode,
                     itemsInPackage: selectedMode === 'unit' ? 1 : boxQuantity,
                     product: product
                 };
                 updatedCart = [...currentCart, cartItem];
             }
-            
+
             localStorage.setItem('cart', JSON.stringify(updatedCart));
             setCart(updatedCart);
             window.dispatchEvent(new Event('cartUpdated'));
@@ -141,15 +141,15 @@ const ProductModalContent = ({ product, locale }) => {
                             <p className='prod-modal__data-title'>{firstPart}<b> {secondPart}</b></p>
                             {/* <p className='prod-modal__data-description'>FitWin tyčinka s náplňou. Obsahuje sladidlo. (60 g)</p> */}
                             <p className='prod-modal__data-subtitle'>{product?.nutritionTable?.title?.[locale]}</p>
-                            
-                            <ul className="prod-modal__data-list">
+
+                            {product?.type !== "box" && (<ul className="prod-modal__data-list">
                                 {/* Заголовок таблицы */}
                                 <li className={`prod-modal__data-item for-title ${!has60gData ? 'two-columns' : ''}`}>
                                     <p>Parameter</p>
                                     {has60gData && <p>NA 60G</p>}
                                     <p>NA 100G</p>
                                 </li>
-                                
+
                                 {/* Строки таблицы */}
                                 {product?.nutritionTable?.rows?.map((el, index) => (
                                     <li key={index} className={`prod-modal__data-item ${!has60gData ? 'two-columns' : ''}`}>
@@ -160,26 +160,42 @@ const ProductModalContent = ({ product, locale }) => {
                                         <p>{el?.values?.per_100g?.text?.trim() || "-"}</p>
                                     </li>
                                 ))}
-                            </ul>
+                            </ul>)}
+
+
 
                             <p className='prod-modal__data-subtitle bottom'>Zloženie</p>
-                            <p className='prod-modal__data-description bottom'>{product?.ingredients?.[locale]}</p>
+                            {product?.type === "box" ? (
+                                <p
+                                    className='prod-modal__data-description bottom'
+                                    style={{ whiteSpace: "pre-line" }}
+                                >
+                                    {product?.description?.[locale]}
+                                </p>
+                            ) : (
+                                <p
+                                    className='prod-modal__data-description bottom'
+                                    style={{ whiteSpace: "pre-line" }}
+                                >
+                                    {product?.ingredients?.[locale]}
+                                </p>
+                            )}
                         </div>
                     </div>
-                    
-                    <div className="prod-modal__main-quantity">
+
+                    {(product?.type !== "box" && isBoxEnabled) && (<div className="prod-modal__main-quantity">
                         <p className='quantity-title'>{t("quant.title")}</p>
                         <div className="prod-modal__main-quantity-btns">
-                            <button 
+                            <button
                                 className={`prod-modal__main-quantity-btn ${selectedMode === 'unit' ? 'active' : ''}`}
                                 onClick={() => setSelectedMode('unit')}
                             >
                                 <p>1</p>
                                 <p className='q'>{t("quant.q")}</p>
                             </button>
-                            
+
                             {isBoxEnabled && (
-                                <button 
+                                <button
                                     className={`prod-modal__main-quantity-btn ${selectedMode === 'box' ? 'active' : ''}`}
                                     onClick={() => setSelectedMode('box')}
                                 >
@@ -188,7 +204,9 @@ const ProductModalContent = ({ product, locale }) => {
                                 </button>
                             )}
                         </div>
-                    </div>
+                    </div>)}
+
+
 
                     <div className="prod-modal__main-btn">
                         <button
