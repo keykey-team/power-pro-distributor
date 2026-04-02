@@ -149,6 +149,8 @@ const ProductSchema = new Schema(
       index: true,
     },
 
+    type: { type: String }, // для фильтрации, если нужно. "box" - для коробок-сетов с индивидуальными позициями внутри
+
     // i18n
     title: { type: LocalizedString, required: true, default: () => ({}) },
     subtitle: { type: LocalizedString, default: () => ({}) }, // строка под заголовком
