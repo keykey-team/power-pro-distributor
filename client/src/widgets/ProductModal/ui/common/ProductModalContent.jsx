@@ -139,7 +139,7 @@ const ProductModalContent = ({ product, locale }) => {
 
                         <div className="prod-modal__data">
                             <p className='prod-modal__data-title'>{firstPart}<b> {secondPart}</b></p>
-                            <p className='prod-modal__data-description'>FitWin tyčinka s náplňou. Obsahuje sladidlo. (60 g)</p>
+                            {/* <p className='prod-modal__data-description'>FitWin tyčinka s náplňou. Obsahuje sladidlo. (60 g)</p> */}
                             <p className='prod-modal__data-subtitle'>{product?.nutritionTable?.title?.[locale]}</p>
                             
                             <ul className="prod-modal__data-list">
