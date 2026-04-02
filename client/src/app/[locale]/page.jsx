@@ -7,6 +7,8 @@ import { Partners } from "@widgets/Partners/ui/Partners";
 import { Preview } from "@widgets/Preview/ui/Preview";
 import { Products } from "@widgets/Products/ui/Products";
 import Ticker from "@widgets/Ticker/ui/Ticker";
+import OrderConfirm from "@features/OrderForm/OrderConfirm";
+import FallingBackground from "@shared/ui/FallingBackground";
 
 // Метаданные для разных языков
 const metadataByLocale = {
@@ -45,8 +47,8 @@ export async function generateMetadata({ params }) {
     keywords: meta.keywords,
     metadataBase: new URL(baseUrl),
     icons: {
-      icon: '/img/google.ico',         
-  
+      icon: '/img/google.ico',
+
     },
     alternates: {
       canonical: locale === "ua" ? "/" : `/${locale}`,
@@ -98,8 +100,11 @@ export default async function HomePage({ params }) {
   const { t } = createI18nServer(messages);
   const data = await getAllProducts();
 
+
   return (
     <>
+      <FallingBackground />
+      <OrderConfirm locale={"home"} title1={"OBJEDNÁVKA "} title2={"PRIJATÁ!"} subtitle={"Platba bola úspešne spracovaná. Začíname balenie vašej objednávky. Sledujte svoj e-mail, kde nájdete podrobné informácie o doručení."} />
       <Preview locale={locale} />
       <Partners locale={locale} />
       <Ticker locale={locale} />

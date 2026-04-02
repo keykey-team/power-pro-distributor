@@ -16,9 +16,10 @@ import { scrollToElement } from "../lib/scrollToOrderForm";
 import Curt from "./common/Cart";
 
 export function Header({ locale }) {
-     const { isModalOpen, setIsModalOpen } = useModals();
+    const { isModalOpen, setIsModalOpen } = useModals();
     const router = useRouter();
     const { t } = useI18n();
+    
 
     // Состояние для количества товаров в корзине
     const [cartCount, setCartCount] = useState(0);
@@ -27,7 +28,14 @@ export function Header({ locale }) {
         // Функция, которая обновляет состояние из localStorage
         const updateCartCount = () => {
             const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-            setCartCount(cart.length);
+
+            // Считаем общее количество, суммируя поле quantity каждого товара
+            const totalQuantity = cart.reduce((total, item) => {
+                // На всякий случай делаем фоллбэк на 1, если quantity вдруг не окажется
+                return total + (item.quantity || 1);
+            }, 0);
+
+            setCartCount(totalQuantity);
         };
 
         // Первоначальная загрузка
@@ -44,32 +52,31 @@ export function Header({ locale }) {
             window.removeEventListener('storage', updateCartCount);
             window.removeEventListener('cartUpdated', updateCartCount);
         };
-    }, []); // Пустой массив зависимостей – эффект выполняется только при монтировании
-
+    }, []);
     return (
         <header className='header'>
             <div className="header__content container">
                 <BurgerMenu />
-                <Curt/>
+                <Curt />
                 <Image
                     src="/img/logo.svg"
                     alt="logo"
-                    onClick={() => router.push("/")}
+                    onClick={() => router.push(`/${locale}/`)}
                     className='header__logo'
                     width={237}
                     height={35}
                 />
                 <ul className="header__list">
-                    <li className='header__item' onClick={() => scrollToElement("prev")}>
+                    <li className='header__item' onClick={() => scrollToElement(locale,"prev")}>
                         <p>{t('navigation.header.us')}</p>
                     </li>
-                    <li className='header__item' onClick={() => scrollToElement("partners")}>
+                    <li className='header__item' onClick={() => scrollToElement(locale,"partners")}>
                         <p>{t('navigation.header.partners')}</p>
                     </li>
-                    <li className='header__item' onClick={() => scrollToElement("prods")}>
+                    <li className='header__item' onClick={() => scrollToElement(locale,"prods")}>
                         <p>{t('navigation.header.prods')}</p>
                     </li>
-                    <li className='header__item' onClick={() => scrollToElement("order-form")}>
+                    <li className='header__item' onClick={() => scrollToElement(locale,"order-form")}>
                         <p>{t('navigation.header.contacts')}</p>
                     </li>
                 </ul>
@@ -84,7 +91,7 @@ export function Header({ locale }) {
                         </div>
                     </div>
                     <div className="language">
-                        <div className="language-main">{locale}</div>
+                        <div className="language-main" onClick={() => { setIsModalOpen("language-dropdown"); console.log("casd") }}>{locale}</div>
                         <LanguageDropdown />
                     </div>
                     <BurgerMenuButton />

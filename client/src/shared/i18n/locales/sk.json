@@ -39,11 +39,13 @@
     "title1": "Vyberte si",
     "title2": "svoju chuť",
     "btn": "Zostavte si svoj box",
+    "btn-5": "Zostavte box (5 tyčiniek)",
+    "btn-10": "Zostavte box (10 tyčiniek)",
     "btn2": "Pozrieť si ďalšie produkty"
   },
   "form": {
-    "title": "Dokončiť",
-    "titleSpan": "dopyt",
+    "title": "Vaše",
+    "titleSpan": "otázky",
     "products": "Vybrané produkty:",
     "noProducts": "Žiadne produkty",
     "nameLabel": "Meno",
@@ -54,8 +56,8 @@
     "submitting": "Odosielam...",
     "success": "Dopyt bol úspešne odoslaný!",
     "error": "Nastala chyba. Skúste to prosím neskôr.",
-    "promoCodeLabel": "Promo kód",
-    "promoCodePlaceholder": "Zadajte promo kód"
+    "promoCodeLabel": "Váš komentár",
+    "promoCodePlaceholder": "Zadajte váš komentár"
   },
   "validation": {
     "nameRequired": "Meno je povinné",
@@ -117,14 +119,49 @@
     "lastNamePlaceholder": "Zadajte priezvisko",
     "placement": "Platba kartou online (prostredníctvom platobnej služby)",
     "func-title": "Tvoj Výber",
-    "promo":"APLIKOVAŤ",
-    "promo-placeholder":"Máte promo kod?",
-    "total":"Medzisúčet",
-    "total2":"CELKOM",
-    "delivery":"Doprava DPD",
-    "delivery-status":"Podľa dopravcu",
-    "btn":"ZAPLATIŤ TERAZ",
-    "quant":"kusy"
-    
+    "promo": "Poznámka k objednávke",
+    "promo-placeholder": "Chcete nám niečo odkázať?",
+    "total": "Medzisúčet",
+    "total2": "CELKOM",
+    "delivery": "Doprava DPD",
+    "delivery-status": "Podľa dopravcu",
+    "btn": "ZAPLATIŤ TERAZ",
+    "quant": "kusy",
+    "form-placeholder": {
+      "firstName": "Zadajte svoje meno",
+      "lastName": "Zadajte svoje priezvisko",
+      "email": "example@mail.com",
+      "phone": "+421 ___ ___ ___",
+      "comment": "Napíšte nám vašu správu alebo špeciálne požiadavky..."
+    }
+  },
+  "quant": {
+    "title": "Vyberte veľkosť boxu:",
+    "q": "KUS"
+  },
+  "cart1": "In list",
+  "cart2": "Add to selection",
+  "footer": {
+    "description": "Vytvárame palivo pre vaše úspechy. Žiadne kompromisy, len výsledky.",
+    "nav": {
+      "title": "NAVIGÁCIA",
+      "about": "O nás",
+      "partners": "Partneri",
+      "products": "Produkty",
+      "contact": "Kontakt"
+    },
+    "contact": {
+      "title": "Kontakt"
+    },
+    "bottom": {
+      "rights": "VŠETKY PRÁVA VYHRADENÉ",
+      "offer": "Verejná ponuka",
+      "privacy": "Zásady ochrany osobných údajov",
+      "dev": "Vývoj a podpora webových stránok: KeyKey"
+    }
+  },
+  "cart-q": {
+    "title": "Množství",
+    "type": "ks"
   }
 }

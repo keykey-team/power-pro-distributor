@@ -4,7 +4,7 @@ import { useModals } from '@shared/index';
 import { removeItemById, updateQuantity } from '@widgets/header/lib/cart';
 import { useCart } from '@widgets/header/model/useCart';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import React from 'react';
 
 const Curt = () => {
@@ -12,16 +12,18 @@ const Curt = () => {
     const router = useRouter();
     const { t } = useI18n();
     const cart = useCart();
+    const params = useParams();
+        const locale = params.locale;
 
     const total = cart.reduce((acc, item) => {
-        const price = item?.product?.price || item?.price || 0;
+        const price = item?.price || item?.price || 0;
         const quantity = item.quantity || 1;
         return acc + price * quantity;
     }, 0);
 
     const handleCheckout = () => {
         setIsModalOpen(null);
-        router.push("/order");
+        router.push(`/${locale}/order`);
     };
 
     return (
@@ -67,13 +69,16 @@ const Curt = () => {
                                         />
                                         <div className="curt__item-content-text">
                                             <span className='curt__item-name'>{item.name}</span>
+                                            {item.itemsInPackage && (
+                                                <span className='curt__item-type'>( {`${t("cart-q.title")}: ${item.itemsInPackage} ${t("cart-q.type")}`} )</span>
+                                            )}
                                             {item.size ? (
                                                 <span className='curt__item-price'>
                                                     {(item.price * (item.quantity || 1)).toFixed(2)} {t('cart.currency') || 'грн'}
                                                 </span>
                                             ) : (
                                                 <span className='curt__item-price'>
-                                                    {(item.product.price * (item.quantity || 1)).toFixed(2)} {t('cart.currency') || 'грн'}
+                                                    {(item.price * (item.quantity || 1)).toFixed(2)} {t('cart.currency') || 'грн'}
                                                 </span>
                                             )}
                                         </div>

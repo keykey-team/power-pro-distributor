@@ -1,12 +1,11 @@
 body {
   background-image: url("/img/bg.webp");
 }
-
 .container {
   max-width: 1530px;
   padding: 0 15px;
   margin: 0 auto;
-  }
+}
 body {
   overflow-x: hidden;
 }
@@ -22,18 +21,22 @@ body {
   transition: opacity 0.3s ease;
   opacity: 1;
   &.item {
-      z-index: 1000;
-    }
+    z-index: 1000;
+  }
 }
 #order-form {
-  scroll-margin-top: 80px; 
+  scroll-margin-top: 80px;
 }
 #prev {
-  scroll-margin-top: 280px; 
+  scroll-margin-top: 280px;
 }
 #partners {
-  scroll-margin-top: 280px; 
+  scroll-margin-top: 280px;
 }
 #prods {
-  scroll-margin-top: 280px; 
+  scroll-margin-top: 280px;
+}
+#falling-images canvas {
+  // opacity: 0.7;
+  filter: blur(2px); /* Настрой значение (например, 3px или 8px) по вкусу */
 }

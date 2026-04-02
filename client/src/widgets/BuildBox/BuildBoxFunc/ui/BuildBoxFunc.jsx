@@ -2,7 +2,7 @@
 
 import { useI18n } from "@shared/i18n/use-i18n";
 import { useModals } from "@shared/index";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 
 
@@ -12,7 +12,8 @@ const BuildBoxFunc = () => {
     const { curt, setIsCurt } = useModals();
     const pathname = usePathname()
     const searchParams = useSearchParams()
-
+    const params = useParams();
+    const locale = params.locale;
     const totalItems = curt.reduce((sum, item) => sum + item.quantity, 0);
     const totalPrice = curt.reduce((sum, item) => sum + item.product.price, 0);
     const limit = Number(searchParams.get('limit')) || 5

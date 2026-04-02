@@ -103,7 +103,7 @@ const OrderForm = () => {
 
   return (
     <>
-      <OrderConfirm locale={"form"} title1={"Ďakujeme za "} title2={"váš dopyt!"} subtitle={"Vaša žiadosť bola úspešne odoslaná.Náš manažér vás čoskoro kontaktuje, aby odpovedal na všetky vaše otázky a poskytol potrebné informácie."} />
+      {/* <OrderConfirm locale={"form"} title1={"Ďakujeme za "} title2={"váš dopyt!"} subtitle={"Vaša žiadosť bola úspešne odoslaná.Náš manažér vás čoskoro kontaktuje, aby odpovedal na všetky vaše otázky a poskytol potrebné informácie."} /> */}
 
       <div id="order-form" className="form container">
         <Image
