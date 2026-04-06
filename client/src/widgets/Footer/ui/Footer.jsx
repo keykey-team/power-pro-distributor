@@ -98,12 +98,45 @@ export function Footer() {
                 </div>
             </div>
             <div className="footer__under">
-                <div className="footer__under-cont container">
+               <div className="footer__under-cont container">
                     <p>© 2026 SportNutrition. {t('footer.bottom.rights')}</p>
                     <ul>
-                        <li><Link href="/about">{t('footer.bottom.offer')}</Link></li>
-                        <li><Link href="/about">{t('footer.bottom.privacy')}</Link></li>
-                        <li><Link href="/about">{t('footer.bottom.dev')}</Link></li>
+                        <li>
+                            <a 
+                                href="/pdf/1. VŠEOBECNÉ OBCHODNÉ PODMIENKY.pdf" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                            >
+                              VŠEOBECNÉ OBCHODNÉ PODMIENKY
+                            </a>
+                        </li>
+                        <li>
+                            <a 
+                                href="/pdf/2. DODACIE A PLATOBNÉ PODMIENKY.pdf" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                            >
+                                DODACIE A PLATOBNÉ PODMIENKY
+                            </a>
+                        </li>
+                        <li>
+                            <a 
+                                href="/pdf/3. REKLAMAČNÉ PODMIENKY.pdf" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                            >
+                               REKLAMAČNÉ PODMIENKY
+                            </a>
+                        </li>
+                        <li>
+                            <a 
+                                href="/pdf/4. OCHRANA OSOBNÝCH ÚDAJOV.pdf" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                            >
+                                OCHRANA OSOBNÝCH ÚDAJOV
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>
