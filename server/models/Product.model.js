@@ -135,6 +135,31 @@ const PurchaseOptionsSchema = new Schema(
   { _id: false }
 );
 
+const PurchaseOptionItemSchema = new Schema(
+  {
+    key: { type: String, required: true, trim: true },
+    title: { type: LocalizedString, default: () => ({}) },
+    enabled: { type: Boolean, default: true },
+    price: { type: Number, default: null },
+    quantity: { type: Number, default: 1 },
+    mode: {
+      type: String,
+      enum: ["unit", "box", "pack"],
+      default: "unit",
+    },
+    sort: { type: Number, default: 0 },
+  },
+  { _id: false }
+);
+
+const PurchaseOptionsV2Schema = new Schema(
+  {
+    items: { type: [PurchaseOptionItemSchema], default: [] },
+    defaultKey: { type: String, default: "unit" },
+  },
+  { _id: false }
+);
+
 /** =========================
  *  Product
  * ========================= */
@@ -159,7 +184,7 @@ const ProductSchema = new Schema(
     features: { type: LocalizedStringArray, default: () => ({}) }, // буллеты
 
     // media
-    cover: { type: ImageSchema, default: null },
+    cover: { type: String, default: null },
     gallery: { type: Array, default: [] },
 
     // ✅ dynamic badges for card (chips)
@@ -194,6 +219,10 @@ const ProductSchema = new Schema(
         defaultMode: "unit",
       }),
     },
+    purchaseOptionsV2: {
+      type: PurchaseOptionsV2Schema,
+      default: null,
+    }
   },
   { timestamps: true }
 );
@@ -218,7 +247,6 @@ ProductSchema.pre("save", function (next) {
     this.nutritionTable.rows.sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
   }
 
-  next();
 });
 
 /** =========================
