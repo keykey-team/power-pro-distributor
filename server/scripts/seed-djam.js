@@ -17,6 +17,7 @@ async function seedSportJamMultiFlavor() {
       isBar: false,
 
       cover: "",
+      
       gallery: [],
 
       price: unitPrice,
