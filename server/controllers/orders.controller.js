@@ -26,13 +26,7 @@ function handleOrderError(res, error) {
   });
 }
 
-function parseComgateResponse(data) {
-  const params = new URLSearchParams(
-    typeof data === "string" ? data : String(data || "")
-  );
 
-  return Object.fromEntries(params.entries());
-}
 
 function formatDeliveryText(delivery = {}) {
   const lines = [];
