@@ -5,18 +5,29 @@ import { useCart } from '@widgets/header/model/useCart';
 import Image from 'next/image';
 import React from 'react';
 
-const OrderFunc = ({ onSubmit }) => {
+const OrderFunc = ({ onSubmit, deliveryType = 'pickup' }) => {
   const { t } = useI18n();
   const cart = useCart();
 
+  // Считаем стоимость товаров
   const total = cart.reduce((acc, item) => {
     const price = Number(item?.price || item?.price || 0);
     const quantity = Number(item.quantity || 1);
     return acc + price * quantity;
   }, 0);
 
+  // Логика расчета доставки: бесплатно от 50 евро
+  const isFreeDelivery = total >= 50;
+  let deliveryPrice = 0;
+
+  if (!isFreeDelivery) {
+    deliveryPrice = deliveryType === 'courier' ? 4.3 : 3.2;
+  }
+
+  // Итоговая сумма (товары + доставка)
+  const finalTotal = total + deliveryPrice;
+
   const handleButtonClick = () => {
-    // Триггерим событие сабмита формы, которая находится в соседнем компоненте OrderForm
     window.dispatchEvent(new CustomEvent('submit-order-form'));
     if (onSubmit) {
       onSubmit();
@@ -24,7 +35,7 @@ const OrderFunc = ({ onSubmit }) => {
   };
 
   return (
-    <section className="order-func">
+    <section className="order-func" style={{ flex: '1 1 35%' }}>
       <div className="order-func__title">
         {t("order.func-title")}
       </div>
@@ -57,20 +68,8 @@ const OrderFunc = ({ onSubmit }) => {
         })}
       </div>
 
-      {/* БЛОК ПРОМОКОДА */}
       <div className="order-func__promo">
-        {/* <p className='lab'>{t("order.promo")}</p>
-        <div className="promo-input-group" style={{ display: 'flex', gap: '8px' }}>
-          <input 
-            type="text" 
-            placeholder={t("order.promo-placeholder")} 
-            className="promo-input"
-            style={{ flex: 1, padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-          />
-          <button className="promo-apply-btn" style={{ padding: '8px 16px', background: '#000', color: '#fff', borderRadius: '4px' }}>
-            {t("order.promo-btn") || "APLIKOVAŤ"}
-          </button>
-        </div> */}
+        {/* Место для промокода */}
       </div>
 
       <div className="order-func__data">
@@ -78,13 +77,17 @@ const OrderFunc = ({ onSubmit }) => {
           <p>{t("order.total")}</p>
           <p>{total.toFixed(2)} €</p>
         </div>
+        
+        {/* Строка с доставкой */}
         <div className='order-func__data-txt'>
           <p>{t("order.delivery")}</p>
-          <p>{t("order.delivery-status")}</p>
+          <p>{isFreeDelivery ? 'Zadarmo' : `${deliveryPrice.toFixed(2)} €`}</p>
         </div>
+        
+        {/* Итоговая сумма с учетом доставки */}
         <div className='order-func__data-txt bold'>
           <p>{t("order.total2")}</p>
-          <p>{total.toFixed(2)} €</p>
+          <p>{finalTotal.toFixed(2)} €</p>
         </div>
         
         <button
