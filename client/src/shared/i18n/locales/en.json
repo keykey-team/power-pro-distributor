@@ -133,7 +133,9 @@
       "email": "example@mail.com",
       "phone": "+421 ___ ___ ___",
       "comment": "Write your message or special requests here..."
-    }
+    },
+    "delivery-courier": "By courier",
+    "delivery-pickup": "To pickup point (DPD)"
   },
   "quant": {
     "title": "Select box size:",

@@ -133,7 +133,9 @@
       "email": "example@mail.com",
       "phone": "+421 ___ ___ ___",
       "comment": "Napíšte nám vašu správu alebo špeciálne požiadavky..."
-    }
+    },
+    "delivery-courier":"Kuriérome",
+    "delivery-pickup":"Na pobočku (DPD)"
   },
   "quant": {
     "title": "Vyberte veľkosť boxu:",
