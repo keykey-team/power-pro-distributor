@@ -283,6 +283,20 @@ export const createOrder = async (req, res) => {
       status = "new",
     } = req.body || {};
 
+    console.log("Creating order with data:", {
+      name,
+      surname,
+      phone,
+      email,
+      promoCode,
+      items,
+      delivery,
+      payment,
+      comment,
+      status
+    });
+
+
     if (!name || !String(name).trim()) {
       return res.status(400).json({ message: "Name is required" });
     }
