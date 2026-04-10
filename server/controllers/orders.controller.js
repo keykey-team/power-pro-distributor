@@ -147,6 +147,20 @@ async function notifyPaidOrderOnce(order) {
   await order.save();
 }
 
+function parseComgateResponse(data) {
+  if (typeof data === "object" && data !== null) return data;
+
+  const text = String(data || "");
+  const result = {};
+
+  text.split("&").forEach((pair) => {
+    const [key, value] = pair.split("=");
+    if (key) result[key] = decodeURIComponent(value || "");
+  });
+
+  return result;
+}
+
 async function createComgatePayment({
   order,
   amountInCents,
@@ -174,11 +188,17 @@ async function createComgatePayment({
 
   const label = String(order.orderNumber || order._id).slice(0, 16);
 
+  const deliveryPrice = Number(order.delivery?.price || 0);
+
+  // amountInCents — это сумма товаров в центах
+  // delivery.price — сумма доставки в евро
+  const finalAmountInCents = amountInCents + Math.round(deliveryPrice * 100);
+
   const body = new URLSearchParams();
   body.append("merchant", COMGATE_MERCHANT);
   body.append("secret", COMGATE_SECRET);
   body.append("prepareOnly", "true");
-  body.append("price", String(amountInCents));
+  body.append("price", String(finalAmountInCents));
   body.append("curr", currency);
   body.append("label", label);
   body.append("refId", String(order._id));
@@ -243,6 +263,7 @@ async function createComgatePayment({
     transactionId: parsed.transId,
     redirectUrl: parsed.redirect,
     raw: parsed,
+    amountInCents: finalAmountInCents,
   };
 }
 
@@ -261,6 +282,20 @@ export const createOrder = async (req, res) => {
       comment = "",
       status = "new",
     } = req.body || {};
+
+    console.log("Creating order with data:", {
+      name,
+      surname,
+      phone,
+      email,
+      promoCode,
+      items,
+      delivery,
+      payment,
+      comment,
+      status
+    });
+
 
     if (!name || !String(name).trim()) {
       return res.status(400).json({ message: "Name is required" });
