@@ -204,6 +204,13 @@ const OrderSchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
+
+    telegramNotification: {
+      paidSentAt: {
+        type: Date,
+        default: null,
+      },
+    }
   },
   {
     timestamps: true,

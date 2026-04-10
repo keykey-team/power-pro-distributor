@@ -1,6 +1,7 @@
 import axios from "axios";
 import { Order } from "../models/Order.model.js";
 import { buildOrderPositions, calcOrderTotals } from "../utils/orderPositions.js";
+import { sendTelegramMessage } from "../services/telegram.js";
 
 const safeMap = {
   box_invalid_size: "Невірний розмір боксу. Доступно лише 5 або 10.",
@@ -31,6 +32,119 @@ function parseComgateResponse(data) {
   );
 
   return Object.fromEntries(params.entries());
+}
+
+function formatDeliveryText(delivery = {}) {
+  const lines = [];
+
+  const entries = [
+    ["Тип доставки", delivery?.type],
+    ["Країна", delivery?.country],
+    ["Місто", delivery?.city],
+    ["Вулиця", delivery?.street],
+    ["Будинок", delivery?.house],
+    ["Квартира", delivery?.apartment],
+    ["Поштовий індекс", delivery?.zip],
+    ["Відділення", delivery?.branch],
+    ["Поштомат", delivery?.parcelLocker],
+    ["Компанія доставки", delivery?.carrier],
+  ].filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== "");
+
+  for (const [label, value] of entries) {
+    lines.push(`• ${label}: ${value}`);
+  }
+
+  return lines;
+}
+
+function formatOrderTelegramText(order) {
+  const lines = [];
+
+  lines.push("🟢 Нове оплачене замовлення");
+  lines.push("");
+
+  lines.push(`📦 Замовлення: ${order.orderNumber || order._id}`);
+  lines.push(`👤 Ім'я: ${order.customer?.name || "-"}`);
+  lines.push(`👤 Прізвище: ${order.customer?.surname || "-"}`);
+  lines.push(`📞 Телефон: ${order.customer?.phone || "-"}`);
+  lines.push(`✉️ Email: ${order.customer?.email || "-"}`);
+  lines.push(`🏷 Промокод: ${order.promoCode || "-"}`);
+  lines.push("");
+
+  if (!order.items?.length) {
+    lines.push("🧾 Позиції: (немає)");
+  } else {
+    lines.push("🧾 Позиції:");
+
+    for (const p of order.items) {
+      if (p.kind === "product") {
+        lines.push(
+          `• ${p.title} × ${p.quantity} = ${Number(p.discountedTotal || 0).toFixed(2)} €`
+        );
+      }
+
+      if (p.kind === "custom_box") {
+        lines.push(
+          `• ${p.title} = ${Number(p.discountedTotal || 0).toFixed(2)} €`
+        );
+        lines.push("  Склад:");
+        for (const bi of p.box?.items || []) {
+          lines.push(`  - ${bi.title} × ${bi.quantity}`);
+        }
+      }
+    }
+  }
+
+  lines.push("");
+  lines.push(`💰 Разом: ${Number(order.totals?.total || 0).toFixed(2)} €`);
+  lines.push(`💳 Статус оплати: ${order.payment?.status || "-"}`);
+  lines.push(`🧾 Транзакція: ${order.payment?.transactionId || "-"}`);
+
+  const deliveryLines = formatDeliveryText(order.delivery);
+  if (deliveryLines.length) {
+    lines.push("");
+    lines.push("🚚 Доставка:");
+    lines.push(...deliveryLines);
+  }
+
+  if (order.comment) {
+    lines.push("");
+    lines.push(`📝 Коментар: ${order.comment}`);
+  }
+
+  return lines.join("\n");
+}
+
+async function sendPaidOrderTelegramNotification(order) {
+  const token = "8349065764:AAGrt4Tm7VYqkF_lA505OabfHL_ZbBZgYyA";
+  const chatId = '-1003884098696';
+
+  if (!token || !chatId) {
+    throw new Error("TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is not configured");
+  }
+
+  const text = formatOrderTelegramText(order);
+
+  await sendTelegramMessage({
+    token,
+    chatId,
+    text,
+  });
+}
+
+async function notifyPaidOrderOnce(order) {
+  if (!order) return;
+  if (order.payment?.status !== "paid") return;
+  if (order.telegramNotification?.paidSentAt) return;
+
+  await sendPaidOrderTelegramNotification(order);
+
+  order.telegramNotification = {
+    ...(order.telegramNotification || {}),
+    paidSentAt: new Date(),
+  };
+
+  await order.save();
 }
 
 async function createComgatePayment({
@@ -100,12 +214,16 @@ async function createComgatePayment({
     `${APP_URL}?comgate=pending&id=\${id}&refId=\${refId}`
   );
 
-  const { data } = await axios.post(`${COMGATE_BASE_URL}/create`, body.toString(), {
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    timeout: 30000,
-  });
+  const { data } = await axios.post(
+    `${COMGATE_BASE_URL}/create`,
+    body.toString(),
+    {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      timeout: 30000,
+    }
+  );
 
   const parsed = parseComgateResponse(data);
 
@@ -181,6 +299,9 @@ export const createOrder = async (req, res) => {
         currency: totals.currency || "EUR",
         paidAt: null,
         rawCallback: null,
+      },
+      telegramNotification: {
+        paidSentAt: null,
       },
       comment: String(comment || "").trim(),
       status,
@@ -298,19 +419,20 @@ export const comgateCallback = async (req, res) => {
     order.payment.status = paymentStatus;
     order.payment.transactionId = transactionId;
     order.payment.refId = refId;
-    order.payment.currency = curr || order.payment.currency || order.totals.currency || "EUR";
+    order.payment.currency =
+      curr || order.payment.currency || order.totals.currency || "EUR";
     order.payment.amount =
-      price > 0 ? Number((price / 100).toFixed(2)) : order.payment.amount || order.totals.total || 0;
+      price > 0
+        ? Number((price / 100).toFixed(2))
+        : order.payment.amount || order.totals.total || 0;
     order.payment.rawCallback = payload;
 
     if (paymentStatus === "paid" && !order.payment.paidAt) {
       order.payment.paidAt = new Date();
     }
 
-    if (paymentStatus === "paid") {
-      if (order.status === "new") {
-        order.status = "confirmed";
-      }
+    if (paymentStatus === "paid" && order.status === "new") {
+      order.status = "confirmed";
     }
 
     if (paymentStatus === "cancelled") {
@@ -319,8 +441,21 @@ export const comgateCallback = async (req, res) => {
 
     await order.save();
 
+    if (paymentStatus === "paid") {
+      try {
+        await notifyPaidOrderOnce(order);
+      } catch (telegramError) {
+        console.error(
+          "Telegram notification failed for paid order:",
+          order._id,
+          telegramError
+        );
+      }
+    }
+
     return res.status(200).send("OK");
   } catch (error) {
+    console.error("Comgate callback error:", error);
     return res.status(500).send("ERROR");
   }
 };
@@ -470,7 +605,8 @@ export const updateOrder = async (req, res) => {
 
       if (order.payment) {
         order.payment.amount = totals.total;
-        order.payment.currency = totals.currency || order.payment.currency || "EUR";
+        order.payment.currency =
+          totals.currency || order.payment.currency || "EUR";
       }
     }
 
@@ -506,9 +642,29 @@ export const updateOrderStatus = async (req, res) => {
       if (paymentStatus === "paid" && !order.payment.paidAt) {
         order.payment.paidAt = new Date();
       }
+
+      if (paymentStatus === "cancelled") {
+        order.status = "cancelled";
+      }
+
+      if (paymentStatus === "paid" && order.status === "new") {
+        order.status = "confirmed";
+      }
     }
 
     await order.save();
+
+    if (paymentStatus === "paid") {
+      try {
+        await notifyPaidOrderOnce(order);
+      } catch (telegramError) {
+        console.error(
+          "Telegram notification failed for manual paid status:",
+          order._id,
+          telegramError
+        );
+      }
+    }
 
     return res.json({
       ok: true,
