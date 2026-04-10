@@ -127,7 +127,7 @@ const OrderForm = forwardRef(({ deliveryType, setDeliveryType, ...props }, ref) 
         surname: values.lastName,
         phone: cleanedPhone,
         email: values.email,
-        note: values.comment,
+        comment: values.comment,
         payment: { method: 'online' },
         items: cart.map((el) => {
           if (el?.kind === 'product') {
