@@ -83,6 +83,7 @@ const DeliverySchema = new mongoose.Schema(
     address: { type: String, default: "" },
     psc: { type: String, default: "" },
     note: { type: String, default: "" },
+    price: { type: Number, default: 0, min: 0 },
   },
   { _id: false }
 );
