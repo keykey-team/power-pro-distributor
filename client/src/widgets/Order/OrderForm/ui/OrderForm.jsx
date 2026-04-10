@@ -90,19 +90,36 @@ const OrderForm = forwardRef(({ deliveryType, setDeliveryType, ...props }, ref) 
       const cleanPhoneNumber = (phone) => phone.replace(/[^\d+]/g, '');
       const cleanedPhone = cleanPhoneNumber(values.phone);
 
-      // Формируем данные доставки
+      // --- НОВАЯ ЛОГИКА РАСЧЕТА СТОИМОСТИ ДОСТАВКИ ---
+      const totalCartPrice = cart.reduce((acc, item) => {
+        const price = Number(item?.price || 0);
+        const quantity = Number(item.quantity || 1);
+        return acc + price * quantity;
+      }, 0);
+
+      const isFreeDelivery = totalCartPrice >= 50;
+      let deliveryPrice = 0;
+
+      if (!isFreeDelivery) {
+        deliveryPrice = deliveryType === 'courier' ? 4.3 : 3.2;
+      }
+      // ------------------------------------------------
+
+      // Формируем данные доставки (добавляем price)
       const deliveryPayload = deliveryType === 'pickup'
         ? {
           country: selectedPoint.location.address.country,
           city: selectedPoint.location.address.city,
           address: selectedPoint.location.address.street,
           psc: selectedPoint.id,
+          price: deliveryPrice, // Отправляем цену доставки (0 или платную)
         }
         : {
           country: 'SK',
           city: values.city,
           address: values.street,
           psc: values.zip,
+          price: deliveryPrice, // Отправляем цену доставки (0 или платную)
         };
 
       const payload = {
@@ -277,7 +294,7 @@ const OrderForm = forwardRef(({ deliveryType, setDeliveryType, ...props }, ref) 
                     background: deliveryType === 'pickup' ? '#E41F25' : 'transparent',
                     cursor: 'pointer',
                     borderRadius: '20px',
-                   
+                    
                   }}
                 >
                   {t('order.delivery-pickup') || 'Na pobočku (DPD)'}
@@ -292,7 +309,7 @@ const OrderForm = forwardRef(({ deliveryType, setDeliveryType, ...props }, ref) 
                     background: deliveryType === 'courier' ? '#E41F25' : 'transparent',
                     cursor: 'pointer',
                     borderRadius: '20px',
-                   
+                    
                   }}
                 >
                   {t('order.delivery-courier') || 'Kuriérom'}

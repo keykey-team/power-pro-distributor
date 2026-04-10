@@ -2,20 +2,60 @@
 import { useModals } from '@shared/index';
 import { formatProductTitle } from '@widgets/ProductModal/lib/formatProductTitle';
 import Image from 'next/image';
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import ProductGallerySwiper from './ProductGallerySwiper';
 import { useI18n } from '@shared/i18n/use-i18n';
 
 const ProductModalContent = ({ product, locale }) => {
-    const { isModalOpen, setIsModalOpen, isProdModalId, setIsProdModalId } = useModals();
+    const { isModalOpen, setIsModalOpen } = useModals();
     const { firstPart, secondPart } = formatProductTitle(product?.title?.[locale]) || { firstPart: product?.subtitle?.[locale] || 'Product', secondPart: '' };
     const [cart, setCart] = useState([]);
-    const { t } = useI18n()
+    const { t } = useI18n();
 
-    // Состояние для выбранного варианта покупки. По умолчанию 'unit' (поштучно).
+    // === СТАРЫЙ ФОРМАТ ОПЦИЙ ===
     const [selectedMode, setSelectedMode] = useState('unit');
 
-    console.log(product, "prod-modal")
+    // === НОВЫЙ ФОРМАТ ОПЦИЙ (V2) ===
+    const [selectedV2Key, setSelectedV2Key] = useState('');
+    const [isSelectOpen, setIsSelectOpen] = useState(false); // Состояние открыт/закрыт селект
+    const selectRef = useRef(null); // Реф для отслеживания клика вне селекта
+
+    // Безопасное извлечение массива (без useMemo, чтобы всегда реагировало на свежий проп product)
+    const v2Data = product?.purchaseOptionsV2;
+    const v2Items = Array.isArray(v2Data?.items) 
+        ? v2Data.items.filter(item => item?.enabled) 
+        : [];
+    const hasV2Options = v2Items.length > 0;
+
+    // Закрытие кастомного селекта при клике вне его области
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (selectRef.current && !selectRef.current.contains(event.target)) {
+                setIsSelectOpen(false);
+            }
+        };
+
+        if (isSelectOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isSelectOpen]);
+
+    useEffect(() => {
+        if (hasV2Options && v2Items.length > 0) {
+            const defaultKey = v2Data?.defaultKey;
+            const isValidDefault = v2Items.some(item => item.key === defaultKey);
+            // Если текущий ключ пустой или его нет в новом списке — устанавливаем дефолтный
+            if (!selectedV2Key || !v2Items.some(item => item.key === selectedV2Key)) {
+                setSelectedV2Key(isValidDefault ? defaultKey : v2Items[0].key);
+            }
+        }
+    }, [product, hasV2Options, v2Items, v2Data?.defaultKey]);
+
+    // Текущая выбранная опция V2
+    const currentV2Option = v2Items.find(item => item.key === selectedV2Key) || v2Items[0];
 
     useEffect(() => {
         const loadCart = () => {
@@ -33,23 +73,27 @@ const ProductModalContent = ({ product, locale }) => {
         return () => window.removeEventListener('cartUpdated', loadCart);
     }, []);
 
-    // Достаем опции и вычисляем текущую цену
+    // Достаем старые опции (для товаров, у которых нет purchaseOptionsV2)
     const boxOptions = product?.purchaseOptions?.box;
     const unitOptions = product?.purchaseOptions?.unit;
     const isBoxEnabled = boxOptions?.enabled;
     const boxQuantity = boxOptions?.quantity || 1;
 
-    // Определяем цену в зависимости от выбранного мода (с фоллбэком на старую цену, если новых данных нет)
-    const currentPrice = selectedMode === 'unit'
-        ? (unitOptions?.price || product.price)
-        : (boxOptions?.price || product.price);
+    // Определяем цену в зависимости от выбранного мода (с фоллбэком на старую цену)
+    const currentPrice = hasV2Options
+        ? currentV2Option?.price
+        : (selectedMode === 'unit' ? (unitOptions?.price || product.price) : (boxOptions?.price || product.price));
 
     const handleAddToCart = (e) => {
         e.stopPropagation();
         try {
             const currentCart = JSON.parse(localStorage.getItem('cart') || '[]');
 
-            const compositeId = `${product._id}-${selectedMode}`;
+            // Формируем ID в зависимости от того, какая версия опций используется
+            const compositeId = hasV2Options
+                ? `${product._id}-${currentV2Option.key}`
+                : `${product._id}-${selectedMode}`;
+
             const existingItemIndex = currentCart.findIndex(item => item.productId === compositeId);
             let updatedCart;
 
@@ -60,9 +104,17 @@ const ProductModalContent = ({ product, locale }) => {
             } else {
                 // ТОВАРА НЕТ: Создаем новый объект
                 const baseName = product?.title?.[locale];
-                const nameWithQuantity = selectedMode === 'box'
-                    ? `${baseName} (Balenie ${boxQuantity} ks)`
-                    : baseName;
+                
+                // Формируем имя с учетом выбранной вариации
+                let nameWithQuantity = baseName;
+                if (hasV2Options) {
+                    const variantName = currentV2Option?.title?.[locale] || currentV2Option?.title?.en || currentV2Option.key;
+                    nameWithQuantity = `${baseName} (${variantName})`;
+                } else {
+                    nameWithQuantity = selectedMode === 'box'
+                        ? `${baseName} (Balenie ${boxQuantity} ks)`
+                        : baseName;
+                }
 
                 const cartItem = {
                     kind: 'product',
@@ -71,8 +123,9 @@ const ProductModalContent = ({ product, locale }) => {
                     baseProductId: product._id,
                     quantity: 1,
                     price: currentPrice,
-                    purchaseMode: selectedMode,
-                    itemsInPackage: selectedMode === 'unit' ? 1 : boxQuantity,
+                    purchaseMode: hasV2Options ? currentV2Option.mode : selectedMode,
+                    itemsInPackage: hasV2Options ? (currentV2Option.quantity || 1) : (selectedMode === 'unit' ? 1 : boxQuantity),
+                    v2Key: hasV2Options ? currentV2Option.key : undefined, // сохраняем ключ на всякий случай
                     product: product
                 };
                 updatedCart = [...currentCart, cartItem];
@@ -87,16 +140,73 @@ const ProductModalContent = ({ product, locale }) => {
         }
     };
 
-    // Проверяем наличие именно выбранной версии товара (штука/коробка)
+    // Проверяем наличие именно выбранной версии товара
     const isInCart = () => {
         if (!product?._id) return false;
-        return cart.some(item => item.productId === `${product._id}-${selectedMode}`);
+        const checkId = hasV2Options
+            ? `${product._id}-${currentV2Option?.key}`
+            : `${product._id}-${selectedMode}`;
+        return cart.some(item => item.productId === checkId);
     };
 
-    // НОВОЕ: Проверяем, есть ли хотя бы в одной строке данные для 60 грамм
     const has60gData = product?.nutritionTable?.rows?.some(
         (el) => el?.values?.per_60g?.text?.trim()
     );
+
+    // Функция рендера селекта V2
+    const renderV2Select = () => {
+        if (!hasV2Options) return null;
+        
+        const selectedTitle = currentV2Option 
+            ? (currentV2Option.title?.[locale] || currentV2Option.title?.en || currentV2Option.key) 
+            : 'Vyberte možnosť';
+
+        return (
+            <div className="prod-modal__custom-select" ref={selectRef}>
+                
+                {/* Триггер (видимая часть) */}
+                <div
+                    className="prod-modal__custom-select-trigger"
+                    onClick={() => setIsSelectOpen(!isSelectOpen)}
+                >
+                    <span>{selectedTitle} — € {currentV2Option?.price}</span>
+                    <svg 
+                        className={`prod-modal__custom-select-arrow ${isSelectOpen ? 'is-open' : ''}`}
+                        width="12" 
+                        height="12" 
+                        viewBox="0 0 12 12" 
+                        fill="none" 
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        <path d="M2.5 4.5L6 8L9.5 4.5" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                </div>
+
+                {/* Выпадающий список */}
+                {isSelectOpen && (
+                    <ul className="prod-modal__custom-select-list">
+                        {v2Items.map((item) => {
+                            const titleText = item.title?.[locale] || item.title?.en || item.key;
+                            const isSelected = item.key === selectedV2Key;
+                            
+                            return (
+                                <li 
+                                    key={item.key} 
+                                    className={`prod-modal__custom-select-item ${isSelected ? 'is-selected' : ''}`}
+                                    onClick={() => {
+                                        setSelectedV2Key(item.key);
+                                        setIsSelectOpen(false); // Закрываем список после выбора
+                                    }}
+                                >
+                                    {titleText} — € {item.price}
+                                </li>
+                            );
+                        })}
+                    </ul>
+                )}
+            </div>
+        );
+    };
 
     return (
         <>
@@ -113,6 +223,8 @@ const ProductModalContent = ({ product, locale }) => {
                         <div className="prod-modal-mobile">
                             <p className='prod-modal__data-title'>{firstPart}<b> {secondPart}</b></p>
                             <p className='prod-modal__data-description'>{product?.subtitle?.[locale]}</p>
+                            {/* Выводим селект для мобильной версии, если есть опции V2 */}
+                            {renderV2Select()}
                         </div>
 
                         <button className="prod-modal__close" onClick={() => setIsModalOpen(null)}>
@@ -139,18 +251,18 @@ const ProductModalContent = ({ product, locale }) => {
 
                         <div className="prod-modal__data">
                             <p className='prod-modal__data-title'>{firstPart}<b> {secondPart}</b></p>
-                            {/* <p className='prod-modal__data-description'>FitWin tyčinka s náplňou. Obsahuje sladidlo. (60 g)</p> */}
                             <p className='prod-modal__data-subtitle'>{product?.nutritionTable?.title?.[locale]}</p>
 
+                            {/* Выводим селект для десктопной версии, если есть опции V2 */}
+                            {renderV2Select()}
+
                             {product?.type !== "box" && (<ul className="prod-modal__data-list">
-                                {/* Заголовок таблицы */}
                                 <li className={`prod-modal__data-item for-title ${!has60gData ? 'two-columns' : ''}`}>
                                     <p>Parameter</p>
                                     {has60gData && <p>NA 60G</p>}
                                     <p>NA 100G</p>
                                 </li>
 
-                                {/* Строки таблицы */}
                                 {product?.nutritionTable?.rows?.map((el, index) => (
                                     <li key={index} className={`prod-modal__data-item ${!has60gData ? 'two-columns' : ''}`}>
                                         <p>{el?.label?.[locale]}</p>
@@ -162,51 +274,41 @@ const ProductModalContent = ({ product, locale }) => {
                                 ))}
                             </ul>)}
 
-
-
                             <p className='prod-modal__data-subtitle bottom'>Zloženie</p>
-                            {product?.type === "box" ? (
-                                <p
-                                    className='prod-modal__data-description bottom'
-                                    style={{ whiteSpace: "pre-line" }}
-                                >
-                                    {product?.description?.[locale]}
-                                </p>
-                            ) : (
-                                <p
-                                    className='prod-modal__data-description bottom'
-                                    style={{ whiteSpace: "pre-line" }}
-                                >
-                                    {product?.ingredients?.[locale]}
-                                </p>
-                            )}
+                            <p
+                                className='prod-modal__data-description bottom'
+                                style={{ whiteSpace: "pre-line" }}
+                            >
+                                {product?.type === "box" ? product?.description?.[locale] : product?.ingredients?.[locale]}
+                            </p>
                         </div>
                     </div>
 
-                    {(product?.type !== "box" && isBoxEnabled) && (<div className="prod-modal__main-quantity">
-                        <p className='quantity-title'>{t("quant.title")}</p>
-                        <div className="prod-modal__main-quantity-btns">
-                            <button
-                                className={`prod-modal__main-quantity-btn ${selectedMode === 'unit' ? 'active' : ''}`}
-                                onClick={() => setSelectedMode('unit')}
-                            >
-                                <p>1</p>
-                                <p className='q'>{t("quant.q")}</p>
-                            </button>
-
-                            {isBoxEnabled && (
+                    {/* Показываем старые кнопки ТОЛЬКО если нет новых опций V2 */}
+                    {(!hasV2Options && product?.type !== "box" && isBoxEnabled) && (
+                        <div className="prod-modal__main-quantity">
+                            <p className='quantity-title'>{t("quant.title")}</p>
+                            <div className="prod-modal__main-quantity-btns">
                                 <button
-                                    className={`prod-modal__main-quantity-btn ${selectedMode === 'box' ? 'active' : ''}`}
-                                    onClick={() => setSelectedMode('box')}
+                                    className={`prod-modal__main-quantity-btn ${selectedMode === 'unit' ? 'active' : ''}`}
+                                    onClick={() => setSelectedMode('unit')}
                                 >
-                                    <p>{boxQuantity}</p>
+                                    <p>1</p>
                                     <p className='q'>{t("quant.q")}</p>
                                 </button>
-                            )}
+
+                                {isBoxEnabled && (
+                                    <button
+                                        className={`prod-modal__main-quantity-btn ${selectedMode === 'box' ? 'active' : ''}`}
+                                        onClick={() => setSelectedMode('box')}
+                                    >
+                                        <p>{boxQuantity}</p>
+                                        <p className='q'>{t("quant.q")}</p>
+                                    </button>
+                                )}
+                            </div>
                         </div>
-                    </div>)}
-
-
+                    )}
 
                     <div className="prod-modal__main-btn">
                         <button

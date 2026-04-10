@@ -496,3 +496,97 @@
         font-size: 16px;
     }
 }
+.prod-modal__custom-select {
+    position: relative;
+    width: 100%;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    // Видимая часть (кнопка)
+    &-trigger {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        padding: 24px;
+        color: var(--White, var(--color-grey-100, #FEFEFE));
+        text-align: center;
+        font-family: Unbounded;
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 600;
+        line-height: normal;
+        cursor: pointer;
+        color: #ffffff;
+        border-radius: 15px;
+        border: 2px solid rgba(107, 114, 128, 0.50);
+        background: rgba(21, 21, 21, 0.50);
+        transition: border-color 0.2s ease, background-color 0.2s ease;
+        &:hover {
+            border-color: #FFED00;
+        }
+    }
+    // Иконка стрелочки
+    &-arrow {
+        transition: transform 0.2s ease;
+        &.is-open {
+            transform: rotate(180deg);
+        }
+    }
+    // Выпадающий список
+    &-list {
+        position: absolute;
+        top: 105%;
+        left: 0;
+        right: 0;
+        z-index: 50;
+        margin-top: 4px;
+        padding: 0;
+        list-style: none;
+        border-radius: 15px;
+        border: 2px solid rgba(107, 114, 128, 0.50);
+        background: #0D0D0D;
+        z-index: 1000;
+        max-height: 200px;
+        overflow-y: auto;
+        // Стилизация скроллбара (по желанию)
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+        &::-webkit-scrollbar-thumb {
+            background-color: #d1d5db;
+            border-radius: 4px;
+        }
+    }
+    // Элемент списка
+    &-item {
+        padding: 14px 22px;
+        cursor: pointer;
+        color: #000;
+        font-size: 15px;
+        transition: background-color 0.2s ease;
+        color: var(--Gray, #6B7280);
+        font-family: Unbounded;
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 500;
+        line-height: normal;
+        background: #0D0D0D;
+        &:last-child {
+            border-bottom: none;
+        }
+        &:hover {
+            background: rgba(107, 114, 128, 0.30);
+            color: white;
+        }
+        // Состояние выбранного элемента
+        &.is-selected {
+            background: rgba(255, 237, 0, 0.30);
+            color: var(--Accent-color-2, #FFED00);
+            font-weight: 500;
+            &:hover {
+                background: rgba(255, 237, 0, 0.30);
+            color: var(--Accent-color-2, #FFED00);
+            }
+        }
+    }
+}
