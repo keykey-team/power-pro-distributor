@@ -141,8 +141,9 @@
     "title": "Select box size:",
     "q": "PCS"
   },
-  "cart1": "V zozname",
-  "cart2": "Pridať do výberu",
+   "cart1": "In list",
+  "cart2": "Add to selection",
+  
   "footer": {
     "description": "We create fuel for your success. No compromises, only results.",
     "nav": {
