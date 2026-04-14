@@ -134,15 +134,15 @@
       "phone": "+421 ___ ___ ___",
       "comment": "Napíšte nám vašu správu alebo špeciálne požiadavky..."
     },
-    "delivery-courier":"Kuriérome",
-    "delivery-pickup":"Na pobočku (DPD)"
+    "delivery-courier": "Kuriérome",
+    "delivery-pickup": "Na pobočku (DPD)"
   },
   "quant": {
     "title": "Vyberte veľkosť boxu:",
     "q": "KUS"
   },
-  "cart1": "In list",
-  "cart2": "Add to selection",
+  "cart1": "V zozname",
+  "cart2": "Pridať do výberu",
   "footer": {
     "description": "Vytvárame palivo pre vaše úspechy. Žiadne kompromisy, len výsledky.",
     "nav": {
