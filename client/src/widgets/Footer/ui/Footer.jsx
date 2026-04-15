@@ -78,10 +78,10 @@ export function Footer() {
                     <div className="footer__list">
                         <p>{t('footer.nav.title')}</p>
                         <ul>
-                            <li onClick={() => scrollToElement(locale,"prev")}>{t('footer.nav.about')}</li>
-                            <li onClick={() => scrollToElement(locale,"partners")}>{t('footer.nav.partners')}</li>
-                            <li onClick={() => scrollToElement(locale,"prods")}>{t('footer.nav.products')}</li>
-                            <li onClick={() => scrollToElement(locale,"order-form")}>{t('footer.nav.contact')}</li>
+                            <li onClick={() => scrollToElement(locale, "prev")}>{t('footer.nav.about')}</li>
+                            <li onClick={() => scrollToElement(locale, "partners")}>{t('footer.nav.partners')}</li>
+                            <li onClick={() => scrollToElement(locale, "prods")}>{t('footer.nav.products')}</li>
+                            <li onClick={() => scrollToElement(locale, "order-form")}>{t('footer.nav.contact')}</li>
                         </ul>
                     </div>
                     <div className="footer__list">
@@ -98,46 +98,51 @@ export function Footer() {
                 </div>
             </div>
             <div className="footer__under">
-               <div className="footer__under-cont container">
+                <div className="footer__under-cont container">
                     <p>© 2026 SportNutrition. {t('footer.bottom.rights')}</p>
                     <ul>
                         <li>
-                            <a 
-                                href="/pdf/1. VŠEOBECNÉ OBCHODNÉ PODMIENKY.pdf" 
-                                target="_blank" 
+                            <a
+                                href="/pdf/1. VŠEOBECNÉ OBCHODNÉ PODMIENKY.pdf"
+                                target="_blank"
                                 rel="noopener noreferrer"
                             >
-                              VŠEOBECNÉ OBCHODNÉ PODMIENKY
+                                VŠEOBECNÉ OBCHODNÉ PODMIENKY
                             </a>
                         </li>
                         <li>
-                            <a 
-                                href="/pdf/2. DODACIE A PLATOBNÉ PODMIENKY.pdf" 
-                                target="_blank" 
+                            <a
+                                href="/pdf/2. DODACIE A PLATOBNÉ PODMIENKY.pdf"
+                                target="_blank"
                                 rel="noopener noreferrer"
                             >
                                 DODACIE A PLATOBNÉ PODMIENKY
                             </a>
                         </li>
                         <li>
-                            <a 
-                                href="/pdf/3. REKLAMAČNÉ PODMIENKY.pdf" 
-                                target="_blank" 
+                            <a
+                                href="/pdf/3. REKLAMAČNÉ PODMIENKY.pdf"
+                                target="_blank"
                                 rel="noopener noreferrer"
                             >
-                               REKLAMAČNÉ PODMIENKY
+                                REKLAMAČNÉ PODMIENKY
                             </a>
                         </li>
                         <li>
-                            <a 
-                                href="/pdf/4. OCHRANA OSOBNÝCH ÚDAJOV.pdf" 
-                                target="_blank" 
+                            <a
+                                href="/pdf/4. OCHRANA OSOBNÝCH ÚDAJOV.pdf"
+                                target="_blank"
                                 rel="noopener noreferrer"
                             >
                                 OCHRANA OSOBNÝCH ÚDAJOV
                             </a>
                         </li>
                     </ul>
+                </div>
+                <div className="footer__under-cont center container">
+                    <p>
+                       <a href="https://www.instagram.com/key_key_ua?igsh=MXNjMjBhZzRqNGJsdg%3D%3D" target="_blank" rel="noopener noreferrer">Vývoj a podpora webových stránok: KeyKey</a>
+                    </p>
                 </div>
             </div>
         </footer>
