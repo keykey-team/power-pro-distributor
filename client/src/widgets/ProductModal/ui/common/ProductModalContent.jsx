@@ -1,16 +1,43 @@
 'use client'
 import { useModals } from '@shared/index';
-import { formatProductTitle } from '@widgets/ProductModal/lib/formatProductTitle';
+// Если formatProductTitle больше нигде не нужен, этот импорт можно удалить
+// import { formatProductTitle } from '@widgets/ProductModal/lib/formatProductTitle';
 import Image from 'next/image';
 import React, { useState, useEffect, useRef } from 'react'
 import ProductGallerySwiper from './ProductGallerySwiper';
 import { useI18n } from '@shared/i18n/use-i18n';
 
+// Вспомогательная функция для разделения строки по словам "s" или "with"
+const splitTitleByFlavor = (title) => {
+    if (!title) return { firstPart: '', secondPart: '' };
+    
+    // Регулярное выражение ищет "s" или "with" как отдельные слова (с учетом пробелов вокруг)
+    // (.*?) - всё до слова
+    // (?:^|\s)(s|with)(?:\s) - само слово "s" или "with"
+    // (.*) - всё после слова (вкусы)
+    const regex = /(.*?)(?:^|\s)(s|with)(?:\s)(.*)/i;
+    const match = title.match(regex);
+    
+    if (match) {
+        return {
+            firstPart: `${match[1]} ${match[2]} `.trimStart(), // Например: "Product s "
+            secondPart: match[3] // Например: "pistáciovou pastou..."
+        };
+    }
+    
+    return { firstPart: title, secondPart: '' };
+};
+
 const ProductModalContent = ({ product, locale }) => {
     const { isModalOpen, setIsModalOpen } = useModals();
-    const { firstPart, secondPart } = formatProductTitle(product?.title?.[locale]) || { firstPart: product?.subtitle?.[locale] || 'Product', secondPart: '' };
+    
+    // Используем нашу новую функцию для разбивки названия
+    const rawTitle = product?.title?.[locale] || product?.subtitle?.[locale] || 'Product';
+    const { firstPart, secondPart } = splitTitleByFlavor(rawTitle);
+    
     const [cart, setCart] = useState([]);
     const { t } = useI18n();
+    console.log('Рендер ProductModalContent, продукт:', product);
 
     // === СТАРЫЙ ФОРМАТ ОПЦИЙ ===
     const [selectedMode, setSelectedMode] = useState('unit');
@@ -221,7 +248,10 @@ const ProductModalContent = ({ product, locale }) => {
                 <div className='prod-modal'>
                     <div className="prod-modal__content">
                         <div className="prod-modal-mobile">
-                            <p className='prod-modal__data-title'>{firstPart}<b> {secondPart}</b></p>
+                            <p className='prod-modal__data-title'>
+                                {firstPart}
+                                {secondPart && <b style={{ color: "red" }}>{secondPart}</b>}
+                            </p>
                             <p className='prod-modal__data-description'>{product?.subtitle?.[locale]}</p>
                             {/* Выводим селект для мобильной версии, если есть опции V2 */}
                             {renderV2Select()}
@@ -250,7 +280,10 @@ const ProductModalContent = ({ product, locale }) => {
                         </div>
 
                         <div className="prod-modal__data">
-                            <p className='prod-modal__data-title'>{firstPart}<b> {secondPart}</b></p>
+                            <p className='prod-modal__data-title'>
+                                {firstPart}
+                                {secondPart && <b style={{ color: "red" }}>{secondPart}</b>}
+                            </p>
                             <p className='prod-modal__data-subtitle'>{product?.nutritionTable?.title?.[locale]}</p>
 
                             {/* Выводим селект для десктопной версии, если есть опции V2 */}
