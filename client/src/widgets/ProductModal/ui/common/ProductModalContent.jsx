@@ -1,112 +1,97 @@
 'use client'
 import { useModals } from '@shared/index';
-// Если formatProductTitle больше нигде не нужен, этот импорт можно удалить
-// import { formatProductTitle } from '@widgets/ProductModal/lib/formatProductTitle';
 import Image from 'next/image';
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import ProductGallerySwiper from './ProductGallerySwiper';
 import { useI18n } from '@shared/i18n/use-i18n';
 
-// Вспомогательная функция для разделения строки по словам "s" или "with"
 const splitTitleByFlavor = (title) => {
     if (!title) return { firstPart: '', secondPart: '' };
-    
-    // Регулярное выражение ищет "s" или "with" как отдельные слова (с учетом пробелов вокруг)
-    // (.*?) - всё до слова
-    // (?:^|\s)(s|with)(?:\s) - само слово "s" или "with"
-    // (.*) - всё после слова (вкусы)
     const regex = /(.*?)(?:^|\s)(s|with)(?:\s)(.*)/i;
     const match = title.match(regex);
-    
     if (match) {
         return {
-            firstPart: `${match[1]} ${match[2]} `.trimStart(), // Например: "Product s "
-            secondPart: match[3] // Например: "pistáciovou pastou..."
+            firstPart: `${match[1]} ${match[2]} `.trimStart(),
+            secondPart: match[3]
         };
     }
-    
     return { firstPart: title, secondPart: '' };
 };
 
 const ProductModalContent = ({ product, locale }) => {
     const { isModalOpen, setIsModalOpen } = useModals();
+    const { t } = useI18n();
     
-    // Используем нашу новую функцию для разбивки названия
     const rawTitle = product?.title?.[locale] || product?.subtitle?.[locale] || 'Product';
     const { firstPart, secondPart } = splitTitleByFlavor(rawTitle);
     
     const [cart, setCart] = useState([]);
-    const { t } = useI18n();
-    console.log('Рендер ProductModalContent, продукт:', product);
-
-    // === СТАРЫЙ ФОРМАТ ОПЦИЙ ===
     const [selectedMode, setSelectedMode] = useState('unit');
-
-    // === НОВЫЙ ФОРМАТ ОПЦИЙ (V2) ===
     const [selectedV2Key, setSelectedV2Key] = useState('');
-    const [isSelectOpen, setIsSelectOpen] = useState(false); // Состояние открыт/закрыт селект
-    const selectRef = useRef(null); // Реф для отслеживания клика вне селекта
+    const [isSelectOpen, setIsSelectOpen] = useState(false); 
+    const selectRef = useRef(null);
 
-    // Безопасное извлечение массива (без useMemo, чтобы всегда реагировало на свежий проп product)
     const v2Data = product?.purchaseOptionsV2;
-    const v2Items = Array.isArray(v2Data?.items) 
-        ? v2Data.items.filter(item => item?.enabled) 
-        : [];
+    const v2Items = useMemo(() => 
+        Array.isArray(v2Data?.items) ? v2Data.items.filter(item => item?.enabled) : [], 
+    [v2Data]);
+    
     const hasV2Options = v2Items.length > 0;
+    const currentV2Option = v2Items.find(item => item.key === selectedV2Key) || v2Items[0];
 
-    // Закрытие кастомного селекта при клике вне его области
+    // === ЛОГИКА ПОДГОТОВКИ ГАЛЕРЕИ ===
+    const activeGallery = useMemo(() => {
+        // 1. Пытаемся взять картинки из выбранной вариации
+        const variantImages = currentV2Option?.images;
+
+        if (variantImages && variantImages.length > 0) {
+            // Если в массиве объекты { url: '...' }, преобразуем их в массив строк (если Swiper ждет строки)
+            // Если Swiper сам умеет работать с .url, можно оставить просто variantImages
+            return variantImages.map(img => typeof img === 'string' ? img : img.url);
+        }
+
+        // 2. Если у вариации нет фото, берем общую галерею продукта
+        // Тоже приводим к единообразному виду (массив строк URL)
+        return product?.gallery?.map(img => typeof img === 'string' ? img : img.url) || [];
+    }, [currentV2Option, product?.gallery]);
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (selectRef.current && !selectRef.current.contains(event.target)) {
                 setIsSelectOpen(false);
             }
         };
-
-        if (isSelectOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
+        if (isSelectOpen) document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [isSelectOpen]);
 
     useEffect(() => {
         if (hasV2Options && v2Items.length > 0) {
             const defaultKey = v2Data?.defaultKey;
             const isValidDefault = v2Items.some(item => item.key === defaultKey);
-            // Если текущий ключ пустой или его нет в новом списке — устанавливаем дефолтный
             if (!selectedV2Key || !v2Items.some(item => item.key === selectedV2Key)) {
                 setSelectedV2Key(isValidDefault ? defaultKey : v2Items[0].key);
             }
         }
-    }, [product, hasV2Options, v2Items, v2Data?.defaultKey]);
-
-    // Текущая выбранная опция V2
-    const currentV2Option = v2Items.find(item => item.key === selectedV2Key) || v2Items[0];
+    }, [product?._id, hasV2Options, v2Items, v2Data?.defaultKey]);
 
     useEffect(() => {
         const loadCart = () => {
             try {
                 const storedCart = JSON.parse(localStorage.getItem('cart') || '[]');
                 setCart(storedCart);
-            } catch (error) {
-                console.error('Ошибка загрузки корзины:', error);
-                setCart([]);
-            }
+            } catch (e) { setCart([]); }
         };
-
         loadCart();
         window.addEventListener('cartUpdated', loadCart);
         return () => window.removeEventListener('cartUpdated', loadCart);
     }, []);
 
-    // Достаем старые опции (для товаров, у которых нет purchaseOptionsV2)
     const boxOptions = product?.purchaseOptions?.box;
     const unitOptions = product?.purchaseOptions?.unit;
     const isBoxEnabled = boxOptions?.enabled;
     const boxQuantity = boxOptions?.quantity || 1;
 
-    // Определяем цену в зависимости от выбранного мода (с фоллбэком на старую цену)
     const currentPrice = hasV2Options
         ? currentV2Option?.price
         : (selectedMode === 'unit' ? (unitOptions?.price || product.price) : (boxOptions?.price || product.price));
@@ -115,35 +100,18 @@ const ProductModalContent = ({ product, locale }) => {
         e.stopPropagation();
         try {
             const currentCart = JSON.parse(localStorage.getItem('cart') || '[]');
-
-            // Формируем ID в зависимости от того, какая версия опций используется
-            const compositeId = hasV2Options
-                ? `${product._id}-${currentV2Option.key}`
-                : `${product._id}-${selectedMode}`;
-
+            const compositeId = hasV2Options ? `${product._id}-${currentV2Option.key}` : `${product._id}-${selectedMode}`;
             const existingItemIndex = currentCart.findIndex(item => item.productId === compositeId);
-            let updatedCart;
-
+            
             if (existingItemIndex >= 0) {
-                // ТОВАР УЖЕ ЕСТЬ: Увеличиваем количество
-                updatedCart = [...currentCart];
-                updatedCart[existingItemIndex].quantity += 1;
+                currentCart[existingItemIndex].quantity += 1;
             } else {
-                // ТОВАРА НЕТ: Создаем новый объект
                 const baseName = product?.title?.[locale];
-                
-                // Формируем имя с учетом выбранной вариации
-                let nameWithQuantity = baseName;
-                if (hasV2Options) {
-                    const variantName = currentV2Option?.title?.[locale] || currentV2Option?.title?.en || currentV2Option.key;
-                    nameWithQuantity = `${baseName} (${variantName})`;
-                } else {
-                    nameWithQuantity = selectedMode === 'box'
-                        ? `${baseName} (Balenie ${boxQuantity} ks)`
-                        : baseName;
-                }
+                let nameWithQuantity = hasV2Options 
+                    ? `${baseName} (${currentV2Option?.title?.[locale] || currentV2Option.key})`
+                    : (selectedMode === 'box' ? `${baseName} (Balenie ${boxQuantity} ks)` : baseName);
 
-                const cartItem = {
+                currentCart.push({
                     kind: 'product',
                     name: nameWithQuantity,
                     productId: compositeId,
@@ -152,83 +120,39 @@ const ProductModalContent = ({ product, locale }) => {
                     price: currentPrice,
                     purchaseMode: hasV2Options ? currentV2Option.mode : selectedMode,
                     itemsInPackage: hasV2Options ? (currentV2Option.quantity || 1) : (selectedMode === 'unit' ? 1 : boxQuantity),
-                    v2Key: hasV2Options ? currentV2Option.key : undefined, // сохраняем ключ на всякий случай
                     product: product
-                };
-                updatedCart = [...currentCart, cartItem];
+                });
             }
-
-            localStorage.setItem('cart', JSON.stringify(updatedCart));
-            setCart(updatedCart);
+            localStorage.setItem('cart', JSON.stringify(currentCart));
+            setCart([...currentCart]);
             window.dispatchEvent(new Event('cartUpdated'));
-        } catch (error) {
-            console.error('Ошибка при добавлении в корзину:', error);
-            alert('Не удалось добавить товар');
-        }
+        } catch (error) { console.error(error); }
     };
 
-    // Проверяем наличие именно выбранной версии товара
     const isInCart = () => {
-        if (!product?._id) return false;
-        const checkId = hasV2Options
-            ? `${product._id}-${currentV2Option?.key}`
-            : `${product._id}-${selectedMode}`;
+        const checkId = hasV2Options ? `${product?._id}-${currentV2Option?.key}` : `${product?._id}-${selectedMode}`;
         return cart.some(item => item.productId === checkId);
     };
 
-    const has60gData = product?.nutritionTable?.rows?.some(
-        (el) => el?.values?.per_60g?.text?.trim()
-    );
-
-    // Функция рендера селекта V2
     const renderV2Select = () => {
         if (!hasV2Options) return null;
-        
-        const selectedTitle = currentV2Option 
-            ? (currentV2Option.title?.[locale] || currentV2Option.title?.en || currentV2Option.key) 
-            : 'Vyberte možnosť';
-
+        const selectedTitle = currentV2Option?.title?.[locale] || currentV2Option?.key || 'Vyberte';
         return (
             <div className="prod-modal__custom-select" ref={selectRef}>
-                
-                {/* Триггер (видимая часть) */}
-                <div
-                    className="prod-modal__custom-select-trigger"
-                    onClick={() => setIsSelectOpen(!isSelectOpen)}
-                >
+                <div className="prod-modal__custom-select-trigger" onClick={() => setIsSelectOpen(!isSelectOpen)}>
                     <span>{selectedTitle} — € {currentV2Option?.price}</span>
-                    <svg 
-                        className={`prod-modal__custom-select-arrow ${isSelectOpen ? 'is-open' : ''}`}
-                        width="12" 
-                        height="12" 
-                        viewBox="0 0 12 12" 
-                        fill="none" 
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
+                    <svg className={`prod-modal__custom-select-arrow ${isSelectOpen ? 'is-open' : ''}`} width="12" height="12" viewBox="0 0 12 12" fill="none">
                         <path d="M2.5 4.5L6 8L9.5 4.5" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                 </div>
-
-                {/* Выпадающий список */}
                 {isSelectOpen && (
                     <ul className="prod-modal__custom-select-list">
-                        {v2Items.map((item) => {
-                            const titleText = item.title?.[locale] || item.title?.en || item.key;
-                            const isSelected = item.key === selectedV2Key;
-                            
-                            return (
-                                <li 
-                                    key={item.key} 
-                                    className={`prod-modal__custom-select-item ${isSelected ? 'is-selected' : ''}`}
-                                    onClick={() => {
-                                        setSelectedV2Key(item.key);
-                                        setIsSelectOpen(false); // Закрываем список после выбора
-                                    }}
-                                >
-                                    {titleText} — € {item.price}
-                                </li>
-                            );
-                        })}
+                        {v2Items.map((item) => (
+                            <li key={item.key} className={`prod-modal__custom-select-item ${item.key === selectedV2Key ? 'is-selected' : ''}`}
+                                onClick={() => { setSelectedV2Key(item.key); setIsSelectOpen(false); }}>
+                                {item.title?.[locale] || item.key} — € {item.price}
+                            </li>
+                        ))}
                     </ul>
                 )}
             </div>
@@ -237,124 +161,84 @@ const ProductModalContent = ({ product, locale }) => {
 
     return (
         <>
-            {(isModalOpen === "prod-modal") && (
-                <div
-                    onClick={() => setIsModalOpen(null)}
-                    className="overlay item"
-                />
-            )}
-
-            {(isModalOpen === "prod-modal") && (
+            {isModalOpen === "prod-modal" && <div onClick={() => setIsModalOpen(null)} className="overlay item" />}
+            {isModalOpen === "prod-modal" && (
                 <div className='prod-modal'>
                     <div className="prod-modal__content">
                         <div className="prod-modal-mobile">
-                            <p className='prod-modal__data-title'>
-                                {firstPart}
-                                {secondPart && <b style={{ color: "red" }}>{secondPart}</b>}
-                            </p>
+                            <p className='prod-modal__data-title'>{firstPart} {secondPart && <b style={{ color: "red" }}>{secondPart}</b>}</p>
                             <p className='prod-modal__data-description'>{product?.subtitle?.[locale]}</p>
-                            {/* Выводим селект для мобильной версии, если есть опции V2 */}
                             {renderV2Select()}
                         </div>
 
                         <button className="prod-modal__close" onClick={() => setIsModalOpen(null)}>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 25 25" fill="none">
-                                <path fillRule="evenodd" clipRule="evenodd" d="M12.5209 14.8793L22.1233 24.4818C22.4435 24.791 22.8722 24.9621 23.3173 24.9582C23.7624 24.9543 24.1881 24.7758 24.5028 24.4611C24.8176 24.1464 24.9961 23.7206 24.9999 23.2756C25.0038 22.8305 24.8327 22.4017 24.5235 22.0816L14.921 12.4791L24.5235 2.87668C24.8327 2.55654 25.0038 2.12776 24.9999 1.6827C24.9961 1.23763 24.8176 0.811892 24.5028 0.497171C24.1881 0.182451 23.7624 0.00393166 23.3173 6.4168e-05C22.8722 -0.00380333 22.4435 0.16729 22.1233 0.476493L12.5209 10.079L2.9184 0.476493C2.59682 0.174933 2.17053 0.0103159 1.72973 0.0174737C1.28893 0.0246315 0.868211 0.203003 0.556589 0.514845C0.244967 0.826688 0.0668927 1.24753 0.0600467 1.68834C0.0532008 2.12914 0.21812 2.55531 0.519907 2.87668L10.1207 12.4791L0.51821 22.0816C0.356087 22.2382 0.226772 22.4255 0.13781 22.6326C0.0488489 22.8397 0.00202263 23.0624 6.40906e-05 23.2878C-0.00189445 23.5132 0.0410535 23.7367 0.126403 23.9453C0.211752 24.1539 0.337793 24.3435 0.49717 24.5028C0.656548 24.6622 0.846072 24.7882 1.05468 24.8736C1.26329 24.9589 1.48681 25.0019 1.7122 24.9999C1.93758 24.998 2.16032 24.9512 2.36742 24.8622C2.57451 24.7732 2.76182 24.6439 2.9184 24.4818L12.5209 14.8793Z" fill="#6B7280" />
-                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 25 25" fill="none"><path d="M12.5209 14.8793L22.1233 24.4818C22.4435 24.791 22.8722 24.9621 23.3173 24.9582C23.7624 24.9543 24.1881 24.7758 24.5028 24.4611C24.8176 24.1464 24.9961 23.7206 24.9999 23.2756C25.0038 22.8305 24.8327 22.4017 24.5235 22.0816L14.921 12.4791L24.5235 2.87668C24.8327 2.55654 25.0038 2.12776 24.9999 1.6827C24.9961 1.23763 24.8176 0.811892 24.5028 0.497171C24.1881 0.182451 23.7624 0.00393166 23.3173 6.4168e-05C22.8722 -0.00380333 22.4435 0.16729 22.1233 0.476493L12.5209 10.079L2.9184 0.476493C2.59682 0.174933 2.17053 0.0103159 1.72973 0.0174737C1.28893 0.0246315 0.868211 0.203003 0.556589 0.514845C0.244967 0.826688 0.0668927 1.24753 0.0600467 1.68834C0.0532008 2.12914 0.21812 2.55531 0.519907 2.87668L10.1207 12.4791L0.51821 22.0816C0.356087 22.2382 0.226772 22.4255 0.13781 22.6326C0.0488489 22.8397 0.00202263 23.0624 6.40906e-05 23.2878C-0.00189445 23.5132 0.0410535 23.7367 0.126403 23.9453C0.211752 24.1539 0.337793 24.3435 0.49717 24.5028C0.656548 24.6622 0.846072 24.7882 1.05468 24.8736C1.26329 24.9589 1.48681 25.0019 1.7122 24.9999C1.93758 24.998 2.16032 24.9512 2.36742 24.8622C2.57451 24.7732 2.76182 24.6439 2.9184 24.4818L12.5209 14.8793Z" fill="#6B7280" /></svg>
                         </button>
 
                         <div className="prod-modal__preview">
                             <div className="prod-modal__preview-img">
                                 <ProductGallerySwiper
-                                    images={product.gallery}
-                                    productTitle={product.title?.[locale]}
+                                    key={selectedV2Key || 'default'} 
+                                    images={activeGallery}
+                                    productTitle={product?.title?.[locale]}
                                 />
                             </div>
                             <ul className="prod-modal__preview-stats">
                                 {product?.features?.[locale]?.map((prod, index) => (
-                                    <li key={index} className="prod-modal__preview-stats-item">
-                                        <p>{prod}</p>
-                                    </li>
+                                    <li key={index} className="prod-modal__preview-stats-item"><p>{prod}</p></li>
                                 ))}
                             </ul>
                         </div>
 
                         <div className="prod-modal__data">
-                            <p className='prod-modal__data-title'>
-                                {firstPart}
-                                {secondPart && <b style={{ color: "red" }}>{secondPart}</b>}
-                            </p>
+                            <p className='prod-modal__data-title'>{firstPart} {secondPart && <b style={{ color: "red" }}>{secondPart}</b>}</p>
                             <p className='prod-modal__data-subtitle'>{product?.nutritionTable?.title?.[locale]}</p>
-
-                            {/* Выводим селект для десктопной версии, если есть опции V2 */}
                             {renderV2Select()}
 
-                            {product?.type !== "box" && (<ul className="prod-modal__data-list">
-                                <li className={`prod-modal__data-item for-title ${!has60gData ? 'two-columns' : ''}`}>
-                                    <p>Parameter</p>
-                                    {has60gData && <p>NA 60G</p>}
-                                    <p>NA 100G</p>
-                                </li>
-
-                                {product?.nutritionTable?.rows?.map((el, index) => (
-                                    <li key={index} className={`prod-modal__data-item ${!has60gData ? 'two-columns' : ''}`}>
-                                        <p>{el?.label?.[locale]}</p>
-                                        {has60gData && (
-                                            <p>{el?.values?.per_60g?.text?.trim() || "-"}</p>
-                                        )}
-                                        <p>{el?.values?.per_100g?.text?.trim() || "-"}</p>
+                            {product?.type !== "box" && (
+                                <ul className="prod-modal__data-list">
+                                    <li className="prod-modal__data-item for-title">
+                                        <p>Parameter</p>
+                                        {product?.nutritionTable?.rows?.some(r => r?.values?.per_60g?.text) && <p>NA 60G</p>}
+                                        <p>NA 100G</p>
                                     </li>
-                                ))}
-                            </ul>)}
-
+                                    {product?.nutritionTable?.rows?.map((el, index) => (
+                                        <li key={index} className="prod-modal__data-item">
+                                            <p>{el?.label?.[locale]}</p>
+                                            {product?.nutritionTable?.rows?.some(r => r?.values?.per_60g?.text) && (
+                                                <p>{el?.values?.per_60g?.text?.trim() || "-"}</p>
+                                            )}
+                                            <p>{el?.values?.per_100g?.text?.trim() || "-"}</p>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                             <p className='prod-modal__data-subtitle bottom'>Zloženie</p>
-                            <p
-                                className='prod-modal__data-description bottom'
-                                style={{ whiteSpace: "pre-line" }}
-                            >
+                            <p className='prod-modal__data-description bottom' style={{ whiteSpace: "pre-line" }}>
                                 {product?.type === "box" ? product?.description?.[locale] : product?.ingredients?.[locale]}
                             </p>
                         </div>
                     </div>
 
-                    {/* Показываем старые кнопки ТОЛЬКО если нет новых опций V2 */}
-                    {(!hasV2Options && product?.type !== "box" && isBoxEnabled) && (
+                    {!hasV2Options && product?.type !== "box" && isBoxEnabled && (
                         <div className="prod-modal__main-quantity">
                             <p className='quantity-title'>{t("quant.title")}</p>
                             <div className="prod-modal__main-quantity-btns">
-                                <button
-                                    className={`prod-modal__main-quantity-btn ${selectedMode === 'unit' ? 'active' : ''}`}
-                                    onClick={() => setSelectedMode('unit')}
-                                >
-                                    <p>1</p>
-                                    <p className='q'>{t("quant.q")}</p>
-                                </button>
-
-                                {isBoxEnabled && (
-                                    <button
-                                        className={`prod-modal__main-quantity-btn ${selectedMode === 'box' ? 'active' : ''}`}
-                                        onClick={() => setSelectedMode('box')}
-                                    >
-                                        <p>{boxQuantity}</p>
-                                        <p className='q'>{t("quant.q")}</p>
-                                    </button>
-                                )}
+                                <button className={`prod-modal__main-quantity-btn ${selectedMode === 'unit' ? 'active' : ''}`} onClick={() => setSelectedMode('unit')}><p>1</p><p className='q'>{t("quant.q")}</p></button>
+                                <button className={`prod-modal__main-quantity-btn ${selectedMode === 'box' ? 'active' : ''}`} onClick={() => setSelectedMode('box')}><p>{boxQuantity}</p><p className='q'>{t("quant.q")}</p></button>
                             </div>
                         </div>
                     )}
 
                     <div className="prod-modal__main-btn">
-                        <button
-                            className={`products__item-button ${isInCart() ? 'in-cart' : ''}`}
-                            onClick={handleAddToCart}
-                        >
+                        <button className={`products__item-button ${isInCart() ? 'in-cart' : ''}`} onClick={handleAddToCart}>
                             {isInCart() ? `${t("cart1")} ✓` : `${t("cart2")} • € ${currentPrice}`}
                         </button>
                     </div>
                 </div>
             )}
         </>
-    )
-}
+    );
+};
 
 export default ProductModalContent;
