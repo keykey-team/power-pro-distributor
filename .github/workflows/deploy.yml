@@ -26,6 +26,7 @@ jobs:
           script: |
             set -e
 
+            # 🔹 Подключаем nvm
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
@@ -39,19 +40,44 @@ jobs:
             git fetch origin
             git reset --hard origin/develop
 
+            # 🔥 ОЧИСТКА ДИСКА (главный блок)
+
+            echo "Cleaning old project files"
+            rm -rf server/node_modules
+            rm -rf client/node_modules
+            rm -rf client/.next
+
+            echo "Cleaning npm cache"
+            npm cache clean --force || true
+            rm -rf ~/.npm || true
+
+            echo "Cleaning PM2 logs"
+            pm2 flush || true
+            rm -rf ~/.pm2/logs/* || true
+
+            # 🔥 системные логи (только если есть права)
+            echo "Cleaning system logs"
+            sudo journalctl --vacuum-time=3d || true
+            sudo rm -rf /var/log/*.gz || true
+            sudo rm -rf /var/log/*/*.gz || true
+
+            # 🔹 Установка зависимостей
+
             echo "Install server dependencies"
-            cd /var/www/power-pro-distributor/server
-            npm install
+            cd server
+            npm ci
 
             echo "Install client dependencies"
-            cd /var/www/power-pro-distributor/client
-            npm install
+            cd ../client
+            npm ci
 
             echo "Build client"
             npm run build
 
+            # 🔹 Перезапуск процессов
+
             echo "Restart PM2 processes"
-            cd /var/www/power-pro-distributor
+            cd ..
             pm2 start ecosystem.config.js --update-env || true
             pm2 reload ecosystem.config.js --update-env
             pm2 save
