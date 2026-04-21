@@ -26,7 +26,6 @@ jobs:
           script: |
             set -e
 
-            # 🔹 Подключаем nvm
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
@@ -39,8 +38,6 @@ jobs:
             echo "Pull latest code"
             git fetch origin
             git reset --hard origin/develop
-
-            # 🔥 ОЧИСТКА ДИСКА (главный блок)
 
             echo "Cleaning old project files"
             rm -rf server/node_modules
@@ -55,26 +52,16 @@ jobs:
             pm2 flush || true
             rm -rf ~/.pm2/logs/* || true
 
-            # 🔥 системные логи (только если есть права)
-            echo "Cleaning system logs"
-            sudo journalctl --vacuum-time=3d || true
-            sudo rm -rf /var/log/*.gz || true
-            sudo rm -rf /var/log/*/*.gz || true
-
-            # 🔹 Установка зависимостей
-
             echo "Install server dependencies"
             cd server
-            npm ci
+            npm install
 
             echo "Install client dependencies"
             cd ../client
-            npm ci
+            npm install
 
             echo "Build client"
             npm run build
-
-            # 🔹 Перезапуск процессов
 
             echo "Restart PM2 processes"
             cd ..
