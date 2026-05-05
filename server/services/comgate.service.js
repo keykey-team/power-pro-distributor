@@ -45,7 +45,7 @@ export async function createComgatePayment({
 
   params.append(
     "url_paid",
-    `${process.env.APP_URL}?comgate=paid&id=\${id}&refId=\${refId}`
+    `${process.env.APP_URL}/thank-you?comgate=paid&id=\${id}&refId=\${refId}`
   );
   params.append(
     "url_cancelled",

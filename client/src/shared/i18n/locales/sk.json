@@ -165,5 +165,11 @@
   "cart-q": {
     "title": "Množství",
     "type": "ks"
+  },
+  "thank-you": {
+    "title1": "OBJEDNÁVKA ",
+    "title2": "PRIJATÁ!",
+    "subtitle": "Platba bola úspešne spracovaná. Začíname balenie vašej objednávky. Sledujte svoj e-mail, kde nájdete podrobné informácie o doručení.",
+    "btn": "Späť na hlavnú stránku"
   }
 }

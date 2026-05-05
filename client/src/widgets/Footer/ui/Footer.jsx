@@ -68,7 +68,7 @@ export function Footer() {
                         />
                         <Image
                             onClick={() => { window.open("https://fit-win.com.ua", '_blank'); }}
-                            src="/img/Power.webp"
+                            src="/img/FitWin.svg"
                             alt='FitWin'
                             width={264}
                             height={118}
