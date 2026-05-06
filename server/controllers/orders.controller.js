@@ -93,7 +93,7 @@ function formatOrderTelegramText(order) {
   }
 
   lines.push("");
-  lines.push(`💰 Разом: ${Number(order.totals?.total || 0).toFixed(2)} €`);
+  lines.push(`💰 Разом за товари: ${Number(order.totals?.total || 0).toFixed(2)} €`);
   lines.push(`💳 Статус оплати: ${order.payment?.status || "-"}`);
   lines.push(`🧾 Транзакція: ${order.payment?.transactionId || "-"}`);
 
@@ -220,7 +220,7 @@ async function createComgatePayment({
 
   body.append(
     "url_paid",
-    `${APP_URL}?comgate=paid&id=\${id}&refId=\${refId}`
+    `${APP_URL}/thank-you`
   );
   body.append(
     "url_cancelled",

@@ -31,7 +31,6 @@ const LocalizedStringArray = new Schema(
 const ImageSchema = new Schema(
   {
     url: { type: String, required: true, trim: true },
-    alt: { type: LocalizedString, default: () => ({}) },
     sort: { type: Number, default: 0 },
   },
   { _id: false }
@@ -148,6 +147,7 @@ const PurchaseOptionItemSchema = new Schema(
       default: "unit",
     },
     sort: { type: Number, default: 0 },
+    images: { type: [ImageSchema], default: [] },
   },
   { _id: false }
 );
