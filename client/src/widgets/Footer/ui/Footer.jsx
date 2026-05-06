@@ -93,6 +93,9 @@ export function Footer() {
                             <li>
                                 <a href="tel:+421917874360">+421 917 874 360</a>
                             </li>
+                            <li className='footer__list-content'>
+                                <Image src={"/img/prods.svg"} alt="Products" width={372} height={23} />
+                            </li>
                         </ul>
                     </div>
                 </div>
