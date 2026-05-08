@@ -166,6 +166,17 @@
         justify-content: space-between;
         align-items: center;
         padding: 24px 15px;
+        &.center {
+            display: flex;
+            justify-content: flex-end;
+            cursor: pointer;
+            p {
+                &:hover {
+                    color: #E41F25;
+                    transition: 0.3s;
+                }
+            }
+        }
         @media(max-width: 1240px) {
             flex-direction: column;
         }

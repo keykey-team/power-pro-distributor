@@ -42,6 +42,7 @@ const OrderFunc = ({ onSubmit, deliveryType = 'pickup' }) => {
       
       <div className="order-func__list">
         {cart.map((item, index) => {
+          console.log('Cart Item:', item); // Лог для проверки структуры данных
           const price = Number(item?.price || item?.price || 0);
           const quantity = Number(item.quantity || 1);
           const itemTotal = price * quantity;
@@ -57,7 +58,7 @@ const OrderFunc = ({ onSubmit, deliveryType = 'pickup' }) => {
                 />
                 <div className="order-func__item-txt">
                   <p className='order-func__item-title'>{item.name || item?.product?.name}</p>
-                  <p className='order-func__item-quantity'>{quantity} {t("order.quant")}</p>
+                  <p className='order-func__item-quantity'>{item.itemsInPackage} {t("order.quant")}</p>
                 </div>
               </div>
               <div className="order-func__item-price">

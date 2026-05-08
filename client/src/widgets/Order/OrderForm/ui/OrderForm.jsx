@@ -135,7 +135,8 @@ const OrderForm = forwardRef(({ deliveryType, setDeliveryType, ...props }, ref) 
               kind: 'product',
               productId: el?.product?._id,
               quantity: el?.quantity,
-              purchaseMode: el?.purchaseMode
+              purchaseMode: el?.purchaseMode,
+              v2Key: el?.v2Key 
             };
           }
           return {

@@ -1,0 +1,96 @@
+.thank-you-wrapper {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+
+    @media(max-width: 600px) {
+        padding: 30px 16px;
+        min-height: 60vh;
+    }
+}
+
+.thank-you-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 60px 50px;
+    max-width: 560px;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+
+    @media(max-width: 768px) {
+        padding: 40px 30px;
+    }
+
+    @media(max-width: 450px) {
+        padding: 30px 20px;
+        border-radius: 14px;
+        gap: 14px;
+    }
+
+    h1 {
+        font-family: var(--font-unbounded), sans-serif;
+        font-size: 28px;
+        font-weight: 700;
+        color: #FEFEFE;
+        text-transform: uppercase;
+        line-height: 1.2;
+
+        @media(max-width: 768px) {
+            font-size: 22px;
+        }
+
+        @media(max-width: 450px) {
+            font-size: 18px;
+        }
+
+        b {
+            color: #E41F25;
+        }
+    }
+
+    p {
+        font-size: 15px;
+        color: rgba(255, 255, 255, 0.65);
+        line-height: 1.6;
+        max-width: 420px;
+
+        @media(max-width: 450px) {
+            font-size: 13px;
+        }
+    }
+}
+
+.thank-you-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    @media(max-width: 450px) {
+        svg {
+            width: 48px;
+            height: 48px;
+        }
+    }
+}
+
+.preview__button {
+   
+
+    @media(max-width: 450px) {
+        padding: 12px 24px;
+        font-size: 11px;
+        width: 100%;
+    }
+
+    &:hover {
+        opacity: 0.85;
+    }
+}
+

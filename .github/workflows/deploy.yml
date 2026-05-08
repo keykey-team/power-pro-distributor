@@ -1,0 +1,70 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
+            set -e
+
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
+            node -v
+            npm -v
+            pm2 -v
+
+            cd /var/www/power-pro-distributor
+
+            echo "Pull latest code"
+            git fetch origin
+            git reset --hard origin/develop
+
+            echo "Cleaning old project files"
+            rm -rf server/node_modules
+            rm -rf client/node_modules
+            rm -rf client/.next
+
+            echo "Cleaning npm cache"
+            npm cache clean --force || true
+            rm -rf ~/.npm || true
+
+            echo "Cleaning PM2 logs"
+            pm2 flush || true
+            rm -rf ~/.pm2/logs/* || true
+
+            echo "Install server dependencies"
+            cd server
+            npm install
+
+            echo "Install client dependencies"
+            cd ../client
+            npm install
+
+            echo "Build client"
+            npm run build
+
+            echo "Restart PM2 processes"
+            cd ..
+            pm2 start ecosystem.config.js --update-env || true
+            pm2 reload ecosystem.config.js --update-env
+            pm2 save
