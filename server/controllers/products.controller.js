@@ -3,6 +3,16 @@
 // (basic CRUD)
 // ================================
 import { Product } from "../models/Product.model.js";
+import { getProductAvailability } from "../utils/productStock.js";
+
+function serializeProduct(product) {
+  const plainProduct = product?.toObject?.() || product;
+
+  return {
+    ...plainProduct,
+    availability: getProductAvailability(plainProduct),
+  };
+}
 
 export async function listProducts(req, res) {
   const { page = 1, limit = 20, q = "", isActive, inStock } = req.query;
@@ -19,18 +29,18 @@ export async function listProducts(req, res) {
   const items = await Product.find(filter)
     .sort({ sort: 1, createdAt: -1 })
     .skip((safePage - 1) * safeLimit)
-    .limit(safeLimit);
+    .limit(safeLimit)
+    .lean();
 
   const total = await Product.countDocuments(filter);
 
   return res.status(200).json({
-  items,
-  page: safePage,
-  limit: safeLimit,
-  total,
-  pages: Math.ceil(total / safeLimit),
-});
-
+    items: items.map(serializeProduct),
+    page: safePage,
+    limit: safeLimit,
+    total,
+    pages: Math.ceil(total / safeLimit),
+  });
 }
 
 export async function getProduct(req, res) {
@@ -40,16 +50,16 @@ export async function getProduct(req, res) {
     ? { _id: idOrSlug }
     : { slug: String(idOrSlug).toLowerCase() };
 
-  const doc = await Product.findOne(query);
+  const doc = await Product.findOne(query).lean();
   if (!doc) return res.status(404).json({ message: "Product not found" });
 
-  res.json(doc);
+  res.json(serializeProduct(doc));
 }
 
 export async function createProduct(req, res) {
   const payload = req.body || {};
   const created = await Product.create(payload);
-  res.status(201).json(created);
+  res.status(201).json(serializeProduct(created));
 }
 
 export async function updateProduct(req, res) {
@@ -62,7 +72,7 @@ export async function updateProduct(req, res) {
   });
 
   if (!updated) return res.status(404).json({ message: "Product not found" });
-  res.json(updated);
+  res.json(serializeProduct(updated));
 }
 
 export async function deleteProduct(req, res) {

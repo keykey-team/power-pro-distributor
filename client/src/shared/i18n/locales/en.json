@@ -141,9 +141,15 @@
     "title": "Select box size:",
     "q": "PCS"
   },
+<<<<<<< feature/9749-stocks
+  "cart1": "V zozname",
+  "cart2": "Pridať do výberu",
+  "cart3": "Out of stock",
+=======
    "cart1": "In list",
   "cart2": "Add to selection",
   
+>>>>>>> develop
   "footer": {
     "description": "We create fuel for your success. No compromises, only results.",
     "nav": {

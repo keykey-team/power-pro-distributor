@@ -1,5 +1,9 @@
 // models/Product.model.js
 import mongoose from "mongoose";
+import {
+  applyTrackedStockState,
+  syncTrackedStockInUpdate,
+} from "../utils/productStock.js";
 const { Schema } = mongoose;
 
 /** =========================
@@ -197,6 +201,7 @@ const ProductSchema = new Schema(
     currency: { type: String, default: "EUR" },
     price: { type: Number, required: true },
     oldPrice: { type: Number, default: null },
+    stockQuantity: { type: Number, default: null, min: 0 },
     inStock: { type: Boolean, default: true },
 
     // optional quick fields (for filters/sorting), не обязаны
@@ -231,6 +236,8 @@ const ProductSchema = new Schema(
  *  Hooks
  * ========================= */
 ProductSchema.pre("save", function (next) {
+  applyTrackedStockState(this);
+
   if (this.slug) this.slug = String(this.slug).trim().toLowerCase();
 
   // сортировки по умолчанию (не обязательно, но удобно)
@@ -247,6 +254,11 @@ ProductSchema.pre("save", function (next) {
     this.nutritionTable.rows.sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
   }
 
+  next();
+});
+
+ProductSchema.pre("findOneAndUpdate", function () {
+  this.setUpdate(syncTrackedStockInUpdate(this.getUpdate()));
 });
 
 /** =========================

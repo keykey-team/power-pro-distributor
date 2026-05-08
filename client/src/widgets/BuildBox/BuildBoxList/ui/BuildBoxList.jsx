@@ -13,6 +13,23 @@ const ProductList = ({ data, locale }) => {
   const searchParams = useSearchParams();
   const limit = Number(searchParams.get('limit')) || 5;
   const isInitialized = useRef(false);
+  const availableProductIdsRef = useRef(new Set());
+  const availableProducts = Array.isArray(data?.items)
+    ? data.items.filter((product) => {
+      const trackedStockQuantity = Number.isFinite(Number(product?.stockQuantity))
+        ? Math.trunc(Number(product.stockQuantity))
+        : null;
+
+      if (trackedStockQuantity !== null) {
+        return trackedStockQuantity > 0;
+      }
+
+      return product?.inStock !== false;
+    })
+    : [];
+  availableProductIdsRef.current = new Set(
+    availableProducts.map((product) => product._id)
+  );
 
   // Валидация корзины под лимит
   const validateCartByLimit = useCallback((cart, currentLimit) => {
@@ -21,6 +38,7 @@ const ProductList = ({ data, locale }) => {
     const validCart = cart.filter(item =>
       item &&
       item.key &&
+      availableProductIdsRef.current.has(item.key) &&
       item.product &&
       typeof item.quantity === 'number' &&
       item.quantity > 0
@@ -63,7 +81,7 @@ const ProductList = ({ data, locale }) => {
       setIsCurt([]);
     }
     isInitialized.current = true;
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [limit, setIsCurt, validateCartByLimit]);
 
   // Валидация при изменении лимита
   useEffect(() => {
@@ -88,6 +106,16 @@ const ProductList = ({ data, locale }) => {
 
   const updateQuantity = (product, delta) => {
     const key = product._id;
+    const trackedStockQuantity = Number.isFinite(Number(product?.stockQuantity))
+      ? Math.trunc(Number(product.stockQuantity))
+      : null;
+
+    if (
+      product?.inStock === false ||
+      (trackedStockQuantity !== null && trackedStockQuantity <= 0)
+    ) {
+      return;
+    }
 
     setIsCurt((prev) => {
       const existing = prev.find((i) => i.key === key);
@@ -122,8 +150,8 @@ const ProductList = ({ data, locale }) => {
   };
 
   // Фильтруем товары на две группы
-  const fitwinItems = data?.items?.filter(product => product.slug && product.slug.includes('fitwin')) || [];
-  const otherItems = data?.items?.filter(product => !product.slug || !product.slug.includes('fitwin')) || [];
+  const fitwinItems = availableProducts.filter(product => product.slug && product.slug.includes('fitwin'));
+  const otherItems = availableProducts.filter(product => !product.slug || !product.slug.includes('fitwin'));
 
   return (
     <div className="products__boxes container">

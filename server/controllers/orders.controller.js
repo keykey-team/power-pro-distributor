@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Order } from "../models/Order.model.js";
+import { deductOrderStockOnce } from "../utils/orderInventory.js";
 import { buildOrderPositions, calcOrderTotals } from "../utils/orderPositions.js";
 import { sendTelegramMessage } from "../services/telegram.js";
 
@@ -8,11 +9,15 @@ const safeMap = {
   box_empty: "Бокс порожній.",
   box_invalid_total_qty: "Кількість товарів у боксі має бути рівно 5 або 10.",
   box_product_not_found: "Один з товарів у боксі не знайдено.",
+  box_product_insufficient_stock: "Недостатній залишок одного з товарів у боксі.",
   product_invalid: "Некоректний товар у замовленні.",
   product_invalid_qty: "Некоректна кількість товару.",
+  product_insufficient_stock: "Недостатній залишок товару на складі.",
   product_not_found: "Товар не знайдено.",
+  product_out_of_stock: "Товар зараз відсутній в наявності.",
   product_purchase_mode_invalid: "Некоректний режим покупки товару.",
   product_box_not_available: "Для цього товару бокс недоступний.",
+  box_product_out_of_stock: "Один з товарів у боксі зараз відсутній в наявності.",
 };
 
 function handleOrderError(res, error) {
@@ -142,6 +147,20 @@ async function notifyPaidOrderOnce(order) {
   };
 
   await order.save();
+}
+
+async function applyPaidOrderState(order) {
+  if (!order) return;
+
+  if (!order.payment?.paidAt) {
+    order.payment.paidAt = new Date();
+  }
+
+  await deductOrderStockOnce(order);
+
+  if (order.status === "new" || order.status === "stock_issue") {
+    order.status = "confirmed";
+  }
 }
 
 function parseComgateResponse(data) {
@@ -459,21 +478,30 @@ export const comgateCallback = async (req, res) => {
         : order.payment.amount || order.totals.total || 0;
     order.payment.rawCallback = payload;
 
-    if (paymentStatus === "paid" && !order.payment.paidAt) {
-      order.payment.paidAt = new Date();
-    }
-
-    if (paymentStatus === "paid" && order.status === "new") {
-      order.status = "confirmed";
-    }
-
     if (paymentStatus === "cancelled") {
       order.status = "cancelled";
     }
 
+    if (paymentStatus === "paid") {
+      try {
+        await applyPaidOrderState(order);
+      } catch (stockError) {
+        order.status = "stock_issue";
+        await order.save();
+
+        console.error(
+          "Stock deduction failed for paid order:",
+          order._id,
+          stockError
+        );
+
+        return res.status(200).send("OK");
+      }
+    }
+
     await order.save();
 
-    if (paymentStatus === "paid") {
+    if (paymentStatus === "paid" && order.status !== "stock_issue") {
       try {
         await notifyPaidOrderOnce(order);
       } catch (telegramError) {
@@ -671,22 +699,24 @@ export const updateOrderStatus = async (req, res) => {
     if (paymentStatus !== undefined) {
       order.payment.status = paymentStatus;
 
-      if (paymentStatus === "paid" && !order.payment.paidAt) {
-        order.payment.paidAt = new Date();
-      }
-
       if (paymentStatus === "cancelled") {
         order.status = "cancelled";
       }
 
-      if (paymentStatus === "paid" && order.status === "new") {
-        order.status = "confirmed";
+      if (paymentStatus === "paid") {
+        try {
+          await applyPaidOrderState(order);
+        } catch (stockError) {
+          order.status = "stock_issue";
+          await order.save();
+          return handleOrderError(res, stockError);
+        }
       }
     }
 
     await order.save();
 
-    if (paymentStatus === "paid") {
+    if (paymentStatus === "paid" && order.status !== "stock_issue") {
       try {
         await notifyPaidOrderOnce(order);
       } catch (telegramError) {

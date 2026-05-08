@@ -1,12 +1,16 @@
 "use client";
 import { useI18n } from '@shared/i18n/use-i18n';
-import { useModals } from '@shared/index';
 import React, { useState, useEffect } from 'react';
 
 const ProductButton = ({ product, locale }) => {
-    const { isModalOpen, setIsModalOpen, isProdModalId, setIsProdModalId } = useModals();
     const [cart, setCart] = useState([]);
     const { t } = useI18n()
+    const trackedStockQuantity = Number.isFinite(Number(product?.stockQuantity))
+        ? Math.trunc(Number(product.stockQuantity))
+        : null;
+    const isOutOfStock = trackedStockQuantity !== null
+        ? trackedStockQuantity <= 0
+        : product?.inStock === false;
 
     // Определяем режим по умолчанию (unit или box) и цену
     const defaultMode = product?.purchaseOptions?.defaultMode || 'unit';
@@ -35,6 +39,10 @@ const ProductButton = ({ product, locale }) => {
 
     const handleAddToCart = (e) => {
         e.stopPropagation();
+        if (isOutOfStock) {
+            return;
+        }
+
         try {
             const currentCart = JSON.parse(localStorage.getItem('cart') || '[]');
 
@@ -87,10 +95,15 @@ const ProductButton = ({ product, locale }) => {
     return (
         <button
             type="button"
-            className={`products__item-button ${isInCart() ? 'in-cart' : ''}`}
+            className={`products__item-button ${isInCart() ? 'in-cart' : ''} ${isOutOfStock ? 'out-of-stock' : ''}`}
             onClick={handleAddToCart}
+            disabled={isOutOfStock}
         >
-            {isInCart() ? `${t("cart1")} ✓` : `${t("cart2")} •`} {currentPrice}€
+            {isOutOfStock
+                ? t("cart3")
+                : isInCart()
+                    ? `${t("cart1")} ✓`
+                    : `${t("cart2")} • ${currentPrice}€`}
         </button>
     );
 };

@@ -1,5 +1,6 @@
 import { Product } from "../models/Product.model.js";
 import { calcDiscountedTotal } from "./pricing.js";
+import { assertProductCanBeOrdered } from "./productStock.js";
 import { toTitleString } from "./title.js";
 
 function getProductImage(product) {
@@ -93,6 +94,10 @@ export async function buildCustomBoxPosition(boxPayload) {
   const boxItems = normalized.map((x) => {
     const p = byId.get(String(x.id));
     if (!p) throw new Error("box_product_not_found");
+    assertProductCanBeOrdered(p, x.quantity, {
+      outOfStock: "box_product_out_of_stock",
+      insufficient: "box_product_insufficient_stock",
+    });
 
     const unitPrice = resolveUnitPrice(p);
     const qty = x.quantity;
@@ -152,14 +157,18 @@ export async function buildProductPosition(item) {
 
   let unitPrice = 0;
   let packQuantity = null;
+  let requiredStockQuantity = qty;
 
   if (purchaseMode === "box") {
     const boxData = resolveBoxPrice(dbProduct);
     unitPrice = boxData.price;
     packQuantity = boxData.quantity;
+    requiredStockQuantity = qty * boxData.quantity;
   } else {
     unitPrice = resolveUnitPrice(dbProduct);
   }
+
+  assertProductCanBeOrdered(dbProduct, requiredStockQuantity);
 
   const total = +(qty * unitPrice).toFixed(2);
   const discountedTotal = calcDiscountedTotal(total, discount);

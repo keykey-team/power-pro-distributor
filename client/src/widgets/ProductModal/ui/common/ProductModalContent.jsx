@@ -1,7 +1,9 @@
 'use client'
 import { useModals } from '@shared/index';
+
 import Image from 'next/image';
 import React, { useState, useEffect, useRef, useMemo } from 'react'
+
 import ProductGallerySwiper from './ProductGallerySwiper';
 import { useI18n } from '@shared/i18n/use-i18n';
 
@@ -21,11 +23,13 @@ const splitTitleByFlavor = (title) => {
 const ProductModalContent = ({ product, locale }) => {
     const { isModalOpen, setIsModalOpen } = useModals();
     const { t } = useI18n();
+
     
     const rawTitle = product?.title?.[locale] || product?.subtitle?.[locale] || 'Product';
     const { firstPart, secondPart } = splitTitleByFlavor(rawTitle);
     
     const [cart, setCart] = useState([]);
+
     const [selectedMode, setSelectedMode] = useState('unit');
     const [selectedV2Key, setSelectedV2Key] = useState('');
     const [isSelectOpen, setIsSelectOpen] = useState(false); 
@@ -98,6 +102,10 @@ const ProductModalContent = ({ product, locale }) => {
 
     const handleAddToCart = (e) => {
         e.stopPropagation();
+        if (isOutOfStock) {
+            return;
+        }
+
         try {
             const currentCart = JSON.parse(localStorage.getItem('cart') || '[]');
             const compositeId = hasV2Options ? `${product._id}-${currentV2Option.key}` : `${product._id}-${selectedMode}`;
@@ -231,8 +239,10 @@ const ProductModalContent = ({ product, locale }) => {
                     )}
 
                     <div className="prod-modal__main-btn">
+
                         <button className={`products__item-button ${isInCart() ? 'in-cart' : ''}`} onClick={handleAddToCart}>
                             {isInCart() ? `${t("cart1")} ✓` : `${t("cart2")} • € ${currentPrice}`}
+
                         </button>
                     </div>
                 </div>

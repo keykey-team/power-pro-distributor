@@ -143,6 +143,34 @@ const PaymentSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const OrderInventoryItemSchema = new mongoose.Schema(
+  {
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+      required: true,
+    },
+    title: { type: String, default: "", trim: true },
+    quantity: { type: Number, required: true, min: 1 },
+    stockAfter: { type: Number, default: null, min: 0 },
+  },
+  { _id: false }
+);
+
+const InventorySchema = new mongoose.Schema(
+  {
+    deductedAt: {
+      type: Date,
+      default: null,
+    },
+    items: {
+      type: [OrderInventoryItemSchema],
+      default: [],
+    },
+  },
+  { _id: false }
+);
+
 const OrderSchema = new mongoose.Schema(
   {
     orderNumber: {
@@ -194,6 +222,7 @@ const OrderSchema = new mongoose.Schema(
         "confirmed",
         "shipped",
         "completed",
+        "stock_issue",
         "cancelled",
       ],
       default: "new",
@@ -211,6 +240,11 @@ const OrderSchema = new mongoose.Schema(
         type: Date,
         default: null,
       },
+    },
+
+    inventory: {
+      type: InventorySchema,
+      default: () => ({ items: [] }),
     }
   },
   {

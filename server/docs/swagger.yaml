@@ -192,7 +192,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [new, processing, confirmed, shipped, completed, cancelled]
+            enum: [new, processing, confirmed, shipped, completed, stock_issue, cancelled]
         - name: phone
           in: query
           schema:
@@ -315,7 +315,7 @@ paths:
               properties:
                 status:
                   type: string
-                  enum: [new, processing, confirmed, shipped, completed, cancelled]
+                  enum: [new, processing, confirmed, shipped, completed, stock_issue, cancelled]
                 paymentStatus:
                   type: string
                   enum: [pending, paid, failed, refunded, cancelled]
@@ -537,6 +537,23 @@ components:
           items:
             $ref: "#/components/schemas/NutritionRow"
 
+    ProductAvailability:
+      type: object
+      properties:
+        isAvailable:
+          type: boolean
+        status:
+          type: string
+          enum: [in_stock, out_of_stock]
+        message:
+          type: string
+          example: Out of stock
+        stockQuantity:
+          type: number
+          nullable: true
+        isTracked:
+          type: boolean
+
     Product:
       type: object
       properties:
@@ -596,8 +613,14 @@ components:
           type: number
           format: float
           nullable: true
+        stockQuantity:
+          type: number
+          nullable: true
+          minimum: 0
         inStock:
           type: boolean
+        availability:
+          $ref: "#/components/schemas/ProductAvailability"
         purchaseOptions:
           $ref: "#/components/schemas/PurchaseOptions"
         weightG:
@@ -838,9 +861,30 @@ components:
           $ref: "#/components/schemas/Payment"
         status:
           type: string
-          enum: [new, processing, confirmed, shipped, completed, cancelled]
+          enum: [new, processing, confirmed, shipped, completed, stock_issue, cancelled]
         comment:
           type: string
+        inventory:
+          type: object
+          properties:
+            deductedAt:
+              type: string
+              format: date-time
+              nullable: true
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  productId:
+                    type: string
+                  title:
+                    type: string
+                  quantity:
+                    type: number
+                  stockAfter:
+                    type: number
+                    nullable: true
         createdAt:
           type: string
           format: date-time
@@ -934,7 +978,7 @@ components:
           type: string
         status:
           type: string
-          enum: [new, processing, confirmed, shipped, completed, cancelled]
+          enum: [new, processing, confirmed, shipped, completed, stock_issue, cancelled]
           default: new
       required:
         - name
@@ -993,7 +1037,7 @@ components:
           type: string
         status:
           type: string
-          enum: [new, processing, confirmed, shipped, completed, cancelled]
+          enum: [new, processing, confirmed, shipped, completed, stock_issue, cancelled]
 
     CreateOrderResponse:
       type: object

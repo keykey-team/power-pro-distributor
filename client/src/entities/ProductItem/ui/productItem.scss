@@ -105,10 +105,21 @@
             box-shadow: 0 0 20px 1px rgba(255, 237, 0, 0.50);
             transition: 0.3s;
         }
+        &:disabled {
+            cursor: not-allowed;
+        }
         &.in-cart {
             border-radius: 12px;
             background: var(--White, #FEFEFE) !important;
             box-shadow: 0 0 20px 1px rgba(254, 254, 254, 0.50) !important;
+        }
+        &.out-of-stock {
+            background: #6B7280 !important;
+            color: #FEFEFE;
+            box-shadow: none !important;
+        }
+        &.out-of-stock:hover {
+            box-shadow: none;
         }
     }
 }
