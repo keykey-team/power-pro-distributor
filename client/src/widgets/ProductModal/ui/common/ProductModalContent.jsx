@@ -1,7 +1,6 @@
 'use client'
 import { useModals } from '@shared/index';
 import { formatProductTitle } from '@widgets/ProductModal/lib/formatProductTitle';
-import Image from 'next/image';
 import React, { useState, useEffect, useRef } from 'react'
 import ProductGallerySwiper from './ProductGallerySwiper';
 import { useI18n } from '@shared/i18n/use-i18n';
@@ -11,6 +10,12 @@ const ProductModalContent = ({ product, locale }) => {
     const { firstPart, secondPart } = formatProductTitle(product?.title?.[locale]) || { firstPart: product?.subtitle?.[locale] || 'Product', secondPart: '' };
     const [cart, setCart] = useState([]);
     const { t } = useI18n();
+    const trackedStockQuantity = Number.isFinite(Number(product?.stockQuantity))
+        ? Math.trunc(Number(product.stockQuantity))
+        : null;
+    const isOutOfStock = trackedStockQuantity !== null
+        ? trackedStockQuantity <= 0
+        : product?.inStock === false;
 
     // === СТАРЫЙ ФОРМАТ ОПЦИЙ ===
     const [selectedMode, setSelectedMode] = useState('unit');
@@ -86,6 +91,10 @@ const ProductModalContent = ({ product, locale }) => {
 
     const handleAddToCart = (e) => {
         e.stopPropagation();
+        if (isOutOfStock) {
+            return;
+        }
+
         try {
             const currentCart = JSON.parse(localStorage.getItem('cart') || '[]');
 
@@ -312,10 +321,15 @@ const ProductModalContent = ({ product, locale }) => {
 
                     <div className="prod-modal__main-btn">
                         <button
-                            className={`products__item-button ${isInCart() ? 'in-cart' : ''}`}
+                            className={`products__item-button ${isInCart() ? 'in-cart' : ''} ${isOutOfStock ? 'out-of-stock' : ''}`}
                             onClick={handleAddToCart}
+                            disabled={isOutOfStock}
                         >
-                            {isInCart() ? `${t("cart1")} ✓` : `${t("cart2")} • € ${currentPrice}`}
+                            {isOutOfStock
+                                ? t("cart3")
+                                : isInCart()
+                                    ? `${t("cart1")} ✓`
+                                    : `${t("cart2")} • € ${currentPrice}`}
                         </button>
                     </div>
                 </div>
