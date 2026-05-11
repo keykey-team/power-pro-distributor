@@ -3,7 +3,7 @@ User-agent: *
 Allow: /
 
 # Host
-Host: http://192.168.0.106:5002
+Host: https://fitwin-powerpro.com
 
 # Sitemaps
-Sitemap: http://192.168.0.106:5002/sitemap.xml
+Sitemap: https://fitwin-powerpro.com/sitemap.xml
