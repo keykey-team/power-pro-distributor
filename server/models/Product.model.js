@@ -2,6 +2,7 @@
 import mongoose from "mongoose";
 import {
   applyTrackedStockState,
+  normalizePurchaseOptionsV2,
   syncTrackedStockInUpdate,
 } from "../utils/productStock.js";
 const { Schema } = mongoose;
@@ -150,6 +151,8 @@ const PurchaseOptionItemSchema = new Schema(
       enum: ["unit", "box", "pack"],
       default: "unit",
     },
+    stockQuantity: { type: Number, default: null, min: 0 },
+    inStock: { type: Boolean, default: true },
     sort: { type: Number, default: 0 },
     images: { type: [ImageSchema], default: [] },
   },
@@ -227,7 +230,7 @@ const ProductSchema = new Schema(
     purchaseOptionsV2: {
       type: PurchaseOptionsV2Schema,
       default: null,
-    }
+    },
   },
   { timestamps: true }
 );
@@ -235,7 +238,7 @@ const ProductSchema = new Schema(
 /** =========================
  *  Hooks
  * ========================= */
-ProductSchema.pre("save", function (next) {
+ProductSchema.pre("save", function () {
   applyTrackedStockState(this);
 
   if (this.slug) this.slug = String(this.slug).trim().toLowerCase();
@@ -254,7 +257,9 @@ ProductSchema.pre("save", function (next) {
     this.nutritionTable.rows.sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
   }
 
-  next();
+  if (this.purchaseOptionsV2) {
+    normalizePurchaseOptionsV2(this.purchaseOptionsV2);
+  }
 });
 
 ProductSchema.pre("findOneAndUpdate", function () {

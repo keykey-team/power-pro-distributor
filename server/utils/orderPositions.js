@@ -1,6 +1,10 @@
 import { Product } from "../models/Product.model.js";
 import { calcDiscountedTotal } from "./pricing.js";
-import { assertProductCanBeOrdered } from "./productStock.js";
+import {
+  assertProductCanBeOrdered,
+  getPurchaseOptionItem,
+  getPurchaseOptionItems,
+} from "./productStock.js";
 import { toTitleString } from "./title.js";
 
 function getProductImage(product) {
@@ -27,8 +31,75 @@ function getProductMultiplicity(product) {
 
 function normalizePurchaseMode(value) {
   const mode = String(value || "unit").trim().toLowerCase();
-  if (mode === "unit" || mode === "box") return mode;
+  if (mode === "unit" || mode === "box" || mode === "pack") return mode;
   throw new Error("product_purchase_mode_invalid");
+}
+
+function resolvePurchaseOptionV2(dbProduct, requestedKey, requestedMode) {
+  const items = getPurchaseOptionItems(dbProduct);
+
+  if (!items.length) {
+    return null;
+  }
+
+  const normalizedRequestedKey = String(requestedKey || "").trim();
+  if (normalizedRequestedKey) {
+    const matchedItem = getPurchaseOptionItem(dbProduct, normalizedRequestedKey);
+
+    if (!matchedItem) {
+      throw new Error("product_purchase_option_not_found");
+    }
+
+    return matchedItem;
+  }
+
+  const normalizedRequestedMode = requestedMode
+    ? normalizePurchaseMode(requestedMode)
+    : null;
+
+  if (normalizedRequestedMode) {
+    const matchedByMode = items.filter(
+      (item) => normalizePurchaseMode(item?.mode) === normalizedRequestedMode
+    );
+
+    if (matchedByMode.length === 1) {
+      return matchedByMode[0];
+    }
+
+    if (matchedByMode.length > 1) {
+      const defaultKey = String(dbProduct?.purchaseOptionsV2?.defaultKey || "").trim();
+      const defaultItem = matchedByMode.find(
+        (item) => String(item?.key || "").trim() === defaultKey
+      );
+
+      if (defaultItem) {
+        return defaultItem;
+      }
+    }
+  }
+
+  const defaultKey = String(dbProduct?.purchaseOptionsV2?.defaultKey || "").trim();
+  return getPurchaseOptionItem(dbProduct, defaultKey) || items[0] || null;
+}
+
+function resolvePurchaseOptionPrice(option, dbProduct) {
+  const optionPrice = Number(option?.price);
+  if (Number.isFinite(optionPrice) && optionPrice >= 0) {
+    return optionPrice;
+  }
+
+  return resolveUnitPrice(dbProduct);
+}
+
+function buildProductPositionTitle(product, option) {
+  const baseTitle = toTitleString(product.title);
+  const optionTitle = toTitleString(option?.title);
+
+  if (!optionTitle) {
+    return baseTitle;
+  }
+
+  return `${baseTitle} (${optionTitle})`;
 }
 
 function resolveUnitPrice(dbProduct) {
@@ -148,27 +219,43 @@ export async function buildProductPosition(item) {
   const qty = Number(item.quantity || item.qty || 1);
   if (!Number.isFinite(qty) || qty <= 0) throw new Error("product_invalid_qty");
 
-  const purchaseMode = normalizePurchaseMode(item?.purchaseMode);
+  const requestedPurchaseMode = normalizePurchaseMode(item?.purchaseMode);
 
   const dbProduct = await Product.findById(productId).lean();
   if (!dbProduct) throw new Error("product_not_found");
 
   const discount = Number(dbProduct.discount || 0);
+  const purchaseOption = resolvePurchaseOptionV2(
+    dbProduct,
+    item?.v2Key,
+    requestedPurchaseMode
+  );
 
   let unitPrice = 0;
   let packQuantity = null;
+  let purchaseMode = purchaseOption
+    ? normalizePurchaseMode(purchaseOption.mode)
+    : requestedPurchaseMode;
   let requiredStockQuantity = qty;
+  let v2Key = "";
+  let optionTitle = "";
 
-  if (purchaseMode === "box") {
+  if (purchaseOption) {
+    unitPrice = resolvePurchaseOptionPrice(purchaseOption, dbProduct);
+    packQuantity = Number(purchaseOption.quantity || 1) || 1;
+    v2Key = String(purchaseOption.key || "");
+    optionTitle = toTitleString(purchaseOption.title) || v2Key;
+    assertProductCanBeOrdered(dbProduct, requiredStockQuantity, {}, v2Key);
+  } else if (purchaseMode === "box") {
     const boxData = resolveBoxPrice(dbProduct);
     unitPrice = boxData.price;
     packQuantity = boxData.quantity;
     requiredStockQuantity = qty * boxData.quantity;
+    assertProductCanBeOrdered(dbProduct, requiredStockQuantity);
   } else {
     unitPrice = resolveUnitPrice(dbProduct);
+    assertProductCanBeOrdered(dbProduct, requiredStockQuantity);
   }
-
-  assertProductCanBeOrdered(dbProduct, requiredStockQuantity);
 
   const total = +(qty * unitPrice).toFixed(2);
   const discountedTotal = calcDiscountedTotal(total, discount);
@@ -177,7 +264,9 @@ export async function buildProductPosition(item) {
     kind: "product",
     id: dbProduct._id,
     barcode: getProductBarcode(dbProduct),
-    title: toTitleString(dbProduct.title),
+    title: purchaseOption
+      ? buildProductPositionTitle(dbProduct, purchaseOption)
+      : toTitleString(dbProduct.title),
     quantity: qty,
     unitPrice: +unitPrice.toFixed(2),
     total,
@@ -185,6 +274,8 @@ export async function buildProductPosition(item) {
     img: getProductImage(dbProduct),
     multiplicity: getProductMultiplicity(dbProduct),
     purchaseMode,
+    v2Key,
+    optionTitle,
     packQuantity,
   };
 }

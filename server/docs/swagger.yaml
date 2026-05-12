@@ -460,6 +460,83 @@ components:
           enum: [unit, box]
           example: unit
 
+    PurchaseOptionV2Item:
+      type: object
+      properties:
+        key:
+          type: string
+        title:
+          $ref: "#/components/schemas/LocalizedString"
+        enabled:
+          type: boolean
+          example: true
+        price:
+          type: number
+          format: float
+          nullable: true
+          example: 2.5
+        quantity:
+          type: integer
+          example: 1
+        mode:
+          type: string
+          enum: [unit, box, pack]
+          example: unit
+        stockQuantity:
+          type: integer
+          nullable: true
+          minimum: 0
+        inStock:
+          type: boolean
+        sort:
+          type: integer
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductImage"
+        availability:
+          $ref: "#/components/schemas/ProductAvailability"
+
+    PurchaseOptionsV2:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PurchaseOptionV2Item"
+        defaultKey:
+          type: string
+          example: unit
+
+    PurchaseOptionsV2AvailabilityItem:
+      type: object
+      properties:
+        key:
+          type: string
+        title:
+          $ref: "#/components/schemas/LocalizedString"
+        mode:
+          type: string
+          enum: [unit, box, pack]
+        quantity:
+          type: integer
+        availability:
+          $ref: "#/components/schemas/ProductAvailability"
+
+    PurchaseOptionsV2Availability:
+      type: object
+      properties:
+        totalActive:
+          type: integer
+        availableCount:
+          type: integer
+        hasAvailable:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PurchaseOptionsV2AvailabilityItem"
+
     Badge:
       type: object
       properties:
@@ -623,6 +700,10 @@ components:
           $ref: "#/components/schemas/ProductAvailability"
         purchaseOptions:
           $ref: "#/components/schemas/PurchaseOptions"
+        purchaseOptionsV2:
+          $ref: "#/components/schemas/PurchaseOptionsV2"
+        purchaseOptionsV2Availability:
+          $ref: "#/components/schemas/PurchaseOptionsV2Availability"
         weightG:
           type: number
           nullable: true
@@ -779,20 +860,27 @@ components:
           type: number
         purchaseMode:
           type: string
-          enum: [unit, box]
+          enum: [unit, box, pack]
           default: unit
           description: |
             Для `kind=product`:
             - `unit` = покупка поштучно
             - `box` = покупка боксом
+            - `pack` = покупка пакетом из `purchaseOptionsV2`
 
             Для `kind=custom_box` значення зберігається як `unit`.
+        v2Key:
+          type: string
+          description: Ключ выбранного элемента из `purchaseOptionsV2.items`.
+        optionTitle:
+          type: string
+          description: Локализованное название выбранного элемента `purchaseOptionsV2.items` на момент заказа.
         packQuantity:
           type: integer
           nullable: true
           description: |
             Кількість штук у боксі на момент покупки.
-            Має значення тільки якщо `purchaseMode=box`.
+            Має значення для `box` і `pack`.
             Для `unit` = null.
         box:
           allOf:
@@ -882,6 +970,10 @@ components:
                     type: string
                   quantity:
                     type: number
+                  purchaseOptionKey:
+                    type: string
+                  purchaseOptionTitle:
+                    type: string
                   stockAfter:
                     type: number
                     nullable: true
@@ -909,8 +1001,13 @@ components:
             Якщо `purchaseMode=box` — кількість боксів.
         purchaseMode:
           type: string
-          enum: [unit, box]
+          enum: [unit, box, pack]
           default: unit
+        v2Key:
+          type: string
+          description: |
+            Необязательный ключ выбранного элемента из `purchaseOptionsV2.items`.
+            Если передан, именно этот вариант используется для цены и склада.
       required:
         - kind
         - id

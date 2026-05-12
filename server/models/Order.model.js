@@ -59,8 +59,20 @@ const OrderPositionSchema = new mongoose.Schema(
 
     purchaseMode: {
       type: String,
-      enum: ["unit", "box"],
+      enum: ["unit", "box", "pack"],
       default: "unit",
+    },
+
+    v2Key: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    optionTitle: {
+      type: String,
+      default: "",
+      trim: true,
     },
 
     packQuantity: {
@@ -152,6 +164,8 @@ const OrderInventoryItemSchema = new mongoose.Schema(
     },
     title: { type: String, default: "", trim: true },
     quantity: { type: Number, required: true, min: 1 },
+    purchaseOptionKey: { type: String, default: "", trim: true },
+    purchaseOptionTitle: { type: String, default: "", trim: true },
     stockAfter: { type: Number, default: null, min: 0 },
   },
   { _id: false }

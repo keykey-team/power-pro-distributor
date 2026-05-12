@@ -1,5 +1,9 @@
 {
   "type": "module",
+  "scripts": {
+    "seed:stock": "node scripts/seed-stock-quantities.js",
+    "verify:stock": "node scripts/verify-stock.js"
+  },
   "dependencies": {
     "adm-zip": "^0.5.16",
     "axios": "^1.13.6",

@@ -16,6 +16,7 @@ const safeMap = {
   product_not_found: "Товар не знайдено.",
   product_out_of_stock: "Товар зараз відсутній в наявності.",
   product_purchase_mode_invalid: "Некоректний режим покупки товару.",
+  product_purchase_option_not_found: "Вибраний варіант товару недоступний.",
   product_box_not_available: "Для цього товару бокс недоступний.",
   box_product_out_of_stock: "Один з товарів у боксі зараз відсутній в наявності.",
 };
