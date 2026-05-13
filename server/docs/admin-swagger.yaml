@@ -1038,6 +1038,11 @@ components:
       properties:
         key:
           type: string
+          example: unit
+          description: |
+            Уникальный ключ вариации.
+            Важно: используйте стабильные ключи в нижнем регистре (латиница, цифры, _ или -), например unit, box_10, pack-6.
+            Этот ключ используется в purchaseOptionsV2.defaultKey, в складских операциях (purchaseOptionKey) и при обновлениях.
         title:
           $ref: "#/components/schemas/LocalizedString"
         enabled:
@@ -1073,12 +1078,17 @@ components:
             $ref: "#/components/schemas/PurchaseOptionV2Item"
         defaultKey:
           type: string
+          example: unit
+          description: |
+            Ключ вариации по умолчанию.
+            Должен в точности совпадать с одним из items[].key.
 
     PurchaseOptionsV2AvailabilityItem:
       type: object
       properties:
         key:
           type: string
+          description: Ключ вариации (должен совпадать с purchaseOptionsV2.items[].key).
         title:
           $ref: "#/components/schemas/LocalizedString"
         mode:
@@ -1235,16 +1245,13 @@ components:
         features:
           $ref: "#/components/schemas/LocalizedStringArray"
         cover:
+          type: string
           nullable: true
-          oneOf:
-            - type: string
-            - $ref: "#/components/schemas/ProductImage"
+          example: "https://fitwin-powerpro.com/ftp/3.png"
         gallery:
           type: array
           items:
-            oneOf:
-              - type: string
-              - $ref: "#/components/schemas/ProductImage"
+            type: string
         cardBadges:
           type: array
           items:
@@ -1326,15 +1333,13 @@ components:
         features:
           $ref: "#/components/schemas/LocalizedStringArray"
         cover:
-          oneOf:
-            - type: string
-            - $ref: "#/components/schemas/ProductImage"
+          type: string
+          nullable: true
+          example: "https://fitwin-powerpro.com/ftp/3.png"
         gallery:
           type: array
           items:
-            oneOf:
-              - type: string
-              - $ref: "#/components/schemas/ProductImage"
+            type: string
         cardBadges:
           type: array
           items:
@@ -1377,6 +1382,9 @@ components:
           $ref: "#/components/schemas/PurchaseOptions"
         purchaseOptionsV2:
           $ref: "#/components/schemas/PurchaseOptionsV2"
+          description: |
+            Блок вариаций товара.
+            Критично: для каждой вариации задавайте корректный items[].key и убедитесь, что defaultKey совпадает с одним из этих ключей.
       example:
         slug: fitwin-cookies-cream-60g
         type: bar
@@ -1405,14 +1413,10 @@ components:
           ru: ["20 г белка", "без сахара", "высокое содержание клетчатки"]
           en: ["20g protein", "no sugar", "high fiber"]
           sk: ["20 g bielkovín", "bez cukru", "vysoký obsah vlákniny"]
-        cover:
-          url: "https://fitwin-powerpro.com/ftp/file.webp"
-          sort: 0
+        cover: "https://fitwin-powerpro.com/ftp/3.png"
         gallery:
-          - url: "https://fitwin-powerpro.com/ftp/file.webp"
-            sort: 0
-          - url: "https://fitwin-powerpro.com/ftp/file-2.webp"
-            sort: 1
+          - "https://fitwin-powerpro.com/ftp/3.png"
+          - "https://fitwin-powerpro.com/ftp/3-2.png"
         cardBadges:
           - key: protein
             label:
@@ -1532,9 +1536,9 @@ components:
             quantity: 12
           defaultMode: unit
         purchaseOptionsV2:
-          defaultKey: unit-1
+          defaultKey: unit
           items:
-            - key: unit-1
+            - key: unit
               title:
                 ua: "1 шт"
                 ru: "1 шт"
@@ -1550,17 +1554,17 @@ components:
               images:
                 - url: "https://fitwin-powerpro.com/ftp/file.webp"
                   sort: 0
-            - key: box-12
+            - key: box_10
               title:
-                ua: "Коробка 12 шт"
-                ru: "Коробка 12 шт"
-                en: "Box 12 pcs"
-                sk: "Box 12 ks"
+                ua: "Бокс 10 шт"
+                ru: "Бокс 10 шт"
+                en: "Box 10 pcs"
+                sk: "Box 10 ks"
               enabled: true
-              price: 31.2
-              quantity: 12
+              price: 28
+              quantity: 10
               mode: box
-              stockQuantity: 20
+              stockQuantity: 6
               inStock: true
               sort: 1
               images:

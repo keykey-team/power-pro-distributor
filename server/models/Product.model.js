@@ -41,6 +41,50 @@ const ImageSchema = new Schema(
   { _id: false }
 );
 
+function normalizeImageItem(input, fallbackSort = 0) {
+  if (!input) return null;
+
+  if (typeof input === "string") {
+    const url = input.trim();
+    return url || null;
+  }
+
+  if (typeof input === "object") {
+    const url = String(input.url || "").trim();
+    return url || null;
+  }
+
+  return null;
+}
+
+function normalizeProductImages(target) {
+  if (!target || typeof target !== "object") return;
+
+  if (target.cover !== undefined) {
+    target.cover = normalizeImageItem(target.cover, 0);
+  }
+
+  if (target.gallery !== undefined) {
+    const source = Array.isArray(target.gallery) ? target.gallery : [];
+
+    target.gallery = source
+      .map((item, index) => normalizeImageItem(item, index))
+      .filter(Boolean);
+  }
+}
+
+function normalizeProductImagesInUpdate(update) {
+  if (!update || typeof update !== "object") return update;
+
+  normalizeProductImages(update);
+
+  if (update.$set && typeof update.$set === "object") {
+    normalizeProductImages(update.$set);
+  }
+
+  return update;
+}
+
 /** =========================
  *  Dynamic badges (chips) on product card
  *  e.g. "25g", "0g", "180 kcal"
@@ -192,7 +236,7 @@ const ProductSchema = new Schema(
 
     // media
     cover: { type: String, default: null },
-    gallery: { type: Array, default: [] },
+    gallery: { type: [String], default: [] },
 
     // ✅ dynamic badges for card (chips)
     cardBadges: { type: [BadgeSchema], default: [] },
@@ -241,12 +285,11 @@ const ProductSchema = new Schema(
 ProductSchema.pre("save", function () {
   applyTrackedStockState(this);
 
+  normalizeProductImages(this);
+
   if (this.slug) this.slug = String(this.slug).trim().toLowerCase();
 
   // сортировки по умолчанию (не обязательно, но удобно)
-  if (Array.isArray(this.gallery)) {
-    this.gallery.sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
-  }
   if (Array.isArray(this.cardBadges)) {
     this.cardBadges.sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
   }
@@ -263,7 +306,8 @@ ProductSchema.pre("save", function () {
 });
 
 ProductSchema.pre("findOneAndUpdate", function () {
-  this.setUpdate(syncTrackedStockInUpdate(this.getUpdate()));
+  const normalizedUpdate = normalizeProductImagesInUpdate(this.getUpdate());
+  this.setUpdate(syncTrackedStockInUpdate(normalizedUpdate));
 });
 
 /** =========================
