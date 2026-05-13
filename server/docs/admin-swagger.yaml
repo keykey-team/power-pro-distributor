@@ -1,0 +1,2134 @@
+openapi: 3.0.3
+info:
+  title: FitWin Admin API
+  version: 1.0.0
+  description: |
+    Админ API для управления товарами и складскими операциями.
+
+    Включает:
+    - расширенный CRUD товаров
+    - гибкую фильтрацию товаров для админ-панели
+    - складские позиции и сводку
+    - оприходования, списания и инвентаризации
+    - журнал движений склада
+
+servers:
+  - url: http://localhost:5001/api/admin
+    description: Локальный сервер
+
+tags:
+  - name: Админ Товары
+  - name: Админ Склад
+  - name: Админ Загрузка
+  - name: Админ Логи
+
+paths:
+  /products:
+    get:
+      tags: [Админ Товары]
+      summary: Список товаров для админ-панели
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 25
+        - in: query
+          name: q
+          schema:
+            type: string
+          description: Поиск по id, slug, названию товара, подзаголовку, бренду или типу.
+        - in: query
+          name: ids
+          schema:
+            type: string
+          description: Идентификаторы товаров через запятую.
+        - in: query
+          name: slugs
+          schema:
+            type: string
+          description: Слаги товаров через запятую.
+        - in: query
+          name: isActive
+          schema:
+            type: boolean
+        - in: query
+          name: inStock
+          schema:
+            type: boolean
+        - in: query
+          name: hasTrackedStock
+          schema:
+            type: boolean
+        - in: query
+          name: hasVariants
+          schema:
+            type: boolean
+        - in: query
+          name: brand
+          schema:
+            type: string
+        - in: query
+          name: type
+          schema:
+            type: string
+        - in: query
+          name: types
+          schema:
+            type: string
+          description: Типы товаров через запятую.
+        - in: query
+          name: minPrice
+          schema:
+            type: number
+        - in: query
+          name: maxPrice
+          schema:
+            type: number
+        - in: query
+          name: sort
+          schema:
+            type: string
+          description: "Сортировка через запятую, например: -updatedAt,slug"
+        - in: query
+          name: includeDisabledPurchaseOptions
+          schema:
+            type: boolean
+            default: true
+      responses:
+        "200":
+          description: Товары загружены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminProductListResponse"
+    post:
+      tags: [Админ Товары]
+      summary: Создать товар
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminProductUpsertRequest"
+      responses:
+        "201":
+          description: Товар создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+  /products/meta:
+    get:
+      tags: [Админ Товары]
+      summary: Загрузить фильтры и счетчики товаров
+      responses:
+        "200":
+          description: Метаинформация загружена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminProductMetaResponse"
+
+  /products/export:
+    get:
+      tags: [Админ Товары]
+      summary: Экспортировать товары в CSV или XLSX
+      parameters:
+        - in: query
+          name: format
+          required: false
+          schema:
+            type: string
+            enum: [csv, xlsx]
+            default: csv
+          description: Формат экспортного файла.
+        - in: query
+          name: q
+          schema:
+            type: string
+          description: Поиск по id, slug, названию, бренду или типу.
+        - in: query
+          name: ids
+          schema:
+            type: string
+          description: Идентификаторы товаров через запятую.
+        - in: query
+          name: slugs
+          schema:
+            type: string
+          description: Слаги товаров через запятую.
+        - in: query
+          name: isActive
+          schema:
+            type: boolean
+        - in: query
+          name: inStock
+          schema:
+            type: boolean
+        - in: query
+          name: hasTrackedStock
+          schema:
+            type: boolean
+        - in: query
+          name: hasVariants
+          schema:
+            type: boolean
+        - in: query
+          name: type
+          schema:
+            type: string
+        - in: query
+          name: types
+          schema:
+            type: string
+        - in: query
+          name: brand
+          schema:
+            type: string
+        - in: query
+          name: minPrice
+          schema:
+            type: number
+        - in: query
+          name: maxPrice
+          schema:
+            type: number
+        - in: query
+          name: sort
+          schema:
+            type: string
+          description: "Сортировка через запятую, например: -updatedAt,slug"
+      responses:
+        "200":
+          description: Файл экспорта сформирован
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Некорректный формат экспорта
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Ошибка формирования экспорта
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /products/{productRef}:
+    get:
+      tags: [Админ Товары]
+      summary: Получить товар по id или slug
+      parameters:
+        - in: path
+          name: productRef
+          required: true
+          schema:
+            type: string
+          description: Идентификатор или slug товара.
+        - in: query
+          name: includeDisabledPurchaseOptions
+          schema:
+            type: boolean
+            default: true
+      responses:
+        "200":
+          description: Товар загружен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Товар не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      tags: [Админ Товары]
+      summary: Полностью обновить товар по MongoDB id
+      parameters:
+        - in: path
+          name: productRef
+          required: true
+          description: Идентификатор товара в MongoDB.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminProductUpsertRequest"
+      responses:
+        "200":
+          description: Товар обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Товар не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      tags: [Админ Товары]
+      summary: Частично обновить товар по MongoDB id
+      parameters:
+        - in: path
+          name: productRef
+          required: true
+          description: Идентификатор товара в MongoDB.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminProductUpsertRequest"
+      responses:
+        "200":
+          description: Товар обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Товар не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      tags: [Админ Товары]
+      summary: Удалить товар по MongoDB id
+      parameters:
+        - in: path
+          name: productRef
+          required: true
+          description: Идентификатор товара в MongoDB.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Товар удален
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+        "404":
+          description: Товар не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /inventory/summary:
+    get:
+      tags: [Админ Склад]
+      summary: Получить сводку остатков по отфильтрованным позициям
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+        - in: query
+          name: type
+          schema:
+            type: string
+        - in: query
+          name: brand
+          schema:
+            type: string
+        - in: query
+          name: isActive
+          schema:
+            type: boolean
+        - in: query
+          name: positionType
+          schema:
+            type: string
+            enum: [all, product, purchase_option]
+            default: all
+        - in: query
+          name: trackedOnly
+          schema:
+            type: boolean
+        - in: query
+          name: inStock
+          schema:
+            type: boolean
+        - in: query
+          name: lowStockMax
+          schema:
+            type: integer
+            default: 5
+      responses:
+        "200":
+          description: Сводка загружена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventorySummary"
+
+  /inventory/positions:
+    get:
+      tags: [Админ Склад]
+      summary: Список складских позиций по товарам и вариантам покупки
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+        - in: query
+          name: q
+          schema:
+            type: string
+        - in: query
+          name: type
+          schema:
+            type: string
+        - in: query
+          name: brand
+          schema:
+            type: string
+        - in: query
+          name: isActive
+          schema:
+            type: boolean
+        - in: query
+          name: positionType
+          schema:
+            type: string
+            enum: [all, product, purchase_option]
+            default: all
+        - in: query
+          name: trackedOnly
+          schema:
+            type: boolean
+        - in: query
+          name: inStock
+          schema:
+            type: boolean
+        - in: query
+          name: enabled
+          schema:
+            type: boolean
+          description: Применяется только к строкам вариантов покупки.
+        - in: query
+          name: minStock
+          schema:
+            type: integer
+        - in: query
+          name: maxStock
+          schema:
+            type: integer
+        - in: query
+          name: lowStockMax
+          schema:
+            type: integer
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum: [updatedAt, createdAt, title, stockQuantity, slug]
+            default: updatedAt
+        - in: query
+          name: sortOrder
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - in: query
+          name: includeDisabledPurchaseOptions
+          schema:
+            type: boolean
+            default: true
+      responses:
+        "200":
+          description: Позиции загружены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryPositionListResponse"
+
+  /inventory/movements:
+    get:
+      tags: [Админ Склад]
+      summary: Журнал движений склада
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+        - in: query
+          name: operationType
+          schema:
+            type: string
+          description: "Значения через запятую, например: receipt,writeoff"
+        - in: query
+          name: scope
+          schema:
+            type: string
+          description: "Значения через запятую, например: product,purchase_option"
+        - in: query
+          name: productId
+          schema:
+            type: string
+        - in: query
+          name: purchaseOptionKey
+          schema:
+            type: string
+        - in: query
+          name: reference
+          schema:
+            type: string
+        - in: query
+          name: createdBy
+          schema:
+            type: string
+        - in: query
+          name: includeMeta
+          schema:
+            type: boolean
+            default: false
+        - in: query
+          name: createdFrom
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: createdTo
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Движения загружены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryMovementListResponse"
+
+  /inventory/receipts:
+    post:
+      tags: [Админ Склад]
+      summary: Оприходовать товар на склад
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InventoryReceiptRequest"
+      responses:
+        "200":
+          description: Оприходование выполнено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryMutationResponse"
+        "400":
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /inventory/writeoffs:
+    post:
+      tags: [Админ Склад]
+      summary: Списать товар со склада
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InventoryReceiptRequest"
+      responses:
+        "200":
+          description: Списание выполнено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryMutationResponse"
+        "400":
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /inventory/recounts:
+    post:
+      tags: [Админ Склад]
+      summary: Провести инвентаризацию и установить точные остатки
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InventoryRecountRequest"
+      responses:
+        "200":
+          description: Инвентаризация выполнена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryMutationResponse"
+        "400":
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /upload/image:
+    post:
+      tags: [Админ Загрузка]
+      summary: Загрузить и конвертировать одно изображение в WebP
+      description: |
+        Загружает одно изображение и конвертирует его в WebP с минимальным сжатием (качество: 75).
+
+        Поддерживаемые форматы: JPG, PNG, GIF, WebP, BMP, TIFF и другие.
+        Максимальный размер файла: 5 МБ
+        Возвращает: данные WebP в Base64 с метаданными и статистикой сжатия
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - image
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Файл изображения (любой формат)
+      responses:
+        "200":
+          description: Изображение успешно обработано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImageUploadResponse"
+        "400":
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "413":
+          description: Файл слишком большой
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Ошибка обработки изображения
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /upload/gallery:
+    post:
+      tags: [Админ Загрузка]
+      summary: Загрузить и конвертировать несколько изображений в WebP (пакетно)
+      description: |
+        Загружает несколько изображений и конвертирует каждое в WebP с минимальным сжатием (качество: 75).
+
+        Максимум файлов: 50 за запрос
+        Максимальный размер файла: 5 МБ per file
+        Возвращает: массив данных WebP в Base64 с метаданными для каждого изображения
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - images
+              properties:
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Файлы изображений (любой формат)
+      responses:
+        "200":
+          description: Изображения успешно обработаны
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GalleryUploadResponse"
+        "400":
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "413":
+          description: Файл(ы) слишком большие
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Ошибка обработки изображения
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /logs:
+    get:
+      tags: [Админ Логи]
+      summary: Список логов операций с фильтрацией
+      description: |
+        Получить журнал всех операций с гибкой фильтрацией и пагинацией.
+        
+        Поддерживает фильтрацию по:
+        - типу операции (create, update, delete, mutation)
+        - типу сущности (Product, Inventory, ImageUpload)
+        - статусу (success, failed)
+        - диапазону дат
+        - ID пользователя
+      parameters:
+        - in: query
+          name: operationType
+          schema:
+            type: string
+            enum: [create, read, update, delete, mutation]
+        - in: query
+          name: entityType
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [success, failed]
+        - in: query
+          name: userId
+          schema:
+            type: string
+        - in: query
+          name: entityId
+          schema:
+            type: string
+        - in: query
+          name: fromDate
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: toDate
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+            maximum: 500
+        - in: query
+          name: skip
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Логи успешно получены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  count:
+                    type: integer
+                  logs:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/OperationLog"
+
+  /logs/summary:
+    get:
+      tags: [Админ Логи]
+      summary: Получить сводную статистику операций
+      description: Агрегированная статистика операций (всего, успешность, по типам и т.д.)
+      parameters:
+        - in: query
+          name: operationType
+          schema:
+            type: string
+        - in: query
+          name: entityType
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Сводная статистика
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  summary:
+                    $ref: "#/components/schemas/LogsSummary"
+
+  /logs/failed:
+    get:
+      tags: [Админ Логи]
+      summary: Получить все неуспешные операции
+      description: Получить неуспешные операции для отладки
+      parameters:
+        - in: query
+          name: operationType
+          schema:
+            type: string
+        - in: query
+          name: entityType
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+        - in: query
+          name: skip
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Неуспешные операции
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  failedCount:
+                    type: integer
+                  failed:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/OperationLog"
+
+  /logs/entity/{entityType}/{entityId}:
+    get:
+      tags: [Админ Логи]
+      summary: Получить историю операций по конкретной сущности
+      description: Получить все операции, затрагивающие конкретную сущность
+      parameters:
+        - in: path
+          name: entityType
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: entityId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: История операций сущности
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  entityType:
+                    type: string
+                  entityId:
+                    type: string
+                  operationsCount:
+                    type: integer
+                  operations:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/OperationLog"
+
+  /logs/user/{userId}:
+    get:
+      tags: [Админ Логи]
+      summary: Получить логи активности пользователя
+      description: Получить все операции, выполненные конкретным пользователем
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+        - in: query
+          name: skip
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Активность пользователя
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  userId:
+                    type: string
+                  activitiesCount:
+                    type: integer
+                  activities:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/OperationLog"
+
+  /logs/cleanup:
+    post:
+      tags: [Админ Логи]
+      summary: Удалить старые логи
+      description: Удалить логи старше N дней (обслуживание)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                daysOld:
+                  type: integer
+                  default: 90
+                  description: Удалить логи старше указанного количества дней
+      responses:
+        "200":
+          description: Очистка завершена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  deletedCount:
+                    type: integer
+                  message:
+                    type: string
+
+components:
+  schemas:
+    LocalizedString:
+      type: object
+      properties:
+        ua:
+          type: string
+        ru:
+          type: string
+        en:
+          type: string
+        sk:
+          type: string
+
+    LocalizedStringArray:
+      type: object
+      properties:
+        ua:
+          type: array
+          items:
+            type: string
+        ru:
+          type: array
+          items:
+            type: string
+        en:
+          type: array
+          items:
+            type: string
+        sk:
+          type: array
+          items:
+            type: string
+
+    ProductImage:
+      type: object
+      properties:
+        url:
+          type: string
+        sort:
+          type: integer
+
+    ProductAvailability:
+      type: object
+      properties:
+        isAvailable:
+          type: boolean
+        status:
+          type: string
+          enum: [in_stock, out_of_stock]
+        message:
+          type: string
+        stockQuantity:
+          type: integer
+          nullable: true
+        isTracked:
+          type: boolean
+
+    PurchaseOptionV2Item:
+      type: object
+      properties:
+        key:
+          type: string
+        title:
+          $ref: "#/components/schemas/LocalizedString"
+        enabled:
+          type: boolean
+        price:
+          type: number
+          nullable: true
+        quantity:
+          type: integer
+        mode:
+          type: string
+          enum: [unit, box, pack]
+        stockQuantity:
+          type: integer
+          nullable: true
+        inStock:
+          type: boolean
+        sort:
+          type: integer
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductImage"
+        availability:
+          $ref: "#/components/schemas/ProductAvailability"
+
+    PurchaseOptionsV2:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PurchaseOptionV2Item"
+        defaultKey:
+          type: string
+
+    PurchaseOptionsV2AvailabilityItem:
+      type: object
+      properties:
+        key:
+          type: string
+        title:
+          $ref: "#/components/schemas/LocalizedString"
+        mode:
+          type: string
+          enum: [unit, box, pack]
+        quantity:
+          type: integer
+        enabled:
+          type: boolean
+        availability:
+          $ref: "#/components/schemas/ProductAvailability"
+
+    PurchaseOptionsV2Availability:
+      type: object
+      properties:
+        totalActive:
+          type: integer
+        availableCount:
+          type: integer
+        hasAvailable:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PurchaseOptionsV2AvailabilityItem"
+
+    PurchaseOptionUnit:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        price:
+          type: number
+          nullable: true
+
+    PurchaseOptionBox:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        price:
+          type: number
+          nullable: true
+        quantity:
+          type: integer
+          nullable: true
+
+    PurchaseOptions:
+      type: object
+      properties:
+        unit:
+          $ref: "#/components/schemas/PurchaseOptionUnit"
+        box:
+          $ref: "#/components/schemas/PurchaseOptionBox"
+        defaultMode:
+          type: string
+          enum: [unit, box]
+
+    Badge:
+      type: object
+      properties:
+        key:
+          type: string
+        label:
+          $ref: "#/components/schemas/LocalizedString"
+        valueNumber:
+          type: number
+          nullable: true
+        valueText:
+          type: string
+        unit:
+          type: string
+        display:
+          type: string
+          enum: [value, label_value]
+        sort:
+          type: integer
+        isHighlighted:
+          type: boolean
+
+    NutritionCell:
+      type: object
+      properties:
+        value:
+          type: number
+          nullable: true
+        text:
+          type: string
+        unit:
+          type: string
+
+    NutritionColumn:
+      type: object
+      properties:
+        key:
+          type: string
+        label:
+          $ref: "#/components/schemas/LocalizedString"
+        meta:
+          type: object
+          properties:
+            grams:
+              type: number
+              nullable: true
+        sort:
+          type: integer
+
+    NutritionRow:
+      type: object
+      properties:
+        key:
+          type: string
+        label:
+          $ref: "#/components/schemas/LocalizedString"
+        values:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/NutritionCell"
+        sort:
+          type: integer
+
+    NutritionTable:
+      type: object
+      properties:
+        title:
+          $ref: "#/components/schemas/LocalizedString"
+        columns:
+          type: array
+          items:
+            $ref: "#/components/schemas/NutritionColumn"
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/NutritionRow"
+
+    Product:
+      type: object
+      properties:
+        _id:
+          type: string
+        slug:
+          type: string
+        type:
+          type: string
+          nullable: true
+        title:
+          $ref: "#/components/schemas/LocalizedString"
+        subtitle:
+          $ref: "#/components/schemas/LocalizedString"
+        description:
+          $ref: "#/components/schemas/LocalizedString"
+        ingredients:
+          $ref: "#/components/schemas/LocalizedString"
+        features:
+          $ref: "#/components/schemas/LocalizedStringArray"
+        cover:
+          nullable: true
+          oneOf:
+            - type: string
+            - $ref: "#/components/schemas/ProductImage"
+        gallery:
+          type: array
+          items:
+            oneOf:
+              - type: string
+              - $ref: "#/components/schemas/ProductImage"
+        cardBadges:
+          type: array
+          items:
+            $ref: "#/components/schemas/Badge"
+        nutritionTable:
+          nullable: true
+          $ref: "#/components/schemas/NutritionTable"
+        currency:
+          type: string
+        price:
+          type: number
+        oldPrice:
+          type: number
+          nullable: true
+        stockQuantity:
+          type: integer
+          nullable: true
+        inStock:
+          type: boolean
+        availability:
+          $ref: "#/components/schemas/ProductAvailability"
+        purchaseOptions:
+          $ref: "#/components/schemas/PurchaseOptions"
+        purchaseOptionsV2:
+          nullable: true
+          $ref: "#/components/schemas/PurchaseOptionsV2"
+        purchaseOptionsV2Availability:
+          nullable: true
+          $ref: "#/components/schemas/PurchaseOptionsV2Availability"
+        weightG:
+          type: number
+          nullable: true
+        proteinG:
+          type: number
+          nullable: true
+        seoTitle:
+          $ref: "#/components/schemas/LocalizedString"
+        seoDescription:
+          $ref: "#/components/schemas/LocalizedString"
+        isActive:
+          type: boolean
+        sort:
+          type: integer
+        isBar:
+          type: boolean
+        brand:
+          type: object
+          properties:
+            title:
+              $ref: "#/components/schemas/LocalizedString"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AdminProductUpsertRequest:
+      type: object
+      required:
+        - slug
+        - title
+        - price
+      properties:
+        slug:
+          type: string
+          example: fitwin-cookies-cream-60g
+        type:
+          type: string
+          nullable: true
+        title:
+          $ref: "#/components/schemas/LocalizedString"
+        subtitle:
+          $ref: "#/components/schemas/LocalizedString"
+        description:
+          $ref: "#/components/schemas/LocalizedString"
+        ingredients:
+          $ref: "#/components/schemas/LocalizedString"
+        features:
+          $ref: "#/components/schemas/LocalizedStringArray"
+        cover:
+          oneOf:
+            - type: string
+            - $ref: "#/components/schemas/ProductImage"
+        gallery:
+          type: array
+          items:
+            oneOf:
+              - type: string
+              - $ref: "#/components/schemas/ProductImage"
+        cardBadges:
+          type: array
+          items:
+            $ref: "#/components/schemas/Badge"
+        nutritionTable:
+          nullable: true
+          $ref: "#/components/schemas/NutritionTable"
+        currency:
+          type: string
+          example: EUR
+        price:
+          type: number
+          example: 2.99
+        oldPrice:
+          type: number
+          nullable: true
+        stockQuantity:
+          type: integer
+          nullable: true
+        inStock:
+          type: boolean
+        weightG:
+          type: number
+          nullable: true
+        proteinG:
+          type: number
+          nullable: true
+        isActive:
+          type: boolean
+        sort:
+          type: integer
+        isBar:
+          type: boolean
+        brand:
+          type: object
+          properties:
+            title:
+              $ref: "#/components/schemas/LocalizedString"
+        purchaseOptions:
+          $ref: "#/components/schemas/PurchaseOptions"
+        purchaseOptionsV2:
+          $ref: "#/components/schemas/PurchaseOptionsV2"
+      example:
+        slug: fitwin-cookies-cream-60g
+        type: bar
+        title:
+          ua: "FitWin COOKIES&CREAM 60g"
+          ru: "FitWin COOKIES&CREAM 60г"
+          en: "FitWin COOKIES&CREAM 60g"
+          sk: "FitWin COOKIES&CREAM 60g"
+        subtitle:
+          ua: "Протеїновий батончик"
+          ru: "Протеиновый батончик"
+          en: "Protein bar"
+          sk: "Proteínová tyčinka"
+        description:
+          ua: "Детальний опис товару"
+          ru: "Подробное описание товара"
+          en: "Detailed product description"
+          sk: "Podrobný popis produktu"
+        ingredients:
+          ua: "Сироватковий білок, какао, клітковина"
+          ru: "Сывороточный белок, какао, клетчатка"
+          en: "Whey protein, cocoa, fiber"
+          sk: "Srvátkový proteín, kakao, vláknina"
+        features:
+          ua: ["20 г білка", "без цукру", "високий вміст клітковини"]
+          ru: ["20 г белка", "без сахара", "высокое содержание клетчатки"]
+          en: ["20g protein", "no sugar", "high fiber"]
+          sk: ["20 g bielkovín", "bez cukru", "vysoký obsah vlákniny"]
+        cover:
+          url: "https://fitwin-powerpro.com/ftp/file.webp"
+          sort: 0
+        gallery:
+          - url: "https://fitwin-powerpro.com/ftp/file.webp"
+            sort: 0
+          - url: "https://fitwin-powerpro.com/ftp/file-2.webp"
+            sort: 1
+        cardBadges:
+          - key: protein
+            label:
+              ua: "Білок"
+              ru: "Белок"
+              en: "Protein"
+              sk: "Bielkoviny"
+            valueNumber: 20
+            valueText: ""
+            unit: g
+            display: value
+            sort: 0
+            isHighlighted: true
+          - key: kcal
+            label:
+              ua: "Калорії"
+              ru: "Калории"
+              en: "Calories"
+              sk: "Kalórie"
+            valueNumber: 210
+            valueText: ""
+            unit: kcal
+            display: value
+            sort: 1
+            isHighlighted: false
+        nutritionTable:
+          title:
+            ua: "Поживна цінність"
+            ru: "Пищевая ценность"
+            en: "Nutrition facts"
+            sk: "Výživové údaje"
+          columns:
+            - key: per_100g
+              label:
+                ua: "На 100 г"
+                ru: "На 100 г"
+                en: "Per 100g"
+                sk: "Na 100 g"
+              meta:
+                grams: 100
+              sort: 0
+            - key: per_60g
+              label:
+                ua: "На 60 г"
+                ru: "На 60 г"
+                en: "Per 60g"
+                sk: "Na 60 g"
+              meta:
+                grams: 60
+              sort: 1
+          rows:
+            - key: energy
+              label:
+                ua: "Енергетична цінність"
+                ru: "Энергетическая ценность"
+                en: "Energy"
+                sk: "Energia"
+              values:
+                per_100g:
+                  value: null
+                  text: "1436 kJ / 364 kcal"
+                  unit: ""
+                per_60g:
+                  value: null
+                  text: "862 kJ / 218 kcal"
+                  unit: ""
+              sort: 0
+            - key: protein
+              label:
+                ua: "Білки"
+                ru: "Белки"
+                en: "Protein"
+                sk: "Bielkoviny"
+              values:
+                per_100g:
+                  value: 33.3
+                  text: ""
+                  unit: g
+                per_60g:
+                  value: 20
+                  text: ""
+                  unit: g
+              sort: 1
+        currency: EUR
+        price: 2.99
+        oldPrice: 3.49
+        stockQuantity: 120
+        inStock: true
+        weightG: 60
+        proteinG: 20
+        seoTitle:
+          ua: "FitWin COOKIES&CREAM 60 г"
+          ru: "FitWin COOKIES&CREAM 60 г"
+          en: "FitWin COOKIES&CREAM 60g"
+          sk: "FitWin COOKIES&CREAM 60 g"
+        seoDescription:
+          ua: "Протеїновий батончик зі смаком cookies&cream"
+          ru: "Протеиновый батончик со вкусом cookies&cream"
+          en: "Protein bar with cookies&cream flavor"
+          sk: "Proteínová tyčinka s príchuťou cookies&cream"
+        isActive: true
+        sort: 10
+        isBar: true
+        brand:
+          title:
+            ua: FitWin
+            ru: FitWin
+            en: FitWin
+            sk: FitWin
+        purchaseOptions:
+          unit:
+            enabled: true
+            price: 2.99
+          box:
+            enabled: true
+            price: 31.2
+            quantity: 12
+          defaultMode: unit
+        purchaseOptionsV2:
+          defaultKey: unit-1
+          items:
+            - key: unit-1
+              title:
+                ua: "1 шт"
+                ru: "1 шт"
+                en: "1 pc"
+                sk: "1 ks"
+              enabled: true
+              price: 2.99
+              quantity: 1
+              mode: unit
+              stockQuantity: 120
+              inStock: true
+              sort: 0
+              images:
+                - url: "https://fitwin-powerpro.com/ftp/file.webp"
+                  sort: 0
+            - key: box-12
+              title:
+                ua: "Коробка 12 шт"
+                ru: "Коробка 12 шт"
+                en: "Box 12 pcs"
+                sk: "Box 12 ks"
+              enabled: true
+              price: 31.2
+              quantity: 12
+              mode: box
+              stockQuantity: 20
+              inStock: true
+              sort: 1
+              images:
+                - url: "https://fitwin-powerpro.com/ftp/file-2.webp"
+                  sort: 0
+
+    AdminProductListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        pages:
+          type: integer
+        sort:
+          type: object
+          additionalProperties:
+            type: integer
+
+    AdminProductMetaResponse:
+      type: object
+      properties:
+        stats:
+          type: object
+          properties:
+            total:
+              type: integer
+            active:
+              type: integer
+            inactive:
+              type: integer
+            withVariants:
+              type: integer
+            tracked:
+              type: integer
+        filters:
+          type: object
+          properties:
+            types:
+              type: array
+              items:
+                type: string
+            brands:
+              type: array
+              items:
+                type: string
+
+    InventoryPosition:
+      type: object
+      properties:
+        positionType:
+          type: string
+          enum: [product, purchase_option]
+        productId:
+          type: string
+        slug:
+          type: string
+        title:
+          $ref: "#/components/schemas/LocalizedString"
+        type:
+          type: string
+        brand:
+          $ref: "#/components/schemas/LocalizedString"
+        isActive:
+          type: boolean
+        enabled:
+          type: boolean
+          nullable: true
+        purchaseOptionKey:
+          type: string
+          nullable: true
+        purchaseOptionMode:
+          type: string
+          nullable: true
+        purchaseOptionQuantity:
+          type: integer
+          nullable: true
+        isTracked:
+          type: boolean
+        stockQuantity:
+          type: integer
+          nullable: true
+        inStock:
+          type: boolean
+        availability:
+          $ref: "#/components/schemas/ProductAvailability"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    InventorySummary:
+      type: object
+      properties:
+        totalPositions:
+          type: integer
+        trackedPositions:
+          type: integer
+        inStockPositions:
+          type: integer
+        outOfStockPositions:
+          type: integer
+        lowStockPositions:
+          type: integer
+        totalTrackedUnits:
+          type: integer
+
+    InventoryPositionListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InventoryPosition"
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        pages:
+          type: integer
+        summary:
+          $ref: "#/components/schemas/InventorySummary"
+
+    InventoryMovement:
+      type: object
+      properties:
+        _id:
+          type: string
+        operationType:
+          type: string
+          enum: [receipt, writeoff, recount]
+        scope:
+          type: string
+          enum: [product, purchase_option]
+        productId:
+          type: string
+        productSlug:
+          type: string
+        productTitle:
+          $ref: "#/components/schemas/LocalizedString"
+        purchaseOptionKey:
+          type: string
+        purchaseOptionTitle:
+          $ref: "#/components/schemas/LocalizedString"
+        quantityRequested:
+          type: integer
+        quantityBefore:
+          type: integer
+          nullable: true
+        quantityDelta:
+          type: integer
+        quantityAfter:
+          type: integer
+        reason:
+          type: string
+        comment:
+          type: string
+        reference:
+          type: string
+        createdBy:
+          type: string
+        meta:
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    InventoryMovementListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InventoryMovement"
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        pages:
+          type: integer
+
+    InventoryMutationItem:
+      type: object
+      properties:
+        movementId:
+          type: string
+          nullable: true
+        operationType:
+          type: string
+          enum: [receipt, writeoff, recount]
+        scope:
+          type: string
+          enum: [product, purchase_option]
+        productId:
+          type: string
+        productSlug:
+          type: string
+        productTitle:
+          $ref: "#/components/schemas/LocalizedString"
+        purchaseOptionKey:
+          type: string
+        purchaseOptionTitle:
+          $ref: "#/components/schemas/LocalizedString"
+        quantityRequested:
+          type: integer
+        quantityBefore:
+          type: integer
+          nullable: true
+        quantityDelta:
+          type: integer
+        quantityAfter:
+          type: integer
+        reason:
+          type: string
+        comment:
+          type: string
+        reference:
+          type: string
+        createdBy:
+          type: string
+        product:
+          type: object
+          properties:
+            _id:
+              type: string
+            slug:
+              type: string
+            title:
+              $ref: "#/components/schemas/LocalizedString"
+            availability:
+              $ref: "#/components/schemas/ProductAvailability"
+            stockQuantity:
+              type: integer
+              nullable: true
+            inStock:
+              type: boolean
+            purchaseOptionsV2:
+              nullable: true
+              $ref: "#/components/schemas/PurchaseOptionsV2"
+            purchaseOptionsV2Availability:
+              nullable: true
+              $ref: "#/components/schemas/PurchaseOptionsV2Availability"
+            isActive:
+              type: boolean
+            updatedAt:
+              type: string
+              format: date-time
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    InventoryMutationResponse:
+      type: object
+      properties:
+        operationType:
+          type: string
+          enum: [receipt, writeoff, recount]
+        dryRun:
+          type: boolean
+        totalItems:
+          type: integer
+        totalDelta:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InventoryMutationItem"
+
+    InventoryReceiptItem:
+      type: object
+      required:
+        - productId
+        - quantity
+      properties:
+        productId:
+          type: string
+        purchaseOptionKey:
+          type: string
+          example: box-12
+        quantity:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+        comment:
+          type: string
+        reference:
+          type: string
+        createdBy:
+          type: string
+        meta:
+          nullable: true
+
+    InventoryReceiptRequest:
+      type: object
+      required:
+        - items
+      properties:
+        dryRun:
+          type: boolean
+          default: false
+        reason:
+          type: string
+        comment:
+          type: string
+        reference:
+          type: string
+        createdBy:
+          type: string
+        meta:
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InventoryReceiptItem"
+
+    InventoryRecountItem:
+      type: object
+      required:
+        - productId
+        - exactQuantity
+      properties:
+        productId:
+          type: string
+        purchaseOptionKey:
+          type: string
+        exactQuantity:
+          type: integer
+          minimum: 0
+        reason:
+          type: string
+        comment:
+          type: string
+        reference:
+          type: string
+        createdBy:
+          type: string
+        meta:
+          nullable: true
+
+    InventoryRecountRequest:
+      type: object
+      required:
+        - items
+      properties:
+        dryRun:
+          type: boolean
+          default: false
+        reason:
+          type: string
+        comment:
+          type: string
+        reference:
+          type: string
+        createdBy:
+          type: string
+        meta:
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InventoryRecountItem"
+
+    ImageMetadata:
+      type: object
+      properties:
+        width:
+          type: integer
+          example: 1920
+        height:
+          type: integer
+          example: 1080
+        originalFormat:
+          type: string
+          example: jpeg
+        originalMimeType:
+          type: string
+          example: image/jpeg
+        quality:
+          type: integer
+          example: 75
+          description: Уровень качества WebP (75 = минимальное сжатие)
+
+    ImageCompressionStats:
+      type: object
+      properties:
+        originalSizeBytes:
+          type: integer
+          example: 245000
+        compressedSizeBytes:
+          type: integer
+          example: 52000
+        compressionRatio:
+          type: string
+          example: "78.8%"
+
+    ProcessedImage:
+      type: object
+      properties:
+        format:
+          type: string
+          example: webp
+        base64:
+          type: string
+          description: Данные изображения WebP в формате Base64
+          example: "UklGRiYAAABXRUJQVlA4..."
+        mimeType:
+          type: string
+          example: image/webp
+        metadata:
+          $ref: "#/components/schemas/ImageMetadata"
+        stats:
+          $ref: "#/components/schemas/ImageCompressionStats"
+
+    ImageUploadResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        image:
+          $ref: "#/components/schemas/ProcessedImage"
+
+    GalleryUploadResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        totalProcessed:
+          type: integer
+          example: 5
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProcessedImage"
+
+    OperationLogMetadata:
+      type: object
+      properties:
+        ip:
+          type: string
+          example: "192.168.1.1"
+        userAgent:
+          type: string
+        method:
+          type: string
+          example: "POST"
+        path:
+          type: string
+        duration:
+          type: integer
+          description: Длительность операции в миллисекундах
+        timestamp:
+          type: string
+          format: date-time
+
+    OperationLog:
+      type: object
+      properties:
+        _id:
+          type: string
+        operationType:
+          type: string
+          enum: [create, read, update, delete, mutation]
+        entityType:
+          type: string
+        entityId:
+          type: string
+        entitySlug:
+          type: string
+        entityTitle:
+          type: string
+        action:
+          type: string
+          example: "product_created"
+        status:
+          type: string
+          enum: [success, failed]
+        details:
+          type: object
+          additionalProperties: true
+        changes:
+          type: object
+          properties:
+            before:
+              type: object
+            after:
+              type: object
+        errorMessage:
+          type: string
+        errorCode:
+          type: string
+        userId:
+          type: string
+        userRole:
+          type: string
+        userEmail:
+          type: string
+        metadata:
+          $ref: "#/components/schemas/OperationLogMetadata"
+        quantity:
+          type: integer
+        amount:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+
+    LogsSummary:
+      type: object
+      properties:
+        totalOperations:
+          type: integer
+        successCount:
+          type: integer
+        failedCount:
+          type: integer
+        byOperationType:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              count:
+                type: integer
+        byEntityType:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              count:
+                type: integer
+        avgDuration:
+          type: number
+          description: Средняя длительность операции в мс
+        totalQuantity:
+          type: integer
+        totalAmount:
+          type: number
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+        details:
+          type: object
+          additionalProperties: true

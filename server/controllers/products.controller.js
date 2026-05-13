@@ -3,40 +3,7 @@
 // (basic CRUD with variations support)
 // ================================
 import { Product } from "../models/Product.model.js";
-import {
-  getProductAvailability,
-  getPurchaseOptionAvailability,
-  getPurchaseOptionsV2Availability,
-} from "../utils/productStock.js";
-
-function serializeProduct(product) {
-  const plainProduct = product?.toObject?.() || product;
-
-  const serializedPurchaseOptionsV2 = plainProduct?.purchaseOptionsV2
-    ? {
-        ...plainProduct.purchaseOptionsV2,
-        items: Array.isArray(plainProduct.purchaseOptionsV2.items)
-          ? plainProduct.purchaseOptionsV2.items.map((item) => ({
-              ...item,
-              availability: getPurchaseOptionAvailability(item),
-            }))
-          : [],
-      }
-    : plainProduct?.purchaseOptionsV2;
-
-  const serialized = {
-    ...plainProduct,
-    purchaseOptionsV2: serializedPurchaseOptionsV2,
-    availability: getProductAvailability(plainProduct),
-  };
-
-  if (serializedPurchaseOptionsV2?.items?.length) {
-    serialized.purchaseOptionsV2Availability =
-      getPurchaseOptionsV2Availability(plainProduct);
-  }
-
-  return serialized;
-}
+import { serializeProduct } from "../utils/productSerialization.js";
 
 export async function listProducts(req, res) {
   const { page = 1, limit = 20, q = "", isActive, inStock } = req.query;
