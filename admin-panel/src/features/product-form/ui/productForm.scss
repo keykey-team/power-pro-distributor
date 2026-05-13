@@ -231,6 +231,198 @@
         margin-top: -4px;
     }
 }
+
+.product-form {
+    &__media-block {
+        gap: 12px;
+    }
+
+    &__media-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    &__media-label {
+        color: $color-slate-900;
+        font-family: $font-family-base;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    &__upload-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        padding: 0 16px;
+        border-radius: 10px;
+        background: $color-side-bar;
+        color: $color-white !important;
+        font-family: $font-family-base;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1;
+        cursor: pointer;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+        box-shadow: 0 8px 18px rgba($color-side-bar, 0.18);
+
+        &:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba($color-side-bar, 0.22);
+        }
+
+        &.is-loading {
+            cursor: progress;
+            opacity: 0.75;
+            transform: none;
+        }
+    }
+
+    &__upload-input {
+        display: none;
+    }
+
+    &__upload-preview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 180px));
+        gap: 12px;
+        margin-top: 4px;
+    }
+
+    &__upload-preview-card {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px;
+        border: 1px solid $color-slate-200;
+        border-radius: 14px;
+        background: $color-white;
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.04);
+    }
+
+    &__upload-preview-image {
+        width: 100%;
+        max-width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 10px;
+        border: 1px solid $color-slate-200;
+        background: $color-slate-50;
+    }
+
+    &__upload-preview-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    &__upload-preview-title {
+        color: $color-slate-700;
+        font-family: $font-family-base;
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1.2;
+    }
+
+    &__checkbox {
+        margin-top: 8px;
+    }
+}
+
+.product-form .btn {
+    min-height: 40px;
+    padding: 0 16px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    font-family: $font-family-base;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease, background-color 0.18s ease;
+}
+
+.product-form .btn-primary {
+    background: $color-side-bar;
+    color: $color-white;
+    box-shadow: 0 8px 18px rgba($color-side-bar, 0.18);
+
+    &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 22px rgba($color-side-bar, 0.22);
+    }
+}
+
+.product-form .btn-danger {
+    background: rgba($color-danger, 0.1);
+    color: $color-danger;
+    border-color: rgba($color-danger, 0.18);
+
+    &:hover {
+        transform: translateY(-1px);
+        background: rgba($color-danger, 0.14);
+        box-shadow: 0 10px 22px rgba($color-danger, 0.1);
+    }
+}
+
+.product-form .btn.btn-success {
+    background: $color-side-bar;
+    color: $color-white;
+}
+
+.product-form .form-group .bulk-offers-modal__checkbox {
+    width: 100%;
+}
+
+.product-form .bulk-offers-modal__checkbox-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.product-form .bulk-offers-modal__checkbox-box {
+    width: 18px;
+    height: 18px;
+}
+
+.product-form .bulk-offers-modal__checkbox-text {
+    font-size: 13px;
+}
+
+.product-form__submit {
+    transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba($color-side-bar, 0.22);
+    }
+}
+
+.section-form__header-btns button {
+    min-height: 40px;
+    padding: 0 16px;
+    border-radius: 10px;
+    border: 1px solid $color-slate-200;
+    background: $color-white;
+    color: $color-txt-main;
+    font-family: $font-family-base;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+
+    &:hover {
+        transform: translateY(-1px);
+        border-color: $color-side-bar;
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+    }
+}
+
 .custom-textarea {
     width: 100%;
     min-height: 120px;

@@ -1,7 +1,7 @@
 import React from 'react';
 import './TranslateButton.scss';
 
-const TranslateButton = ({ onClick, isLoading, label = 'Перекласти UA → EN' }) => (
+const TranslateButton = ({ onClick, isLoading, label = 'Перекласти EN → SK' }) => (
   <button
     type="button"
     className={`btn-translate${isLoading ? ' btn-translate--loading' : ''}`}
