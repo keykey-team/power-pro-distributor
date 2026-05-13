@@ -1,597 +1,604 @@
 "use client";
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useProductForm } from '../lib/useProductForm';
-import { useAccessoryOptions } from '../lib/useAccessoryOptions';
-import { useOfferImageSync } from '../lib/useOfferImageSync';
-import { useAccessoryBindings, useCategoryOptions, useProductFormUiEffects } from '../lib/useProductFormUiEffects';
+import { generateSlug } from '../lib/generateSlug';
 import CustomSelect from '../../../shared/ui/select-form/CustomSelect';
 import CustomInput from '../../../shared/ui/input-form/CustomInput';
-import CatalogPagination from '../../pagination/ui/Pagination'; 
 import { uploadAdminImages } from '../../../shared/api/products.services'; 
 import toast from '../../../shared/lib/toast';
 import { useAutoTranslate } from '../../../shared/lib/useAutoTranslate';
 import TranslateButton from '../../../shared/ui/translate-button/TranslateButton';
-import { BulkOffersModal, getAxisPresetLabel, getAxisPresetValue } from '../../bulk-offers-modal';
-import { getStatusOptions } from '../../../shared/lib/statuses';
-
-const STATUS_OPTIONS = getStatusOptions(['active', 'hidden', 'draft'], { labelType: 'form' });
-const ACCESSORY_CATEGORY_ID = '69fdaa7d5c7946d45d6d9e2d';
 
 const ProductForm = ({
     type,
     initialData,
-    variationsData,
-    isBulkOffersModalOpen = false,
-    onCloseBulkOffersModal = () => {},
 }) => {
-    const formik = useProductForm(type, initialData, variationsData);
+    const formik = useProductForm(type, initialData);
     const { translateFields, isTranslating } = useAutoTranslate(formik);
-
     const isEditMode = type !== 'create';
-    const [localOfferFilters, setLocalOfferFilters] = useState({});
+    const [uploadingImages, setUploadingImages] = useState(false);
 
-    // === БАЗОВИЙ URL ДЛЯ КАРТИНОК ===
-    const API_BASE_URL = process.env.REACT_APP_API_URL_IMG?.trim() || process.env.REACT_APP_API_URL_IMG?.trim() || '';
+    useEffect(() => {
+        if (initialData) {
+            console.log('Product:', initialData);
+        }
+    }, [initialData]);
 
-    // Функція, яка підклеює домен до відносного шляху (якщо це ще не зроблено)
-    const getFullImageUrl = (imgUrl) => {
-        if (!imgUrl) return '';
-        if (imgUrl.startsWith('http')) return imgUrl;
-        return `${API_BASE_URL}${imgUrl}`;
-    };
+    useEffect(() => {
+        const generatedSlug = generateSlug(formik.values.title?.en || '');
+        if ((formik.values.slug || '') !== generatedSlug) {
+            formik.setFieldValue('slug', generatedSlug, false);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formik.values.title?.en]);
 
-    // === СТЕЙТ ДЛЯ КАТЕГОРІЙ ===
-    const { categoryOptions, categoryMetaById } = useCategoryOptions();
-    const [accessorySearchQuery, setAccessorySearchQuery] = useState('');
-    const { accessoryOptions: loadedAccessoryOptions, isAccessorySearchLoading } = useAccessoryOptions(
-        ACCESSORY_CATEGORY_ID,
-        accessorySearchQuery
+    const renderCheckbox = (name, checked, onChange, labelText) => (
+        <label className="bulk-offers-modal__checkbox product-form__checkbox">
+            <input
+                type="checkbox"
+                name={name}
+                checked={checked}
+                onChange={onChange}
+                className="bulk-offers-modal__checkbox-input"
+            />
+            <span className="bulk-offers-modal__checkbox-box" />
+            <span className="bulk-offers-modal__checkbox-text">{labelText}</span>
+        </label>
     );
 
-const axes = formik.values.variationAxes || [];
-const offers = formik.values.offers || [];
-
-useProductFormUiEffects({
-    formik,
-    categoryMetaById,
-    initialData,
-    variationsData,
-    offers,
-});
-
-useOfferImageSync({
-    axes,
-    offers,
-    setFieldValue: formik.setFieldValue,
-});
-
-const { accessoryOptions, applyAccessoryToAllOffers } = useAccessoryBindings({
-    loadedAccessoryOptions,
-    offers,
-    setFieldValue: formik.setFieldValue,
-});
-
-const selectableAxes = useMemo(
-    () => axes.filter((axis) => Array.isArray(axis.valuesPreset) && axis.valuesPreset.length > 0),
-    [axes]
-);
-
-const currentOpt = localOfferFilters;
-
-const filteredOffers = useMemo(() => {
-    const activeFilters = Object.entries(currentOpt).filter(([, value]) => String(value || '').trim() !== '');
-
-    if (!activeFilters.length) {
-        return offers.map((item, originalIndex) => ({ item, originalIndex }));
+    // Guard: ensure formik values are initialized properly
+    if (!formik.values ) {
+        return <div>Loading form...</div>;
     }
 
-    return offers
-        .map((item, originalIndex) => ({ item, originalIndex }))
-        .filter(({ item }) => activeFilters.every(([axisId, filterValue]) => {
-            const offerValue = item?.options?.[axisId];
-            return String(offerValue ?? '') === String(filterValue ?? '');
-        }));
-}, [offers, currentOpt]);
+    // === IMAGE UPLOAD HANDLER ===
+    const handleImageUpload = async (e, fieldName) => {
+        const files = Array.from(e.target.files || []);
+        if (!files.length) return;
 
-    // === ЛОГІКА ОНОВЛЕННЯ ФІЛЬТРІВ ===
-    const handleFilterChange = (axisId, value) => {
-        const newOpt = { ...currentOpt };
+        setUploadingImages(true);
+        try {
+            const formData = new FormData();
+            files.forEach((file) => {
+                formData.append('images', file);
+            });
 
-        if (value) {
-            newOpt[axisId] = value;
-        } else {
-            delete newOpt[axisId]; 
+            const uploadedUrls = await uploadAdminImages(formData);
+            const urls = Array.isArray(uploadedUrls) ? uploadedUrls : uploadedUrls?.urls || [];
+
+            if (fieldName === 'cover') {
+                // Set first uploaded image as cover
+                formik.setFieldValue('cover', urls[0] || '');
+            } else if (fieldName === 'gallery') {
+                // Append to gallery
+                const currentGallery = formik.values.gallery || [];
+                formik.setFieldValue('gallery', [...currentGallery, ...urls]);
+            }
+
+            toast.success('Зображення завантажено успішно');
+        } catch (error) {
+            console.error('Error uploading images:', error);
+            toast.error('Помилка завантаження зображень');
+        } finally {
+            setUploadingImages(false);
         }
-
-        setLocalOfferFilters(newOpt);
     };
 
-    const handleAddOffer = () => {
-        const newOffer = {
-            title: '',
-            price: '',
-            sku: '',
-            options: {},
-            image: null,
-            accessoryOfferId: String(formik.values.groupAccessoryOfferId || '').trim(),
+    const handleRemoveGalleryImage = (index) => {
+        const updated = (formik.values.gallery || []).filter((_, i) => i !== index);
+        formik.setFieldValue('gallery', updated);
+    };
+
+    // === PURCHASE OPTIONS MANAGEMENT ===
+    const addPurchaseOption = () => {
+        const newItem = {
+            key: '',
+            title: { ua: '', ru: '', en: '', sk: '' },
+            enabled: true,
+            price: 0,
+            quantity: 1,
+            mode: 'unit',
+            stockQuantity: 0,
+            inStock: true,
+            sort: 0,
+            images: [],
         };
-        formik.setFieldValue('offers', [...offers, newOffer]);
+        formik.setFieldValue('purchaseOptionsV2Items', [
+            ...(formik.values.purchaseOptionsV2Items || []),
+            newItem,
+        ]);
     };
 
-    const handleRemoveOffer = (indexToRemove) => {
-        const newOffers = offers.filter((_, i) => i !== indexToRemove);
-        formik.setFieldValue('offers', newOffers);
+    const removePurchaseOption = (index) => {
+        const updated = (formik.values.purchaseOptionsV2Items || []).filter((_, i) => i !== index);
+        formik.setFieldValue('purchaseOptionsV2Items', updated);
+    };
+
+    const updatePurchaseOption = (index, field, value) => {
+        const items = [...(formik.values.purchaseOptionsV2Items || [])];
+        items[index] = { ...items[index], [field]: value };
+        formik.setFieldValue('purchaseOptionsV2Items', items);
+    };
+
+    const updatePurchaseOptionLang = (index, lang, value) => {
+        const items = [...(formik.values.purchaseOptionsV2Items || [])];
+        items[index] = {
+            ...items[index],
+            title: { ...(items[index].title || {}), [lang]: value },
+        };
+        formik.setFieldValue('purchaseOptionsV2Items', items);
     };
 
     return (
         <>
         <form id="product-create-form" onSubmit={formik.handleSubmit} className="product-form">
-             <div className="product__variations-header">
-                 <h1>Дані товару</h1>
-                  <div className="form-translate-bar">
-                <TranslateButton
-                    isLoading={isTranslating}
-                    onClick={() => {
-                        translateFields([
-                            { from: 'title.ua',       to: 'title.en' },
-                            { from: 'subtitle.ua',    to: 'subtitle.en' },
-                            { from: 'description.ua', to: 'description.en' },
-                        ]);
-                    }}
-                />
+            {/* === HEADER === */}
+            <div className="product__variations-header">
+                <h1>Переклад</h1>
+                <div className="form-translate-bar">
+                    <TranslateButton
+                        isLoading={isTranslating}
+                        onClick={() => {
+                            translateFields([
+                                { from: 'title.en', to: 'title.sk' },
+                                { from: 'subtitle.en', to: 'subtitle.sk' },
+                                { from: 'description.en', to: 'description.sk' },
+                            ]);
+                        }}
+                    />
+                </div>
             </div>
-            </div>
-           
 
-           
+            {/* === TITLE === */}
+            <h1>Назва товару</h1>
             <div className="form-wrapper-2-column">
                 <CustomInput
-                    id="title.ua" name="title.ua" label="Назва товару (UA)"
-                    value={formik.values.title?.ua || ''} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                    placeholder="Введіть назву українською" error={formik.errors.title?.ua} touched={formik.touched.title?.ua}
+                    id="title.en" label="Назва товару (EN)"
+                    value={String(formik.values.title?.en || '')} onChange={(e) => formik.setFieldValue('title.en', e.target.value)} onBlur={() => formik.setFieldTouched('title.en', true)}
+                    placeholder="Enter title in English" error={String(formik.errors.title?.en || '')} touched={Boolean(formik.touched.title?.en)}
                 />
                 <CustomInput
-                    id="title.en" name="title.en" label="Назва товару (EN)"
-                    value={formik.values.title?.en || ''} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                    placeholder="Enter title in English" error={formik.errors.title?.en} touched={formik.touched.title?.en}
+                    id="title.sk" label="Назва товару (SK)"
+                    value={String(formik.values.title?.sk || '')} onChange={(e) => formik.setFieldValue('title.sk', e.target.value)} onBlur={() => formik.setFieldTouched('title.sk', true)}
+                    placeholder="Zadajte názov po slovensky" error={String(formik.errors.title?.sk || '')} touched={Boolean(formik.touched.title?.sk)}
                 />
             </div>
-
-            <div className="form-wrapper-2-1-column">
+            <div className="form-wrapper-2-column">
                 <CustomInput
-                    id="slug" name="slug" label="Slug (URL товару)"
+                    id="slug" name="slug" label="Slug (URL)"
                     value={formik.values.slug || ''} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                    placeholder="generyetsya-avtomatichno" error={formik.errors.slug} touched={formik.touched.slug}
+                    placeholder="product-slug" error={formik.errors.slug} touched={formik.touched.slug}
                 />
-                <div className="form-group">
-                    <label htmlFor="category">Категорія</label>
-                    <div className="input-wrapper">
-                        <CustomSelect
-                            options={categoryOptions} 
-                            value={formik.values.categoryIds || []}
-                            onChange={(value) => formik.setFieldValue('categoryIds', value)} 
-                            onBlur={formik.handleBlur}
-                            name="categoryIds"
-                            id="category"
-                            error={formik.errors.categoryIds}
-                            touched={formik.touched.categoryIds}
-                            placeholder={categoryOptions.length > 0 ? "Виберіть категорію" : "Завантаження..."}
-                            isMulti
-                        />
-                    </div>
-                    {formik.touched.categoryIds && formik.errors.categoryIds ? (
-                        <div className="error-text">{formik.errors.categoryIds}</div>
-                    ) : null}
-                </div>
             </div>
 
-            <div className="form-group">
-                <label htmlFor="status">Статус</label>
-                <div className="input-wrapper">
-                    <CustomSelect
-                        options={STATUS_OPTIONS}
-                        value={formik.values.status}
-                        onChange={(value) => formik.setFieldValue('status', value)}
-                        onBlur={formik.handleBlur}
-                        name="status"
-                        id="status"
-                        error={formik.errors.status}
-                        touched={formik.touched.status}
-                        placeholder="Виберіть статус"
+            {/* === SUBTITLE === */}
+            <h1>Підпис до товару</h1>
+            <div className="form-wrapper-2-column">
+                <CustomInput
+                    id="subtitle.en" label="Підпис (EN)"
+                    value={String(formik.values.subtitle?.en || '')} onChange={(e) => formik.setFieldValue('subtitle.en', e.target.value)} onBlur={() => formik.setFieldTouched('subtitle.en', true)}
+                    placeholder="Short subtitle in English..."
+                />
+                <CustomInput
+                    id="subtitle.sk" label="Підпис (SK)"
+                    value={String(formik.values.subtitle?.sk || '')} onChange={(e) => formik.setFieldValue('subtitle.sk', e.target.value)} onBlur={() => formik.setFieldTouched('subtitle.sk', true)}
+                    placeholder="Krátky popis v slovenčine..."
+                />
+            </div>
+
+            {/* === DESCRIPTION === */}
+            <h1>Опис товару</h1>
+            {['en', 'sk'].map((lang) => (
+                <div key={lang} className="form-group">
+                    <label htmlFor={`description.${lang}`}>Опис ({lang.toUpperCase()})</label>
+                    <textarea
+                        id={`description.${lang}`}
+                        className={`custom-textarea ${Boolean(formik.touched.description?.[lang]) && Boolean(formik.errors.description?.[lang]) ? 'error' : ''}`}
+                        value={String(formik.values.description?.[lang] || '')}
+                        onChange={(e) => formik.setFieldValue(`description.${lang}`, e.target.value)}
+                        onBlur={() => formik.setFieldTouched(`description.${lang}`, true)}
+                        placeholder={`Опис товару ${lang === 'ua' ? 'українською' : lang === 'en' ? 'англійською' : lang === 'ru' ? 'російською' : 'словацькою'}...`}
+                        rows="3"
                     />
-                </div>
-            </div>
-
-            <div className="form-wrapper-2-column">
-                <div />
-                <div className="form-group">
-                    <label htmlFor="groupAccessoryOfferId">Аксесуар для всіх офферів</label>
-                    <div className="input-wrapper">
-                        <CustomSelect
-                            options={accessoryOptions}
-                            value={formik.values.groupAccessoryOfferId || ''}
-                            onChange={applyAccessoryToAllOffers}
-                            onInputChange={setAccessorySearchQuery}
-                            name="groupAccessoryOfferId"
-                            id="groupAccessoryOfferId"
-                            placeholder={isAccessorySearchLoading ? 'Пошук аксесуарів...' : 'Оберіть аксесуар'}
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* === ОСНОВНА ІНФОРМАЦІЯ ПРО ТОВАР === */}
-            <div className="form-wrapper-2-column">
-                <CustomInput
-                    id="subtitle.ua" name="subtitle.ua" label="Підпис до товару (UA)"
-                    value={formik.values.subtitle?.ua || ''} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                    placeholder="Короткий підпис українською..." error={formik.errors.subtitle?.ua} touched={formik.touched.subtitle?.ua}
-                />
-                <CustomInput
-                    id="subtitle.en" name="subtitle.en" label="Підпис до товару (EN)"
-                    value={formik.values.subtitle?.en || ''} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                    placeholder="Short subtitle in English..." error={formik.errors.subtitle?.en} touched={formik.touched.subtitle?.en}
-                />
-            </div>
-
-            {/* === ОПИС ТОВАРУ === */}
-            <div className="form-group">
-                <label htmlFor="description.ua">Опис товару (UA)</label>
-                <textarea
-                    id="description.ua"
-                    name="description.ua"
-                    className={`custom-textarea ${formik.touched.description?.ua && formik.errors.description?.ua ? 'error' : ''}`}
-                    value={formik.values.description?.ua || ''}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    placeholder="Детальний опис українською..."
-                />
-                {formik.touched.description?.ua && formik.errors.description?.ua && (
-                    <div className="error-text">{formik.errors.description.ua}</div>
-                )}
-            </div>
-
-            <div className="form-group">
-                <label htmlFor="description.en">Опис товару (EN)</label>
-                <textarea
-                    id="description.en"
-                    name="description.en"
-                    className={`custom-textarea ${formik.touched.description?.en && formik.errors.description?.en ? 'error' : ''}`}
-                    value={formik.values.description?.en || ''}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    placeholder="Detailed description in English..."
-                />
-                {formik.touched.description?.en && formik.errors.description?.en && (
-                    <div className="error-text">{formik.errors.description.en}</div>
-                )}
-            </div>
-
-            {/* === РОЗМІРНА СІТКА === */}
-            <div className="form-group">
-                <label className="form-label">Розмірна сітка</label>
-                <div 
-                    className="size-chart-upload__box" 
-                    style={{ 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        position: 'relative',
-                        padding: '15px',
-                        textAlign: 'center',
-                        border: '1px dashed #ccc',
-                        borderRadius: '8px'
-                    }}
-                >
-                    {formik.values.sizeChart?.imageUrl ? (
-                        <>
-                            <img 
-                                src={getFullImageUrl(formik.values.sizeChart.imageUrl)} 
-                                alt="Size Chart Preview" 
-                                style={{ 
-                                    width: '100%', 
-                                    maxHeight: '200px', 
-                                    objectFit: 'contain', 
-                                    borderRadius: '4px', 
-                                    marginBottom: '8px' 
-                                }} 
-                            />
-                            <span style={{ color: '#7864F5', fontWeight: '500' }}>
-                                Змінити картинку
-                            </span>
-                        </>
-                    ) : (
-                        <>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44" fill="none" style={{ marginBottom: '8px' }}>
-                                <path d="M39.1111 4.88889V39.1111H4.88889V4.88889H39.1111ZM39.1111 0H4.88889C2.2 0 0 2.2 0 4.88889V39.1111C0 41.8 2.2 44 4.88889 44H39.1111C41.8 44 44 41.8 44 39.1111V4.88889C44 2.2 41.8 0 39.1111 0ZM27.2311 21.6578L19.8978 31.1178L14.6667 24.7867L7.33333 34.2222H36.6667L27.2311 21.6578Z" fill="#7864F5"/>
-                            </svg>
-                            <span style={{ color: '#7864F5', fontWeight: '500' }}>
-                                Завантажити розмірну сітку
-                            </span>
-                        </>
+                    {Boolean(formik.touched.description?.[lang]) && Boolean(formik.errors.description?.[lang]) && (
+                        <div className="error-text">{String(formik.errors.description?.[lang] || '')}</div>
                     )}
-                    
-                    <input
-                        type="file"
-                        accept="image/jpeg, image/png, image/webp, image/gif, image/svg+xml, image/avif, image/tiff, image/bmp"
-                        style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                            opacity: 0,
-                            cursor: 'pointer'
-                        }}
-                        onChange={async (e) => {
-                            const file = e.currentTarget.files[0];
-                            if (!file) return;
+                </div>
+            ))}
 
-                            try {
-                                const response = await uploadAdminImages(file);
+            {/* === DATA === */}
+            <h1>Дані товару</h1>
+            <div className="form-wrapper-2-column">
+                <CustomInput
+                    id="type" name="type" label="Тип товару"
+                    value={formik.values.type || ''} onChange={formik.handleChange} onBlur={formik.handleBlur}
+                    placeholder="Тип товару" error={formik.errors.type} touched={formik.touched.type}
+                />
+                <CustomInput
+                    id="sort" name="sort" label="Порядок сортування" type="number"
+                    value={formik.values.sort || 0} onChange={formik.handleChange} onBlur={formik.handleBlur}
+                    placeholder="0" error={formik.errors.sort} touched={formik.touched.sort}
+                />
+            </div>
+            <div className="form-wrapper-2-column">
+                <div className="form-group">
+                    {renderCheckbox('isActive', Boolean(formik.values.isActive), formik.handleChange, 'Активний')}
+                </div>
+                <div className="form-group">
+                    {renderCheckbox('isBar', Boolean(formik.values.isBar), formik.handleChange, 'Это батончик (значок)')}
+                </div>
+            </div>
 
-                                if (response?.ok && response?.data?.length > 0) {
-                                    const imageUrl = response.data[0].url; 
-                                    const fullImageUrl = getFullImageUrl(imageUrl);
-                                    formik.setFieldValue('sizeChart.imageUrl', fullImageUrl);
-                                }
-                            } catch (error) {
-                                console.error("Upload error:", error);
-                                toast.error("Помилка при завантаженні картинки розмірної сітки");
-                            }
-                        }}
+            {/* === BRAND INFO === */}
+            <h1>Бренд</h1>
+            <div className="form-wrapper-2-column">
+                <CustomInput
+                    id="brand_title_en" name="brand_title_en" label="Назва бренду (EN)"
+                    value={formik.values.brand_title_en || ''} onChange={formik.handleChange} onBlur={formik.handleBlur}
+                    placeholder="Brand name in English"
+                />
+                <CustomInput
+                    id="brand_title_sk" name="brand_title_sk" label="Назва бренду (SK)"
+                    value={formik.values.brand_title_sk || ''} onChange={formik.handleChange} onBlur={formik.handleBlur}
+                    placeholder="Názov značky v slovenčine"
+                />
+            </div>
+
+            {/* === PRICING === */}
+            <h1>Ціна і валюта</h1>
+            <div className="form-wrapper-2-column">
+                <CustomInput
+                    id="price" name="price" label="Ціна" type="number" step="0.01"
+                    value={formik.values.price || ''} onChange={formik.handleChange} onBlur={formik.handleBlur}
+                    placeholder="0.00" error={formik.errors.price} touched={formik.touched.price}
+                />
+                <CustomInput
+                    id="oldPrice" name="oldPrice" label="Стара ціна" type="number" step="0.01"
+                    value={formik.values.oldPrice || ''} onChange={formik.handleChange} onBlur={formik.handleBlur}
+                    placeholder="0.00"
+                />
+            </div>
+            <div className="form-group">
+                <label htmlFor="currency">Валюта</label>
+                <CustomSelect
+                    options={[
+                        { value: 'EUR', label: 'EUR (€)' },
+                        { value: 'USD', label: 'USD ($)' },
+                        { value: 'CZK', label: 'CZK (Kč)' },
+                        { value: 'PLN', label: 'PLN (zł)' },
+                        { value: 'UAH', label: 'UAH (₴)' },
+                    ]}
+                    value={formik.values.currency || 'EUR'}
+                    onChange={(value) => formik.setFieldValue('currency', value)}
+                    name="currency"
+                    id="currency"
+                />
+            </div>
+
+            {/* === INGREDIENTS === */}
+            <h1>Компоненти / Інгредієнти</h1>
+            {['en', 'sk'].map((lang) => (
+                <div key={lang} className="form-group">
+                    <label htmlFor={`ingredients.${lang}`}>Інгредієнти ({lang.toUpperCase()})</label>
+                    <textarea
+                        id={`ingredients.${lang}`}
+                        className="custom-textarea"
+                        value={String(formik.values.ingredients?.[lang] || '')}
+                        onChange={(e) => formik.setFieldValue(`ingredients.${lang}`, e.target.value)}
+                        onBlur={() => formik.setFieldTouched(`ingredients.${lang}`, true)}
+                        placeholder={`Список інгредієнтів ${lang === 'ua' ? 'українською' : lang === 'en' ? 'англійською' : lang === 'ru' ? 'російською' : 'словацькою'}...`}
+                        rows="3"
                     />
+                </div>
+            ))}
+
+            {/* === FEATURES === */}
+            <h1>Особливості</h1>
+            {['en', 'sk'].map((lang) => (
+                <div key={lang} className="form-group">
+                    <label htmlFor={`features.${lang}`}>Особливості ({lang.toUpperCase()})</label>
+                    <textarea
+                        id={`features.${lang}`}
+                        name={`features.${lang}`}
+                        className="custom-textarea"
+                        value={(formik.values.features?.[lang] || []).join('\n')}
+                        onChange={(e) => {
+                            const features = e.target.value.split('\n').filter(Boolean);
+                            formik.setFieldValue(`features.${lang}`, features);
+                        }}
+                        onBlur={formik.handleBlur}
+                        placeholder={`Особливості по одній на рядок ${lang === 'ua' ? 'українською' : lang === 'en' ? 'англійською' : lang === 'ru' ? 'російською' : 'словацькою'}...`}
+                        rows="3"
+                    />
+                </div>
+            ))}
+
+            {/* === IMAGES === */}
+            <h1>Зображення</h1>
+            <div className="form-group product-form__media-block">
+                <div className="product-form__media-head">
+                    <label className="product-form__media-label" htmlFor="cover">
+                        Основне зображення (обкладинка)
+                    </label>
+                    <label
+                        htmlFor="cover"
+                        className={`product-form__upload-button ${uploadingImages ? 'is-loading' : ''}`}
+                        aria-disabled={uploadingImages}
+                    >
+                        {uploadingImages ? 'Завантаження...' : 'Завантажити фото'}
+                    </label>
                 </div>
                 <input
-                    type="text"
-                    placeholder="Або вставте URL..."
-                    value={formik.values.sizeChart?.imageUrl || ''}
-                    onChange={(e) => formik.setFieldValue('sizeChart.imageUrl', e.target.value)}
-                    style={{
-                        marginTop: '8px',
-                        width: '100%',
-                        padding: '6px 10px',
-                        fontSize: '12px',
-                        border: '1px solid #CBD5E1',
-                        borderRadius: '6px',
-                        color: '#475569',
-                        outline: 'none',
-                        boxSizing: 'border-box'
-                    }}
+                    type="file"
+                    id="cover"
+                    className="product-form__upload-input"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload(e, 'cover')}
+                    disabled={uploadingImages}
                 />
-            </div>
-
-            {/* === ВАРІАЦІЇ ТОВАРУ (ОФФЕРИ) === */}
-            <div className="product__variations-header">
-                <h1>Варіації товару (Оффери)</h1>
-            </div>
-
-            {/* === БЛОК ФІЛЬТРАЦІЇ ОФФЕРІВ ПО ОСЯМ === */}
-            {axes.length > 0 && (
-                <div className="offers-filters" style={{ display: 'flex', gap: '20px', marginBottom: '20px', flexWrap: 'wrap' }}>
-                    {axes.map((axis) => {
-                        const filterOptions = [
-                            { value: '', label: 'Всі' },
-                            ...(axis.valuesPreset?.map(val => ({
-                                value: getAxisPresetValue(val),
-                                label: getAxisPresetLabel(val)
-                            })) || [])
-                        ];
-
-                        return (
-                            <div key={`filter-${axis.axisId}`} className="form-group" style={{ minWidth: '200px' }}>
-                                <label>Фільтр: {axis.title?.ua || axis.axisId}</label>
-                                <CustomSelect
-                                    options={filterOptions}
-                                    value={currentOpt[axis.axisId] || ''}
-                                    onChange={(val) => handleFilterChange(axis.axisId, val)}
-                                    placeholder="Оберіть значення"
-                                />
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
-
-            <div className="product__variations">
-                {filteredOffers.map(({ item, originalIndex }) => (
-                    <div className="product__variation" key={originalIndex}>
-
-                        <div className="product__variation__header">
-                            <div className="product__variation__title-wrapper">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 11 11" fill="none">
-                                    <path fillRule="evenodd" clipRule="evenodd" d="M1.02745 0.0858936C1.37383 0.0388511 1.87187 0 2.57447 0C3.27706 0 3.77511 0.0388511 4.12149 0.0858936C4.70426 0.165468 5.07755 0.62934 5.11266 1.18168C5.13279 1.49694 5.14894 1.94536 5.14894 2.57447C5.14894 3.20357 5.13279 3.652 5.11266 3.96726C5.07755 4.5196 4.70426 4.98347 4.12126 5.06304C3.77511 5.11009 3.2773 5.14894 2.57447 5.14894C1.87164 5.14894 1.37383 5.11009 1.02745 5.06304C0.444681 4.98347 0.071617 4.51936 0.0365106 3.96702C0.0161489 3.652 0 3.20357 0 2.57447C0 1.94536 0.0161489 1.49694 0.0362766 1.18168C0.071383 0.62934 0.444681 0.165468 1.02745 0.0858936ZM1.02745 10.9141C1.37383 10.9611 1.87164 11 2.57447 11C3.2773 11 3.77511 10.9611 4.12149 10.9141C4.70426 10.8345 5.07755 10.3707 5.11266 9.81832C5.13279 9.50306 5.14894 9.05464 5.14894 8.42553C5.14894 7.79643 5.13279 7.348 5.11266 7.03274C5.07755 6.4804 4.70426 6.01653 4.12126 5.93696C3.77511 5.88991 3.2773 5.85106 2.57447 5.85106C1.87164 5.85106 1.37383 5.88991 1.02745 5.93696C0.444681 6.01653 0.071617 6.48064 0.0365106 7.03298C0.0161489 7.348 0 7.79643 0 8.42553C0 9.05464 0.0161489 9.50306 0.0362766 9.81832C0.071383 10.3707 0.444681 10.8345 1.02745 10.9141ZM11 8.42553C11 9.12836 10.9611 9.62617 10.9141 9.97255C10.8345 10.5553 10.3707 10.9286 9.81832 10.9637C9.50306 10.9839 9.05464 11 8.42553 11C7.79643 11 7.348 10.9839 7.03274 10.9637C6.4804 10.9286 6.01653 10.5551 5.93696 9.97232C5.88991 9.62617 5.85106 9.12836 5.85106 8.42553C5.85106 7.7227 5.88991 7.22489 5.93696 6.87851C6.01653 6.29574 6.4804 5.92245 7.03274 5.88734C7.348 5.86721 7.79643 5.85106 8.42553 5.85106C9.05464 5.85106 9.50306 5.86721 9.81832 5.88734C10.3707 5.92245 10.8345 6.29574 10.9141 6.87875C10.9611 7.22489 11 7.7227 11 8.42553ZM7.91228 0.323915C8.13415 -0.0816809 8.71692 -0.0816809 8.93879 0.323915L9.405 1.1763C9.50165 1.35303 9.64697 1.49835 9.8237 1.595L10.6761 2.06121C11.0817 2.28309 11.0817 2.86585 10.6761 3.08772L9.8237 3.55394C9.64697 3.65059 9.50165 3.7959 9.405 3.97264L8.93879 4.82502C8.71692 5.23062 8.13415 5.23062 7.91228 4.82502L7.44606 3.97264C7.34941 3.7959 7.2041 3.65059 7.02736 3.55394L6.17498 3.08772C5.76938 2.86585 5.76938 2.28309 6.17498 2.06121L7.02736 1.595C7.2041 1.49835 7.34941 1.35303 7.44606 1.1763L7.91228 0.323915Z" fill="#0F172A" />
-                                </svg>
-                                <h3>{item.title || `Нова варіація ${originalIndex + 1}`}</h3>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => handleRemoveOffer(originalIndex)}
-                                className="btn-remove"
-                            >
-                                - Видалити оффер
-                            </button>
-                        </div>
-
-                        <div className="product__variation__content">
-                          <div className="variation-image-upload">
-                            <label className="variation-image-upload__label">Зображення</label>
-                            <div 
-                                className="variation-image-upload__box" 
-                                style={{ 
-                                    display: 'flex', 
-                                    flexDirection: 'column', 
-                                    alignItems: 'center', 
-                                    justifyContent: 'center',
-                                    position: 'relative',
-                                    padding: '15px',
-                                    textAlign: 'center',
-                                    border: '1px dashed #ccc',
-                                    borderRadius: '8px'
-                                }}
-                            >
-                                {formik.values.offers?.[originalIndex]?.image && typeof formik.values.offers[originalIndex].image === 'string' ? (
-                                    <>
-                                        <img 
-                                            src={getFullImageUrl(formik.values.offers[originalIndex].image)} 
-                                            alt="Preview" 
-                                            style={{ 
-                                                width: '100%', 
-                                                maxHeight: '120px', 
-                                                objectFit: 'contain', 
-                                                borderRadius: '4px', 
-                                                marginBottom: '8px' 
-                                            }} 
-                                        />
-                                        <span className="variation-image-upload__text" style={{ color: '#7864F5', fontWeight: '500' }}>
-                                            Змінити
-                                        </span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44" fill="none" style={{ marginBottom: '8px' }}>
-                                            <path d="M39.1111 4.88889V39.1111H4.88889V4.88889H39.1111ZM39.1111 0H4.88889C2.2 0 0 2.2 0 4.88889V39.1111C0 41.8 2.2 44 4.88889 44H39.1111C41.8 44 44 41.8 44 39.1111V4.88889C44 2.2 41.8 0 39.1111 0ZM27.2311 21.6578L19.8978 31.1178L14.6667 24.7867L7.33333 34.2222H36.6667L27.2311 21.6578Z" fill="#7864F5"/>
-                                        </svg>
-                                        <span className="variation-image-upload__text" style={{ color: '#7864F5', fontWeight: '500' }}>
-                                            Завантажити
-                                        </span>
-                                    </>
-                                )}
-                                
-                                <input
-                                    type="file"
-                                    accept="image/jpeg, image/png, image/webp, image/gif, image/svg+xml, image/avif, image/tiff, image/bmp"
-                                    style={{
-                                        position: 'absolute',
-                                        top: 0,
-                                        left: 0,
-                                        width: '100%',
-                                        height: '100%',
-                                        opacity: 0,
-                                        cursor: 'pointer'
-                                    }}
-                                    onChange={async (e) => {
-                                        const file = e.currentTarget.files[0];
-                                        if (!file) return;
-
-                                        try {
-                                            const response = await uploadAdminImages(file);
-
-                                            if (response?.ok && response?.data?.length > 0) {
-                                                const imageUrl = response.data[0].url; 
-                                                const fullImageUrl = getFullImageUrl(imageUrl);
-                                                formik.setFieldValue(`offers[${originalIndex}].image`, fullImageUrl);
-                                            }
-                                        } catch (error) {
-                                            console.error("Upload error:", error);
-                                            toast.error("Помилка при завантаженні зображення");
-                                        }
-                                    }}
-                                    className="variation-image-upload__input"
-                                />
-                            </div>
-                            <input
-                                type="text"
-                                placeholder="Або вставте URL..."
-                                value={typeof formik.values.offers?.[originalIndex]?.image === 'string' ? formik.values.offers[originalIndex].image : ''}
-                                onChange={(e) => formik.setFieldValue(`offers[${originalIndex}].image`, e.target.value)}
-                                style={{
-                                    marginTop: '8px',
-                                    width: '100%',
-                                    padding: '6px 10px',
-                                    fontSize: '12px',
-                                    border: '1px solid #CBD5E1',
-                                    borderRadius: '6px',
-                                    color: '#475569',
-                                    outline: 'none',
-                                    boxSizing: 'border-box'
-                                }}
-                            />
-                        </div>
-
-                            <div className="variation-details">
-                                <div className="form-wrapper-3-column">
-                                    <CustomInput
-                                        id={`offers-${originalIndex}-price`} name={`offers[${originalIndex}].price`}
-                                        label="Ціна" type="number"
-                                        value={formik.values.offers?.[originalIndex]?.price || ''} onChange={formik.handleChange}
-                                        placeholder="0.00"
-                                    />
-                                    <CustomInput
-                                        id={`offers-${originalIndex}-sku`} name={`offers[${originalIndex}].sku`}
-                                        label="Артикул (SKU)"
-                                        value={formik.values.offers?.[originalIndex]?.sku || ''} onChange={formik.handleChange}
-                                        placeholder="Генерується автоматично"
-                                        readOnly
-                                    />
-                                    <div className="form-group">
-                                        <label htmlFor={`offers-${originalIndex}-accessory`}>Аксесуар</label>
-                                        <CustomSelect
-                                            options={accessoryOptions}
-                                            value={String(formik.values.offers?.[originalIndex]?.accessoryOfferId || '')}
-                                            onChange={(val) => formik.setFieldValue(`offers[${originalIndex}].accessoryOfferId`, val)}
-                                            onInputChange={setAccessorySearchQuery}
-                                            name={`offers[${originalIndex}].accessoryOfferId`}
-                                            id={`offers-${originalIndex}-accessory`}
-                                            placeholder={isAccessorySearchLoading ? 'Пошук аксесуарів...' : 'Оберіть аксесуар'}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="form-wrapper-2-column">
-                                    {axes.map((axis) => {
-                                        const selectOptions = axis.valuesPreset?.map(val => ({
-                                            value: getAxisPresetValue(val),
-                                            label: getAxisPresetLabel(val)
-                                        })) || [];
-
-                                        return (
-                                            <div className="form-group" key={axis.axisId}>
-                                                <label>{axis.title?.ua || axis.axisId}</label>
-                                                <CustomSelect
-                                                    options={selectOptions}
-                                                    value={String(formik.values.offers?.[originalIndex]?.options?.[axis.axisId] || '')}
-                                                    onChange={(val) => formik.setFieldValue(`offers[${originalIndex}].options.${axis.axisId}`, val)}
-                                                    placeholder="Оберіть опцію"
-                                                />
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+                {formik.values.cover && (
+                    <div className="product-form__upload-preview-grid">
+                        <div className="product-form__upload-preview-card">
+                            <img className="product-form__upload-preview-image" src={formik.values.cover} alt="Cover" />
+                            <div className="product-form__upload-preview-actions">
+                                <span className="product-form__upload-preview-title">Обкладинка</span>
+                                <button
+                                    type="button"
+                                    onClick={() => formik.setFieldValue('cover', '')}
+                                    className="btn-remove"
+                                >
+                                    Видалити
+                                </button>
                             </div>
                         </div>
                     </div>
-                ))}
-
-                <button type="button" onClick={handleAddOffer} className="btn-add-primary">
-                    + Додати варіацію
-                </button>
+                )}
             </div>
 
-            {/* === ПАГІНАЦІЯ ОФФЕРІВ === */}
-            {isEditMode && variationsData?.meta && variationsData.meta.total > 0 && (
-                <CatalogPagination data={variationsData.meta} />
-            )}
-
-            {/* === ДЕБАГ: ПОМИЛКИ ФОРМИ === */}
-            {Object.keys(formik.errors).length > 0 && (
-                <div style={{ marginTop: '24px', padding: '16px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px' }}>
-                    <strong style={{ color: '#DC2626', fontSize: '13px' }}>Помилки форми (чому не зберігається):</strong>
-                    <pre style={{ marginTop: '8px', fontSize: '12px', color: '#7F1D1D', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                        {JSON.stringify(formik.errors, null, 2)}
-                    </pre>
+            <div className="form-group product-form__media-block">
+                <div className="product-form__media-head">
+                    <label className="product-form__media-label" htmlFor="gallery">
+                        Галерея зображень
+                    </label>
+                    <label
+                        htmlFor="gallery"
+                        className={`product-form__upload-button ${uploadingImages ? 'is-loading' : ''}`}
+                        aria-disabled={uploadingImages}
+                    >
+                        {uploadingImages ? 'Завантаження...' : 'Додати фото в галерею'}
+                    </label>
                 </div>
-            )}
+                <input
+                    type="file"
+                    id="gallery"
+                    className="product-form__upload-input"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload(e, 'gallery')}
+                    disabled={uploadingImages}
+                />
+                <div className="product-form__upload-preview-grid">
+                    {(formik.values.gallery || []).map((url, index) => (
+                        <div key={index} className="product-form__upload-preview-card">
+                            <img className="product-form__upload-preview-image" src={url} alt={`Gallery ${index}`} />
+                            <div className="product-form__upload-preview-actions">
+                                <span className="product-form__upload-preview-title">Фото {index + 1}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => handleRemoveGalleryImage(index)}
+                                    className="btn-remove"
+                                >
+                                    Видалити
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* === STOCK === */}
+            <h1>Наявність на складі</h1>
+            <div className="form-wrapper-2-column">
+                <CustomInput
+                    id="stockQuantity" name="stockQuantity" label="Кількість на складі" type="number"
+                    value={formik.values.stockQuantity || 0} onChange={formik.handleChange} onBlur={formik.handleBlur}
+                    placeholder="0"
+                />
+                <div className="form-group">
+                    {renderCheckbox('inStock', Boolean(formik.values.inStock), formik.handleChange, 'Є в наявності')}
+                </div>
+            </div>
+
+            {/* === NUTRITION INFO === */}
+            <h1>Информация про нутрієнти</h1>
+            <div className="form-wrapper-2-column">
+                <CustomInput
+                    id="weightG" name="weightG" label="Вага (г)" type="number" step="0.1"
+                    value={formik.values.weightG || ''} onChange={formik.handleChange} onBlur={formik.handleBlur}
+                    placeholder="0"
+                />
+                <CustomInput
+                    id="proteinG" name="proteinG" label="Білки (г)" type="number" step="0.1"
+                    value={formik.values.proteinG || ''} onChange={formik.handleChange} onBlur={formik.handleBlur}
+                    placeholder="0"
+                />
+            </div>
+            <div className="form-group">
+                <label htmlFor="nutritionTable">Таблиця поживної цінності (JSON)</label>
+                <textarea
+                    id="nutritionTable"
+                    name="nutritionTable"
+                    className="custom-textarea"
+                    value={formik.values.nutritionTable ? JSON.stringify(formik.values.nutritionTable, null, 2) : ''}
+                    onChange={(e) => {
+                        try {
+                            const val = e.target.value.trim();
+                            formik.setFieldValue('nutritionTable', val ? JSON.parse(val) : null);
+                        } catch {
+                            // Invalid JSON, just set as string (will fail validation on submit)
+                        }
+                    }}
+                    placeholder="{}"
+                    rows="3"
+                />
+            </div>
+
+            {/* === SEO === */}
+            <h1>SEO</h1>
+            {['en', 'sk'].map((lang) => (
+                <div key={lang} className="form-group">
+                    <label htmlFor={`seoTitle.${lang}`}>SEO Title ({lang.toUpperCase()})</label>
+                    <CustomInput
+                        id={`seoTitle.${lang}`} label=""
+                        value={String(formik.values.seoTitle?.[lang] || '')} 
+                        onChange={(e) => formik.setFieldValue(`seoTitle.${lang}`, e.target.value)} 
+                        onBlur={() => formik.setFieldTouched(`seoTitle.${lang}`, true)}
+                        placeholder={`SEO title ${lang === 'ua' ? 'українською' : lang === 'en' ? 'англійською' : lang === 'ru' ? 'російською' : 'словацькою'}...`}
+                    />
+                </div>
+            ))}
+            {['en', 'sk'].map((lang) => (
+                <div key={lang} className="form-group">
+                    <label htmlFor={`seoDescription.${lang}`}>SEO Description ({lang.toUpperCase()})</label>
+                    <textarea
+                        id={`seoDescription.${lang}`}
+                        className="custom-textarea"
+                        value={String(formik.values.seoDescription?.[lang] || '')}
+                        onChange={(e) => formik.setFieldValue(`seoDescription.${lang}`, e.target.value)}
+                        onBlur={() => formik.setFieldTouched(`seoDescription.${lang}`, true)}
+                        placeholder={`SEO description ${lang === 'ua' ? 'українською' : lang === 'en' ? 'англійською' : lang === 'ru' ? 'російською' : 'словацькою'}...`}
+                        rows="2"
+                    />
+                </div>
+            ))}
+
+            {/* === CARD BADGES === */}
+            <h1>Бейджи карточки</h1>
+            <div className="form-group">
+                <label htmlFor="cardBadges">Бейджи (через кому)</label>
+                <CustomInput
+                    id="cardBadges" name="cardBadges" label=""
+                    value={(formik.values.cardBadges || []).join(', ')}
+                    onChange={(e) => {
+                        const badges = e.target.value.split(',').map(b => b.trim()).filter(Boolean);
+                        formik.setFieldValue('cardBadges', badges);
+                    }}
+                    onBlur={formik.handleBlur}
+                    placeholder="Новинка, Хіт, Знижка"
+                />
+            </div>
+
+            {/* === PURCHASE OPTIONS V2 === */}
+            <h1>Варіанти покупки (версія 2)</h1>
+            <div className="form-group">
+                <label htmlFor="purchaseOptionsV2DefaultKey">Ключ за замовчуванням</label>
+                <CustomInput
+                    id="purchaseOptionsV2DefaultKey" name="purchaseOptionsV2DefaultKey" label=""
+                    value={formik.values.purchaseOptionsV2DefaultKey || 'unit'}
+                    onChange={formik.handleChange}
+                    placeholder="unit"
+                />
+            </div>
+
+            <div className="purchase-options-list">
+                {(formik.values.purchaseOptionsV2Items || []).map((item, index) => (
+                    <div key={index} className="purchase-option-item">
+                        <h4>Варіант {index + 1}</h4>
+                        <div className="form-wrapper-2-column">
+                            <CustomInput
+                                label="Ключ"
+                                value={item.key || ''}
+                                onChange={(e) => updatePurchaseOption(index, 'key', e.target.value)}
+                                placeholder="unit, pack, box..."
+                            />
+                            <CustomInput
+                                label="Кількість"
+                                type="number"
+                                value={item.quantity || 1}
+                                onChange={(e) => updatePurchaseOption(index, 'quantity', Number(e.target.value))}
+                            />
+                        </div>
+
+                        <div className="form-wrapper-2-column">
+                            <CustomInput
+                                label="Ціна"
+                                type="number"
+                                step="0.01"
+                                value={item.price || 0}
+                                onChange={(e) => updatePurchaseOption(index, 'price', Number(e.target.value))}
+                            />
+                            <CustomInput
+                                label="Режим"
+                                value={item.mode || 'unit'}
+                                onChange={(e) => updatePurchaseOption(index, 'mode', e.target.value)}
+                                placeholder="unit, weight..."
+                            />
+                        </div>
+
+                        <div className="form-wrapper-2-column">
+                            <CustomInput
+                                label="Кількість на складі"
+                                type="number"
+                                value={item.stockQuantity || 0}
+                                onChange={(e) => updatePurchaseOption(index, 'stockQuantity', Number(e.target.value))}
+                            />
+                            {renderCheckbox(
+                                `purchaseOptionsV2Items.${index}.inStock`,
+                                Boolean(item.inStock),
+                                (e) => updatePurchaseOption(index, 'inStock', e.target.checked),
+                                'Є в наявності'
+                            )}
+                        </div>
+
+                        <div className="form-wrapper-2-column">
+                            <CustomInput
+                                label="Сортування"
+                                type="number"
+                                value={item.sort || 0}
+                                onChange={(e) => updatePurchaseOption(index, 'sort', Number(e.target.value))}
+                            />
+                            {renderCheckbox(
+                                `purchaseOptionsV2Items.${index}.enabled`,
+                                Boolean(item.enabled),
+                                (e) => updatePurchaseOption(index, 'enabled', e.target.checked),
+                                'Ввімкнено'
+                            )}
+                        </div>
+
+                        <h1>Назва варіанту (4 мови)</h1>
+                        {['en', 'sk'].map((lang) => (
+                            <CustomInput
+                                key={lang}
+                                label={`Назва (${lang.toUpperCase()})`}
+                                value={item.title?.[lang] || ''}
+                                onChange={(e) => updatePurchaseOptionLang(index, lang, e.target.value)}
+                                placeholder={`Назва варіанту ${lang === 'ua' ? 'українською' : lang === 'en' ? 'англійською' : lang === 'ru' ? 'російською' : 'словацькою'}...`}
+                            />
+                        ))}
+
+                        <button
+                            type="button"
+                            onClick={() => removePurchaseOption(index)}
+                            className="btn btn-danger"
+                            style={{ marginTop: '10px' }}
+                        >
+                            Видалити варіант
+                        </button>
+                    </div>
+                ))}
+            </div>
+
+            <button
+                type="button"
+                onClick={addPurchaseOption}
+                className="btn btn-primary"
+                style={{ marginTop: '20px' }}
+            >
+                Додати варіант покупки
+            </button>
 
         </form>
-        <BulkOffersModal
-            isOpen={isBulkOffersModalOpen}
-            onClose={onCloseBulkOffersModal}
-            selectableAxes={selectableAxes}
-            offers={offers}
-            setFieldValue={formik.setFieldValue}
-        />
         </>
     );
 };

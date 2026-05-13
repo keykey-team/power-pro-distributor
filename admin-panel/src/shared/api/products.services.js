@@ -556,3 +556,125 @@ function getDefaultEmptyResponse(params) {
         }
     };
 }
+
+// ─── NEW PRODUCTS API (/products) ─────────────────────────────────────────────
+
+export async function getAdminProducts(params = {}) {
+    try {
+        const apiUrl = process.env.REACT_APP_API_URL?.trim() || process.env.NEXT_PUBLIC_API_URL?.trim();
+        if (!apiUrl) {
+            return { items: [], page: 1, limit: 25, total: 0, pages: 0 };
+        }
+
+        const normalizedParams = { ...params };
+        if (normalizedParams.priceMin !== undefined && normalizedParams.minPrice === undefined) {
+            normalizedParams.minPrice = normalizedParams.priceMin;
+        }
+        if (normalizedParams.priceMax !== undefined && normalizedParams.maxPrice === undefined) {
+            normalizedParams.maxPrice = normalizedParams.priceMax;
+        }
+
+        const queryParams = new URLSearchParams();
+        for (const [key, value] of Object.entries(normalizedParams)) {
+            if (value !== undefined && value !== null && value !== '') {
+                queryParams.append(key, typeof value === 'object' ? JSON.stringify(value) : String(value));
+            }
+        }
+
+        const response = await fetch(`${apiUrl}/products?${queryParams.toString()}`, {
+            cache: 'no-store',
+        });
+
+        if (!response.ok) {
+            return { items: [], page: 1, limit: 25, total: 0, pages: 0 };
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching admin products:', error);
+        return { items: [], page: 1, limit: 25, total: 0, pages: 0 };
+    }
+}
+
+export async function getAdminProductById(productRef) {
+    if (!productRef) return null;
+
+    try {
+        const apiUrl = process.env.REACT_APP_API_URL?.trim() || process.env.NEXT_PUBLIC_API_URL?.trim();
+        if (!apiUrl) return null;
+
+        const response = await fetch(
+            `${apiUrl}/products/${productRef}?includeDisabledPurchaseOptions=true`,
+            { cache: 'no-store' }
+        );
+
+        if (!response.ok) return null;
+
+        return await response.json();
+    } catch (error) {
+        console.error(`Error fetching admin product (${productRef}):`, error);
+        return null;
+    }
+}
+
+export async function createAdminProduct(payload) {
+    try {
+        const apiUrl = process.env.REACT_APP_API_URL?.trim() || process.env.NEXT_PUBLIC_API_URL?.trim();
+        if (!apiUrl) throw new Error('API URL is not defined');
+
+        const response = await fetch(`${apiUrl}/products`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || `Failed to create product. Status: ${response.status}`);
+        return data;
+    } catch (error) {
+        console.error('Error creating admin product:', error);
+        throw error;
+    }
+}
+
+export async function updateAdminProduct(productRef, payload) {
+    if (!productRef) throw new Error('productRef is required for update');
+
+    try {
+        const apiUrl = process.env.REACT_APP_API_URL?.trim() || process.env.NEXT_PUBLIC_API_URL?.trim();
+        if (!apiUrl) throw new Error('API URL is not defined');
+
+        const response = await fetch(`${apiUrl}/products/${productRef}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || `Failed to update product. Status: ${response.status}`);
+        return data;
+    } catch (error) {
+        console.error(`Error updating admin product (${productRef}):`, error);
+        throw error;
+    }
+}
+
+export async function deleteAdminProduct(productRef) {
+    if (!productRef) throw new Error('productRef is required for delete');
+
+    try {
+        const apiUrl = process.env.REACT_APP_API_URL?.trim() || process.env.NEXT_PUBLIC_API_URL?.trim();
+        if (!apiUrl) throw new Error('API URL is not defined');
+
+        const response = await fetch(`${apiUrl}/products/${productRef}`, {
+            method: 'DELETE',
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || `Failed to delete product. Status: ${response.status}`);
+        return data;
+    } catch (error) {
+        console.error(`Error deleting admin product (${productRef}):`, error);
+        throw error;
+    }
+}

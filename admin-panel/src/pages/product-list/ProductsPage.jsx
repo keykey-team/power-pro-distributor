@@ -3,8 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import { PageHeader } from '../../shared/ui';
 import toast from '../../shared/lib/toast';
-// ДОДАНО: імпорт функції видалення
-import { getAdminCatalogGroups, deleteAdminCatalogGroup } from '../../shared/api/products.services';
+import { getAdminProducts, deleteAdminProduct } from '../../shared/api/products.services';
 import ProductsList from '../../widgets/products-list/ui/ProductsList';
 import Filter from '../../shared/ui/filter/Filter';
 import { useProductFilters } from '../../widgets/products-list/config/filter';
@@ -31,7 +30,7 @@ export default function ProductsPage() {
       try {
         setLoading(true);
         const queryParams = Object.fromEntries([...searchParams]);
-        const result = await getAdminCatalogGroups(queryParams);
+        const result = await getAdminProducts(queryParams);
         setData(result);
       } catch (error) {
         console.error("Ошибка при загрузке данных:", error);
@@ -55,7 +54,7 @@ export default function ProductsPage() {
 
       try {
           // Робимо запит на бекенд
-          await deleteAdminCatalogGroup(itemToDelete);
+          await deleteAdminProduct(itemToDelete);
           // Оновлюємо список товарів
           setRefreshKey(prev => prev + 1); 
       } catch (error) {
@@ -73,7 +72,7 @@ export default function ProductsPage() {
    
       <ModalConfirm 
           onConfirm={handleConfirmDelete} 
-          title="Ви впевнені, що хочете видалити цю групу товарів?" 
+          title="Ви впевнені, що хочете видалити цей товар?" 
       />
       <PageHeader placeholder={"Пошук за назвою, артикулом (SKU), тегом"} link={"/product-rewrite/create"} />
       <Filter fields={dynamicFilters} />

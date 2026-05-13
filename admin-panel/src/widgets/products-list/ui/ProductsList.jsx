@@ -3,7 +3,7 @@ import CatalogPagination from '../../../features/pagination'
 import ProductItem from '../../../entities/product/ui/ProductItem'
 import CustomSelect from '../../../shared/ui/filter/LimitSelect'
 // Импортируем созданную функцию экспорта
-import { exportAdminCatalogGroupsCsv } from '../../../shared/api/products.services' 
+import { exportAdminCatalogGroupsCsv } from '../../../shared/api/products.services'
 import toast from '../../../shared/lib/toast'
 
 const ProductsList = ({ data, onDeleteClick }) => {
@@ -35,7 +35,7 @@ console.log(data, "products list data");
         <div className='admin-list'>
             <div className="admin-list__header">
                 <p className="admin-list__header-info">
-                    {data?.meta?.total || 0} товарів
+                    {data?.total || 0} товарів
                 </p>
                 <div className="admin-list__header-func">
                     <CustomSelect options={[24, 48, 72]} />
@@ -64,7 +64,7 @@ console.log(data, "products list data");
                     {data?.items?.length > 0 ? (
                         data.items.map((product) => (
                             <ProductItem
-                                key={product.groupId}
+                                key={product._id}
                                 product={product}
                                 onDeleteClick={onDeleteClick} 
                             />
@@ -76,7 +76,7 @@ console.log(data, "products list data");
             </div>
 
             <div className="admin-list__pagination">
-                <CatalogPagination data={data?.meta} />
+                <CatalogPagination data={data} />
             </div>
         </div>
     )
