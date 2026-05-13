@@ -4,6 +4,7 @@ import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 import routes from "./routes/index.js";
+import adminRoutes from "./routes/admin.routes.js";
 import { fileURLToPath } from "url";
 import path from "path";
 import swaggerUi from "swagger-ui-express";
@@ -14,6 +15,9 @@ const __dirname = path.dirname(__filename);
 
 const swaggerSiteDocument = YAML.load(
   path.join(__dirname, "docs", "swagger.yaml")
+);
+const adminSwaggerSiteDocument = YAML.load(
+  path.join(__dirname, "docs", "admin-swagger.yaml")
 );
 
 const app = express();
@@ -37,6 +41,7 @@ app.use(express.urlencoded({ extended: true }));
 // ==============================
 
 app.use("/api", routes);
+app.use("/api/admin", adminRoutes);
 
 // ==============================
 // SWAGGER
@@ -46,6 +51,12 @@ app.use(
   "/api/docs",
   swaggerUi.serveFiles(swaggerSiteDocument),
   swaggerUi.setup(swaggerSiteDocument, { explorer: true })
+);
+
+app.use(
+  "/api/admin/docs",
+  swaggerUi.serveFiles(adminSwaggerSiteDocument),
+  swaggerUi.setup(adminSwaggerSiteDocument, { explorer: true })
 );
 
 // ==============================
@@ -76,6 +87,7 @@ async function start() {
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
       console.log(`📚 Swagger docs: http://localhost:${PORT}/api/docs`);
+      console.log(`🛠 Admin docs: http://localhost:${PORT}/api/admin/docs`);
       console.log(`❤️ Healthcheck: http://localhost:${PORT}/health`);
     });
   } catch (err) {
