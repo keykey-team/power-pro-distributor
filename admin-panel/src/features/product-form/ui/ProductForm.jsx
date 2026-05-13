@@ -60,6 +60,7 @@ const ProductForm = ({
         const previousCover = formik.values.cover || '';
         const previousGallery = formik.values.gallery || [];
 
+        // Always show previews instantly
         if (fieldName === 'cover') {
             formik.setFieldValue('cover', localPreviewUrls[0] || '');
         } else if (fieldName === 'gallery') {
@@ -79,6 +80,7 @@ const ProductForm = ({
             } else if (fieldName === 'gallery') {
                 const uploadedGallery = await uploadAdminGalleryImages(files);
                 const uploadedUrls = uploadedGallery?.dataUrls || [];
+                // Remove local previews and add uploaded URLs
                 const currentGallery = formik.values.gallery || [];
                 const galleryWithoutLocalPreviews = currentGallery.filter((url) => !localPreviewUrls.includes(url));
 
@@ -86,7 +88,7 @@ const ProductForm = ({
                     formik.setFieldValue('gallery', [...galleryWithoutLocalPreviews, ...uploadedUrls]);
                     localPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
                 } else {
-                    formik.setFieldValue('gallery', currentGallery);
+                    // If upload failed, keep previews (user can remove manually)
                 }
             }
 
@@ -99,8 +101,8 @@ const ProductForm = ({
                     URL.revokeObjectURL(localPreviewUrls[0]);
                 }
             } else if (fieldName === 'gallery') {
-                formik.setFieldValue('gallery', previousGallery);
-                localPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+                // On error, keep previews so user sees what was selected
+                // Optionally, show error toast
             }
             toast.error(error?.message || 'Помилка завантаження зображень');
         } finally {
@@ -151,6 +153,53 @@ const ProductForm = ({
             ...items[index],
             title: { ...(items[index].title || {}), [lang]: value },
         };
+        formik.setFieldValue('purchaseOptionsV2Items', items);
+    };
+
+    const handleOptionImageUpload = async (e, optionIndex) => {
+        const files = Array.from(e.target.files || []);
+        if (!files.length) return;
+
+        const localPreviewUrls = files.map((file) => URL.createObjectURL(file));
+        const items = [...(formik.values.purchaseOptionsV2Items || [])];
+        const currentImages = items[optionIndex]?.images || [];
+        // Show instant previews
+        items[optionIndex] = {
+            ...items[optionIndex],
+            images: [...currentImages, ...localPreviewUrls.map((url, i) => ({ url, sort: currentImages.length + i }))],
+        };
+        formik.setFieldValue('purchaseOptionsV2Items', items);
+
+        setUploadingImages(true);
+        try {
+            const uploaded = await uploadAdminGalleryImages(files);
+            const uploadedUrls = uploaded?.dataUrls || [];
+
+            const latestItems = [...(formik.values.purchaseOptionsV2Items || [])];
+            const latestImages = latestItems[optionIndex]?.images || [];
+            const withoutPreviews = latestImages.filter((img) => !localPreviewUrls.includes(img.url));
+            const newImages = uploadedUrls.map((url, i) => ({ url, sort: withoutPreviews.length + i }));
+
+            latestItems[optionIndex] = {
+                ...latestItems[optionIndex],
+                images: [...withoutPreviews, ...newImages],
+            };
+            formik.setFieldValue('purchaseOptionsV2Items', latestItems);
+            localPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+            toast.success('Зображення варіанту завантажено');
+        } catch (error) {
+            console.error('Error uploading option image:', error);
+            toast.error(error?.message || 'Помилка завантаження зображення варіанту');
+        } finally {
+            setUploadingImages(false);
+            e.target.value = '';
+        }
+    };
+
+    const removeOptionImage = (optionIndex, imageIndex) => {
+        const items = [...(formik.values.purchaseOptionsV2Items || [])];
+        const updated = (items[optionIndex]?.images || []).filter((_, i) => i !== imageIndex);
+        items[optionIndex] = { ...items[optionIndex], images: updated };
         formik.setFieldValue('purchaseOptionsV2Items', items);
     };
 
@@ -1057,6 +1106,45 @@ const ProductForm = ({
                                 placeholder={`Назва варіанту ${lang === 'ua' ? 'українською' : lang === 'en' ? 'англійською' : lang === 'ru' ? 'російською' : 'словацькою'}...`}
                             />
                         ))}
+
+                        <div className="form-group product-form__media-block" style={{ marginTop: '12px' }}>
+                            <div className="product-form__media-head">
+                                <label className="product-form__media-label">Фото варіанту</label>
+                                <label
+                                    htmlFor={`option-image-${index}`}
+                                    className={`product-form__upload-button ${uploadingImages ? 'is-loading' : ''}`}
+                                    aria-disabled={uploadingImages}
+                                >
+                                    {uploadingImages ? 'Завантаження...' : 'Додати фото'}
+                                </label>
+                            </div>
+                            <input
+                                type="file"
+                                id={`option-image-${index}`}
+                                className="product-form__upload-input"
+                                multiple
+                                accept="image/*"
+                                onChange={(e) => handleOptionImageUpload(e, index)}
+                                disabled={uploadingImages}
+                            />
+                            <div className="product-form__upload-preview-grid">
+                                {(item.images || []).map((img, imgIndex) => (
+                                    <div key={imgIndex} className="product-form__upload-preview-card">
+                                        <img className="product-form__upload-preview-image" src={img.url} alt={`Option ${index} img ${imgIndex}`} />
+                                        <div className="product-form__upload-preview-actions">
+                                            <span className="product-form__upload-preview-title">Фото {imgIndex + 1}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeOptionImage(index, imgIndex)}
+                                                className="btn-remove"
+                                            >
+                                                Видалити
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
 
                         <button
                             type="button"
