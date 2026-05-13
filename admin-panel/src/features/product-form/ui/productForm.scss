@@ -374,6 +374,11 @@
     color: $color-white;
 }
 
+.product-form .purchase-option-item h4 {
+    margin-top: 24px;
+    margin-bottom: 12px;
+}
+
 .product-form .form-group .bulk-offers-modal__checkbox {
     width: 100%;
 }
@@ -454,6 +459,60 @@
         }
     }
 }
+
+.nutrition-table-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+
+    &__table-wrap {
+        width: 100%;
+        overflow-x: auto;
+        border: 1px solid $color-slate-200;
+        border-radius: 10px;
+        background: $color-white;
+        padding: 8px;
+    }
+
+    &__table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+
+        th,
+        td {
+            vertical-align: top;
+            padding: 8px;
+            border-bottom: 1px solid $color-slate-200;
+        }
+
+        th {
+            color: $color-slate-700;
+            font-family: $font-family-base;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+    }
+
+    &__name-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 220px;
+    }
+
+    .form-group {
+        margin-bottom: 0;
+    }
+}
+
 .section-form__header-btns {
     display: flex;
     gap: 12px;align-items: center;

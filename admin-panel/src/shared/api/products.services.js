@@ -376,7 +376,7 @@ export async function uploadAdminImages(files) {
             throw new Error("API URL is not defined");
         }
 
-        const url = `${apiUrl}/admin/uploads/images`;
+        const url = `${apiUrl}/upload/image`;
 
         const uploadOne = async (file) => {
             const formData = new FormData();
@@ -423,6 +423,94 @@ export async function uploadAdminImages(files) {
 
     } catch (error) {
         console.error("Error uploading admin images:", error);
+        throw error;
+    }
+}
+
+function normalizeUploadImageToDataUrl(image) {
+    if (!image?.base64) return null;
+
+    const rawBase64 = String(image.base64);
+    if (rawBase64.startsWith('data:')) return rawBase64;
+
+    const mimeType = image.mimeType || 'image/webp';
+    return `data:${mimeType};base64,${rawBase64}`;
+}
+
+export async function uploadAdminPreviewImage(file) {
+    if (!file) {
+        throw new Error('Image file is required');
+    }
+
+    try {
+        const apiUrl = process.env.REACT_APP_API_URL?.trim() || process.env.NEXT_PUBLIC_API_URL?.trim();
+        if (!apiUrl) {
+            throw new Error('API URL is not defined');
+        }
+
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const response = await fetch(`${apiUrl}/upload/image`, {
+            method: 'POST',
+            body: formData,
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data?.message || `Failed to upload preview image. Status: ${response.status}`);
+        }
+
+        const image = data?.image || null;
+        return {
+            ok: Boolean(data?.success),
+            image,
+            dataUrl: normalizeUploadImageToDataUrl(image),
+        };
+    } catch (error) {
+        console.error('Error uploading admin preview image:', error);
+        throw error;
+    }
+}
+
+export async function uploadAdminGalleryImages(files) {
+    const normalizedFiles = Array.from(files || []);
+    if (!normalizedFiles.length) {
+        throw new Error('At least one image is required');
+    }
+
+    try {
+        const apiUrl = process.env.REACT_APP_API_URL?.trim() || process.env.NEXT_PUBLIC_API_URL?.trim();
+        if (!apiUrl) {
+            throw new Error('API URL is not defined');
+        }
+
+        const formData = new FormData();
+        normalizedFiles.forEach((file) => {
+            formData.append('images', file);
+        });
+
+        const response = await fetch(`${apiUrl}/upload/gallery`, {
+            method: 'POST',
+            body: formData,
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data?.message || `Failed to upload gallery images. Status: ${response.status}`);
+        }
+
+        const images = Array.isArray(data?.images) ? data.images : [];
+        return {
+            ok: Boolean(data?.success),
+            totalProcessed: Number(data?.totalProcessed) || images.length,
+            images,
+            dataUrls: images
+                .map((image) => normalizeUploadImageToDataUrl(image))
+                .filter(Boolean),
+        };
+    } catch (error) {
+        console.error('Error uploading admin gallery images:', error);
         throw error;
     }
 }
