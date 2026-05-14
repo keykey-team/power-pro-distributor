@@ -945,6 +945,24 @@
         line-height: 1.45;
     }
 
+    &__nutrition-column-switches {
+        margin-top: 12px;
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    &__nutrition-column-switch {
+        padding: 8px 10px;
+        border: 1px solid $color-slate-200;
+        border-radius: 12px;
+        background: rgba($color-slate-50, 0.65);
+
+        .bulk-offers-modal__checkbox {
+            margin: 0;
+        }
+    }
+
     &__stack-lg {
         display: flex;
         flex-direction: column;

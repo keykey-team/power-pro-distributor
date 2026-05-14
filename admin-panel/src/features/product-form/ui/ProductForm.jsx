@@ -34,6 +34,35 @@ const SECTION_LINKS = [
     { id: 'product-variants', label: 'Варіанти покупки' },
 ];
 
+const NUTRITION_COLUMN_TEMPLATES = {
+    per_100g: {
+        key: 'per_100g',
+        label: {
+            ua: 'На 100 г',
+            ru: 'На 100 г',
+            en: 'Per 100g',
+            sk: 'Na 100 g',
+        },
+        meta: {
+            grams: 100,
+        },
+    },
+    per_60g: {
+        key: 'per_60g',
+        label: {
+            ua: 'На 60 г',
+            ru: 'На 60 г',
+            en: 'Per 60g',
+            sk: 'Na 60 g',
+        },
+        meta: {
+            grams: 60,
+        },
+    },
+};
+
+const NUTRITION_COLUMN_ORDER = ['per_100g', 'per_60g'];
+
 const getAvailabilityMeta = (quantity) => {
     const normalizedQuantity = Number(quantity) || 0;
 
@@ -418,34 +447,10 @@ const ProductForm = ({
             en: 'Nutrition facts',
             sk: 'Vyzivove udaje',
         },
-        columns: [
-            {
-                key: 'per_100g',
-                label: {
-                    ua: 'На 100 г',
-                    ru: 'На 100 г',
-                    en: 'Per 100g',
-                    sk: 'Na 100 g',
-                },
-                meta: {
-                    grams: 100,
-                },
-                sort: 0,
-            },
-            {
-                key: 'per_60g',
-                label: {
-                    ua: 'На 60 г',
-                    ru: 'На 60 г',
-                    en: 'Per 60g',
-                    sk: 'Na 60 g',
-                },
-                meta: {
-                    grams: 60,
-                },
-                sort: 1,
-            },
-        ],
+        columns: NUTRITION_COLUMN_ORDER.map((key, index) => ({
+            ...NUTRITION_COLUMN_TEMPLATES[key],
+            sort: index,
+        })),
         rows: [],
     });
 
@@ -476,6 +481,78 @@ const ProductForm = ({
     const nutritionTable = getNormalizedNutritionTable();
     const nutritionColumns = [...(nutritionTable.columns || [])]
         .sort((a, b) => (Number(a?.sort) || 0) - (Number(b?.sort) || 0));
+
+    const isNutritionColumnEnabled = (columnKey) =>
+        nutritionColumns.some((column) => column.key === columnKey);
+
+    const toggleNutritionColumn = (columnKey) => {
+        const currentlyEnabled = isNutritionColumnEnabled(columnKey);
+        if (currentlyEnabled && nutritionColumns.length <= 1) {
+            return;
+        }
+
+        const currentColumns = Array.isArray(nutritionTable.columns) ? nutritionTable.columns : [];
+        const currentRows = Array.isArray(nutritionTable.rows) ? nutritionTable.rows : [];
+
+        if (currentlyEnabled) {
+            const nextColumns = currentColumns
+                .filter((column) => column?.key !== columnKey)
+                .map((column, index) => ({ ...column, sort: index }));
+
+            const nextRows = currentRows.map((row) => {
+                const nextValues = { ...(row?.values || {}) };
+                delete nextValues[columnKey];
+                return {
+                    ...row,
+                    values: nextValues,
+                };
+            });
+
+            setNutritionTable({
+                ...nutritionTable,
+                columns: nextColumns,
+                rows: nextRows,
+            });
+
+            return;
+        }
+
+        const template = NUTRITION_COLUMN_TEMPLATES[columnKey];
+        if (!template) {
+            return;
+        }
+
+        const nextColumns = [...currentColumns, { ...template }]
+            .sort((a, b) => {
+                const left = NUTRITION_COLUMN_ORDER.indexOf(a?.key);
+                const right = NUTRITION_COLUMN_ORDER.indexOf(b?.key);
+                return left - right;
+            })
+            .map((column, index) => ({ ...column, sort: index }));
+
+        const nextRows = currentRows.map((row) => {
+            const nextValues = { ...(row?.values || {}) };
+            if (!nextValues[columnKey]) {
+                const fallbackUnit = Object.values(nextValues).find((cell) => cell?.unit)?.unit || '';
+                nextValues[columnKey] = {
+                    value: null,
+                    text: '',
+                    unit: fallbackUnit,
+                };
+            }
+
+            return {
+                ...row,
+                values: nextValues,
+            };
+        });
+
+        setNutritionTable({
+            ...nutritionTable,
+            columns: nextColumns,
+            rows: nextRows,
+        });
+    };
 
     const setNutritionTable = (nextTable) => {
         formik.setFieldValue('nutritionTable', nextTable);
@@ -965,6 +1042,24 @@ const ProductForm = ({
                                 <p className="product-form__section-note">
                                     Увесь блок зібрано в компактну таблицю, щоб значення легко звіряти по рядках.
                                 </p>
+                                <div className="product-form__nutrition-column-switches">
+                                    <div className="product-form__nutrition-column-switch">
+                                        {renderCheckbox(
+                                            'nutrition-column-per-100g',
+                                            isNutritionColumnEnabled('per_100g'),
+                                            () => toggleNutritionColumn('per_100g'),
+                                            'На 100 г'
+                                        )}
+                                    </div>
+                                    <div className="product-form__nutrition-column-switch">
+                                        {renderCheckbox(
+                                            'nutrition-column-per-60g',
+                                            isNutritionColumnEnabled('per_60g'),
+                                            () => toggleNutritionColumn('per_60g'),
+                                            'На 60 г'
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                             <button
                                 type="button"

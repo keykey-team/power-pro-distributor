@@ -112,6 +112,55 @@ const ProductModalContent = ({ product, locale }) => {
         ? currentV2Option?.price
         : (selectedMode === 'unit' ? (unitOptions?.price || product.price) : (boxOptions?.price || product.price));
     const isOutOfStock = getIsOutOfStock(currentV2Option || product);
+    const nutritionRows = useMemo(
+        () => (Array.isArray(product?.nutritionTable?.rows) ? product.nutritionTable.rows : []),
+        [product?.nutritionTable?.rows]
+    );
+    const nutritionColumns = useMemo(() => {
+        const rawColumns = Array.isArray(product?.nutritionTable?.columns)
+            ? product.nutritionTable.columns.filter((column) => column?.key)
+            : [];
+
+        if (rawColumns.length > 0) {
+            return [...rawColumns].sort((a, b) => (Number(a?.sort) || 0) - (Number(b?.sort) || 0));
+        }
+
+        const inferredColumns = [];
+        if (nutritionRows.some((row) => row?.values?.per_60g)) {
+            inferredColumns.push({
+                key: 'per_60g',
+                label: {
+                    en: 'Per 60g',
+                    sk: 'Na 60 g',
+                    ua: 'На 60 г',
+                },
+            });
+        }
+
+        if (nutritionRows.some((row) => row?.values?.per_100g)) {
+            inferredColumns.push({
+                key: 'per_100g',
+                label: {
+                    en: 'Per 100g',
+                    sk: 'Na 100 g',
+                    ua: 'На 100 г',
+                },
+            });
+        }
+
+        return inferredColumns;
+    }, [product?.nutritionTable?.columns, nutritionRows]);
+
+    const formatNutritionValue = (cell) => {
+        const text = String(cell?.text || '').trim();
+        if (text) return text;
+
+        const hasNumeric = cell?.value !== null && cell?.value !== undefined && cell?.value !== '';
+        if (!hasNumeric) return '-';
+
+        const unit = String(cell?.unit || '').trim();
+        return unit ? `${cell.value} ${unit}` : String(cell.value);
+    };
 
     const handleAddToCart = (e) => {
         e.stopPropagation();
@@ -216,20 +265,24 @@ const ProductModalContent = ({ product, locale }) => {
                             <p className='prod-modal__data-subtitle'>{product?.nutritionTable?.title?.[locale]}</p>
                             {renderV2Select()}
 
-                            {product?.type !== "box" && (
+                            {nutritionRows.length > 0 && (
                                 <ul className="prod-modal__data-list">
                                     <li className="prod-modal__data-item for-title">
                                         <p>Parameter</p>
-                                        {product?.nutritionTable?.rows?.some(r => r?.values?.per_60g?.text) && <p>NA 60G</p>}
-                                        <p>NA 100G</p>
+                                        {nutritionColumns.map((column) => (
+                                            <p key={`header-${column.key}`}>
+                                                {column?.label?.[locale] || column?.label?.en || column.key}
+                                            </p>
+                                        ))}
                                     </li>
-                                    {product?.nutritionTable?.rows?.map((el, index) => (
+                                    {nutritionRows.map((el, index) => (
                                         <li key={index} className="prod-modal__data-item">
                                             <p>{el?.label?.[locale]}</p>
-                                            {product?.nutritionTable?.rows?.some(r => r?.values?.per_60g?.text) && (
-                                                <p>{el?.values?.per_60g?.text?.trim() || "-"}</p>
-                                            )}
-                                            <p>{el?.values?.per_100g?.text?.trim() || "-"}</p>
+                                            {nutritionColumns.map((column) => (
+                                                <p key={`${column.key}-${index}`}>
+                                                    {formatNutritionValue(el?.values?.[column.key])}
+                                                </p>
+                                            ))}
                                         </li>
                                     ))}
                                 </ul>

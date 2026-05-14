@@ -11,7 +11,16 @@ const ProductItem = ({ product, onDeleteClick }) => {
     const sku = product?.slug || "тестовий слаг"
     const img = product?.cover || "/img/prod-tst.png"
     const price = product?.price != null ? String(product.price) : "0"
-    const quantity = product?.availability?.stockQuantity ?? product?.stockQuantity ?? 0
+    const variationItems = Array.isArray(product?.purchaseOptionsV2?.items)
+        ? product.purchaseOptionsV2.items.filter((item) => item?.enabled !== false)
+        : []
+    const variationsStockSum = variationItems.reduce((sum, item) => {
+        const stock = Number(item?.stockQuantity)
+        return Number.isFinite(stock) ? sum + Math.max(0, Math.trunc(stock)) : sum
+    }, 0)
+    const quantity = variationItems.length > 0
+        ? variationsStockSum
+        : (product?.availability?.stockQuantity ?? product?.stockQuantity ?? 0)
     const hasAvailable = product?.availability?.isAvailable ?? product?.inStock ?? quantity > 0
     const category = product?.brand?.title?.ua || product?.brand?.title?.en || product?.type || "—"
     const status = getStatusLabel(hasAvailable ? 'active' : 'inactive', 'Статус невідомий')
