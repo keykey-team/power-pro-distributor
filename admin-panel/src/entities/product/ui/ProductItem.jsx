@@ -35,7 +35,7 @@ const ProductItem = ({ product, onDeleteClick }) => {
                 </div>
             </div>
             <div className="product-item__price">
-                <p>{price} $</p>
+                <p>{price} €</p>
             </div>
             <div className="product-item__quantity">
                 <div className="product-item__quantity-num">

@@ -781,8 +781,8 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 28px;
-        height: 28px;
+        width: 20px;
+        height: 20px;
         padding: 0;
         border: none;
         border-radius: 999px;
@@ -791,7 +791,7 @@
         color: $color-side-bar;
         font-family: $font-family-base;
         font-size: 14px;
-        font-weight: 700;
+        font-weight: 300;
         line-height: 1;
         cursor: pointer;
         transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
