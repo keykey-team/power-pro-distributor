@@ -896,7 +896,7 @@ const ProductForm = ({
                                                 className="custom-textarea"
                                                 value={(formik.values.features?.[lang] || []).join('\n')}
                                                 onChange={(e) => {
-                                                    const features = e.target.value.split('\n').filter(Boolean);
+                                                    const features = e.target.value.split('\n');
                                                     formik.setFieldValue(`features.${lang}`, features);
                                                 }}
                                                 onBlur={formik.handleBlur}
