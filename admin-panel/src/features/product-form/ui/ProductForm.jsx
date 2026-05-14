@@ -32,6 +32,24 @@ const ProductForm = ({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formik.values.title?.en]);
 
+        useEffect(() => {
+        const currentItems = formik.values.purchaseOptionsV2Items || [];
+        const normalizedItems = normalizePurchaseOptions(currentItems);
+        const currentDefaultKey = formik.values.purchaseOptionsV2DefaultKey || '';
+        const nextDefaultKey = resolveDefaultPurchaseOptionKey(normalizedItems, currentDefaultKey);
+
+        const keysOrModesChanged = normalizedItems.length !== currentItems.length || normalizedItems.some((item, index) => {
+            const current = currentItems[index] || {};
+            return item.key !== current.key || item.mode !== current.mode;
+        });
+
+        if (keysOrModesChanged || nextDefaultKey !== currentDefaultKey) {
+            formik.setFieldValue('purchaseOptionsV2Items', normalizedItems, false);
+            formik.setFieldValue('purchaseOptionsV2DefaultKey', nextDefaultKey, false);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formik.values.purchaseOptionsV2Items, formik.values.purchaseOptionsV2DefaultKey]);
+
     const renderCheckbox = (name, checked, onChange, labelText) => (
         <label className="bulk-offers-modal__checkbox product-form__checkbox">
             <input
@@ -221,23 +239,7 @@ const ProductForm = ({
         return items?.[0]?.key || '';
     };
 
-    useEffect(() => {
-        const currentItems = formik.values.purchaseOptionsV2Items || [];
-        const normalizedItems = normalizePurchaseOptions(currentItems);
-        const currentDefaultKey = formik.values.purchaseOptionsV2DefaultKey || '';
-        const nextDefaultKey = resolveDefaultPurchaseOptionKey(normalizedItems, currentDefaultKey);
 
-        const keysOrModesChanged = normalizedItems.length !== currentItems.length || normalizedItems.some((item, index) => {
-            const current = currentItems[index] || {};
-            return item.key !== current.key || item.mode !== current.mode;
-        });
-
-        if (keysOrModesChanged || nextDefaultKey !== currentDefaultKey) {
-            formik.setFieldValue('purchaseOptionsV2Items', normalizedItems, false);
-            formik.setFieldValue('purchaseOptionsV2DefaultKey', nextDefaultKey, false);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [formik.values.purchaseOptionsV2Items, formik.values.purchaseOptionsV2DefaultKey]);
 
     const addCardBadge = () => {
         const newBadge = {

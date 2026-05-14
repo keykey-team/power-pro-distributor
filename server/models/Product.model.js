@@ -35,7 +35,7 @@ const LocalizedStringArray = new Schema(
  * ========================= */
 const ImageSchema = new Schema(
   {
-    url: { type: String, required: true, trim: true },
+    url: { type: String,  trim: true },
     sort: { type: Number, default: 0 },
   },
   { _id: false }
