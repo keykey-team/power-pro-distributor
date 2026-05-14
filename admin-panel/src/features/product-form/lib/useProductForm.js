@@ -22,6 +22,14 @@ const getNumericValue = (value, fallback = 0) => {
 
 const buildPurchaseOptionKey = (mode, index) => `${mode || 'unit'}_${index + 1}`;
 
+const normalizePurchaseOptionQuantity = (mode, quantity) => {
+    if ((mode || 'unit') === 'unit') {
+        return 1;
+    }
+
+    return getNumericValue(quantity, 1);
+};
+
 const buildCardBadgeKey = (badge, index) => {
     const baseLabel = badge?.label?.en || badge?.label?.sk || badge?.unit || `badge_${index + 1}`;
     const slugValue = String(baseLabel)
@@ -99,7 +107,7 @@ const normalizePurchaseOptionsForPayload = (items) => (items || []).map((item, i
         },
         enabled: Boolean(item?.enabled),
         price: getNumericValue(item?.price, 0),
-        quantity: getNumericValue(item?.quantity, 1),
+        quantity: normalizePurchaseOptionQuantity(mode, item?.quantity),
         mode,
         stockQuantity,
         inStock: stockQuantity > 0,

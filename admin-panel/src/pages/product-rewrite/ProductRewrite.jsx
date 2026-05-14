@@ -13,7 +13,7 @@ export default function ProductRewritePage() {
 
     return (
         <>
-            <section className="section-admin section-form">
+            <section className="section-admin section-form section-form--product-rewrite">
                 <div className="section-form__header">
                     <h2>{isCreateMode ? 'Додавання товару' : 'Редагування товару'}</h2>
                     <div className="section-form__header-btns">

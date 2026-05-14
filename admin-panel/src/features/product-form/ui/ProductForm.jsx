@@ -14,6 +14,13 @@ const PRODUCT_TYPE_OPTIONS = [
     { value: 'box', label: 'Коробкою' },
 ];
 
+const BRAND_OPTIONS = [
+    { value: 'powerpro', label: 'powerpro' },
+    { value: 'fitwin', label: 'fitwin' },
+];
+
+const buildInfoImageSrc = (fileName) => `${process.env.PUBLIC_URL || ''}/img/${fileName}`;
+
 const TRANSLATION_LANGUAGES = ['en', 'sk'];
 
 const SECTION_LINKS = [
@@ -45,13 +52,22 @@ const getAvailabilityMeta = (quantity) => {
     };
 };
 
+const getNormalizedPurchaseOptionQuantity = (mode, quantity) => {
+    if ((mode || 'unit') === 'unit') {
+        return 1;
+    }
+
+    const normalizedQuantity = Number(quantity);
+    return Number.isFinite(normalizedQuantity) && normalizedQuantity > 0 ? normalizedQuantity : 1;
+};
+
 const ProductForm = ({
     type,
     initialData,
 }) => {
     const formik = useProductForm(type, initialData);
     const { translateFields, isTranslating } = useAutoTranslate(formik);
-    const isEditMode = type !== 'create';
+    const [activeTooltipId, setActiveTooltipId] = useState(null);
     const [uploadingImages, setUploadingImages] = useState(false);
 
     useEffect(() => {
@@ -80,6 +96,30 @@ const ProductForm = ({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formik.values.purchaseOptionsV2Items, formik.values.purchaseOptionsV2DefaultKey]);
 
+    useEffect(() => {
+        const handlePointerDown = (event) => {
+            if (event.target.closest('.product-form__info-tooltip')) {
+                return;
+            }
+
+            setActiveTooltipId(null);
+        };
+
+        const handleEscape = (event) => {
+            if (event.key === 'Escape') {
+                setActiveTooltipId(null);
+            }
+        };
+
+        document.addEventListener('mousedown', handlePointerDown);
+        document.addEventListener('keydown', handleEscape);
+
+        return () => {
+            document.removeEventListener('mousedown', handlePointerDown);
+            document.removeEventListener('keydown', handleEscape);
+        };
+    }, []);
+
     const renderCheckbox = (name, checked, onChange, labelText) => (
         <label className="bulk-offers-modal__checkbox product-form__checkbox">
             <input
@@ -93,6 +133,33 @@ const ProductForm = ({
             <span className="bulk-offers-modal__checkbox-text">{labelText}</span>
         </label>
     );
+
+    const renderInfoTooltip = (tooltipId, imageFileName, altText) => {
+        const isOpen = activeTooltipId === tooltipId;
+
+        return (
+            <div className={`product-form__info-tooltip ${isOpen ? 'is-open' : ''}`}>
+                <button
+                    type="button"
+                    className="product-form__info-button"
+                    aria-label="Показати підказку"
+                    aria-expanded={isOpen}
+                    onClick={() => setActiveTooltipId((currentId) => currentId === tooltipId ? null : tooltipId)}
+                >
+                    i
+                </button>
+                {isOpen && (
+                    <div className="product-form__info-popup" role="tooltip">
+                        <img
+                            src={buildInfoImageSrc(imageFileName)}
+                            alt={altText}
+                            className="product-form__info-image"
+                        />
+                    </div>
+                )}
+            </div>
+        );
+    };
 
     // Guard: ensure formik values are initialized properly
     if (!formik.values ) {
@@ -198,7 +265,18 @@ const ProductForm = ({
 
     const updatePurchaseOption = (index, field, value) => {
         const items = [...(formik.values.purchaseOptionsV2Items || [])];
-        items[index] = { ...items[index], [field]: value };
+        const currentItem = items[index] || {};
+        const nextMode = field === 'mode' ? value : (currentItem.mode || 'unit');
+        const nextQuantity = field === 'quantity'
+            ? getNormalizedPurchaseOptionQuantity(nextMode, value)
+            : getNormalizedPurchaseOptionQuantity(nextMode, currentItem.quantity);
+
+        items[index] = {
+            ...currentItem,
+            [field]: value,
+            mode: nextMode,
+            quantity: nextQuantity,
+        };
         formik.setFieldValue('purchaseOptionsV2Items', items);
     };
 
@@ -277,6 +355,7 @@ const ProductForm = ({
         return {
             ...item,
             mode,
+            quantity: getNormalizedPurchaseOptionQuantity(mode, item?.quantity),
             key: buildPurchaseOptionKey(mode, index),
         };
     });
@@ -511,20 +590,21 @@ const ProductForm = ({
     const productAvailability = getAvailabilityMeta(formik.values.stockQuantity);
     const totalVariantsCount = (formik.values.purchaseOptionsV2Items || []).length;
     const activeVariantsCount = (formik.values.purchaseOptionsV2Items || []).filter((item) => item.enabled !== false).length;
-    const pageTitle = isEditMode ? 'Редагування товару' : 'Створення товару';
+    const selectedBrand = formik.values.brand_title_en || formik.values.brand_title_sk || formik.values.brand_title_ua || formik.values.brand_title_ru || '';
+
+    const handleBrandChange = (value) => {
+        formik.setFieldValue('brand_title_ua', value, false);
+        formik.setFieldValue('brand_title_ru', value, false);
+        formik.setFieldValue('brand_title_en', value, false);
+        formik.setFieldValue('brand_title_sk', value, false);
+    };
 
     return (
         <>
         <form id="product-create-form" onSubmit={formik.handleSubmit} className="product-form">
             <div className="product-form__layout">
                 <aside className="product-form__sidebar">
-                    <div className="product-form__sidebar-card" id="product-overview">
-                        <span className="product-form__eyebrow">Картка товару</span>
-                        <h1 className="product-form__page-title">{pageTitle}</h1>
-                        <p className="product-form__section-note">
-                            Форма згрупована по задачах: спочатку основні дані, потім контент, залишки та варіанти покупки.
-                        </p>
-                    </div>
+                    
 
                     <div className="product-form__sidebar-nav-shell">
                         <nav className="product-form__sidebar-card product-form__sidebar-nav" aria-label="Навігація по формі">
@@ -642,24 +722,14 @@ const ProductForm = ({
                             </div>
                         </div>
 
-                        <div className="form-wrapper-2-column">
-                            <CustomInput
-                                id="brand_title_en"
-                                name="brand_title_en"
-                                label="Назва бренду (EN)"
-                                value={formik.values.brand_title_en || ''}
-                                onChange={formik.handleChange}
-                                onBlur={formik.handleBlur}
-                                placeholder="Brand name in English"
-                            />
-                            <CustomInput
-                                id="brand_title_sk"
-                                name="brand_title_sk"
-                                label="Назва бренду (SK)"
-                                value={formik.values.brand_title_sk || ''}
-                                onChange={formik.handleChange}
-                                onBlur={formik.handleBlur}
-                                placeholder="Názov značky v slovenčine"
+                        <div className="form-group">
+                            <label htmlFor="brand_title">Назва бренду</label>
+                            <CustomSelect
+                                id="brand_title"
+                                name="brand_title"
+                                options={BRAND_OPTIONS}
+                                value={selectedBrand}
+                                onChange={handleBrandChange}
                             />
                         </div>
 
@@ -678,7 +748,10 @@ const ProductForm = ({
                         <div className="product-form__content-rows">
                             <div className="product-form__content-row">
                                 <div className="product-form__content-row-meta">
-                                    <h3 className="product-form__subsection-title">Опис товару</h3>
+                                    <div className="product-form__title-with-info">
+                                        <h3 className="product-form__subsection-title">Опис товару</h3>
+                                        {renderInfoTooltip('description-info', 'description.jpg', 'Підказка для блоку опису товару')}
+                                    </div>
                                     <p className="product-form__section-note">Головний опис на сторінці товару.</p>
                                 </div>
                                 <div className="product-form__content-row-fields">
@@ -704,7 +777,10 @@ const ProductForm = ({
 
                             <div className="product-form__content-row">
                                 <div className="product-form__content-row-meta">
-                                    <h3 className="product-form__subsection-title">Інгредієнти</h3>
+                                    <div className="product-form__title-with-info">
+                                        <h3 className="product-form__subsection-title">Інгредієнти</h3>
+                                        {renderInfoTooltip('ingredients-info', 'ingridients.jpg', 'Підказка для блоку інгредієнтів')}
+                                    </div>
                                     <p className="product-form__section-note">Склад продукту для двох мов.</p>
                                 </div>
                                 <div className="product-form__content-row-fields">
@@ -727,7 +803,10 @@ const ProductForm = ({
 
                             <div className="product-form__content-row">
                                 <div className="product-form__content-row-meta">
-                                    <h3 className="product-form__subsection-title">Ключові особливості</h3>
+                                    <div className="product-form__title-with-info">
+                                        <h3 className="product-form__subsection-title">Ключові особливості</h3>
+                                        {renderInfoTooltip('main-features-info', 'main_features.jpg', 'Підказка для блоку ключових особливостей')}
+                                    </div>
                                     <p className="product-form__section-note">По одному пункту з нового рядка.</p>
                                 </div>
                                 <div className="product-form__content-row-fields">
@@ -879,7 +958,10 @@ const ProductForm = ({
                     <section id="product-nutrition" className="product-form__section-card">
                         <div className="product-form__section-head">
                             <div>
-                                <h2 className="product-form__section-title-lg">Харчова цінність</h2>
+                                <div className="product-form__title-with-info">
+                                    <h2 className="product-form__section-title-lg">Харчова цінність</h2>
+                                    {renderInfoTooltip('nutrition-info', 'information.jpg', 'Підказка для блоку харчової цінності')}
+                                </div>
                                 <p className="product-form__section-note">
                                     Увесь блок зібрано в компактну таблицю, щоб значення легко звіряти по рядках.
                                 </p>
@@ -1031,7 +1113,10 @@ const ProductForm = ({
                     <section id="product-badges" className="product-form__section-card">
                         <div className="product-form__section-head">
                             <div>
-                                <h2 className="product-form__section-title-lg">Бейджі картки</h2>
+                                <div className="product-form__title-with-info">
+                                    <h2 className="product-form__section-title-lg">Бейджі картки</h2>
+                                    {renderInfoTooltip('badges-info', 'bages.jpg', 'Підказка для блоку бейджів картки')}
+                                </div>
                                 <p className="product-form__section-note">
                                     Короткі характеристики, які показуються на картці товару: білки, kcal, high protein тощо.
                                 </p>
@@ -1153,7 +1238,10 @@ const ProductForm = ({
                                             <div className="product-form__variant-section">
                                                 <div className="product-form__variant-section-head">
                                                     <div>
-                                                        <h4 className="product-form__subsection-title">Назва та фото</h4>
+                                                        <div className="product-form__title-with-info">
+                                                            <h4 className="product-form__subsection-title">Назва та фото</h4>
+                                                            {renderInfoTooltip(`variant-title-info-${index}`, 'var_title.png', 'Підказка для блоку назви та фото варіанта')}
+                                                        </div>
                                                         <p className="product-form__section-note">Це побачить клієнт у виборі варіанта на сайті.</p>
                                                     </div>
                                                 </div>
@@ -1247,6 +1335,7 @@ const ProductForm = ({
                                                             label="Кількість у варіанті"
                                                             type="number"
                                                             value={item.quantity || 1}
+                                                            disabled={(item.mode || 'unit') !== 'box'}
                                                             onChange={(e) => updatePurchaseOption(index, 'quantity', Number(e.target.value))}
                                                         />
                                                     </div>

@@ -1,25 +1,38 @@
 "use client";
-import { useI18n } from '@shared/i18n/use-i18n';
-import React, { useState, useEffect } from 'react';
+import { useI18n } from '@shared';
+import React, { useEffect, useState } from 'react';
+
+const getTrackedStockQuantity = (value) => {
+    const normalizedValue = Number(value);
+    return Number.isFinite(normalizedValue) ? Math.trunc(normalizedValue) : null;
+};
+
+const getIsOutOfStock = (stockSource) => {
+    const trackedStockQuantity = getTrackedStockQuantity(stockSource?.stockQuantity);
+
+    if (trackedStockQuantity !== null) {
+        return trackedStockQuantity <= 0;
+    }
+
+    return stockSource?.inStock === false;
+};
 
 const ProductButton = ({ product, locale }) => {
     const [cart, setCart] = useState([]);
-    const { t } = useI18n()
-    const trackedStockQuantity = Number.isFinite(Number(product?.stockQuantity))
-        ? Math.trunc(Number(product.stockQuantity))
-        : null;
-    const isOutOfStock = trackedStockQuantity !== null
-        ? trackedStockQuantity <= 0
-        : product?.inStock === false;
+    const { t } = useI18n();
 
-    // Определяем режим по умолчанию (unit или box) и цену
-    const defaultMode = product?.purchaseOptions?.defaultMode || 'unit';
-    const isBox = defaultMode === 'box';
-    const boxQuantity = product?.purchaseOptions?.box?.quantity || 1;
-    const currentPrice = product?.purchaseOptions?.[defaultMode]?.price || product.price;
+    const v2Items = Array.isArray(product?.purchaseOptionsV2?.items)
+        ? product.purchaseOptionsV2.items.filter((item) => item?.enabled !== false)
+        : [];
+    const defaultV2Option = v2Items.find((item) => item.key === product?.purchaseOptionsV2?.defaultKey) || v2Items[0] || null;
 
-    // Составной ID для синхронизации с модалкой
-    const compositeId = `${product._id}-${defaultMode}`;
+    const purchaseMode = defaultV2Option?.mode || product?.type || 'unit';
+    const isBox = purchaseMode === 'box';
+    const boxQuantity = defaultV2Option?.quantity || product?.purchaseOptions?.box?.quantity || 1;
+    const currentPrice = defaultV2Option?.price ?? product?.price;
+    const isOutOfStock = getIsOutOfStock(defaultV2Option || product);
+
+    const compositeId = `${product._id}-${defaultV2Option?.key || purchaseMode}`;
 
     useEffect(() => {
         const loadCart = () => {
@@ -57,7 +70,9 @@ const ProductButton = ({ product, locale }) => {
             } else {
                 // ТОВАРА НЕТ: Добавляем новый
                 const baseName = product?.title?.[locale];
-                const nameWithQuantity = isBox ? `${baseName} (Balenie ${boxQuantity} ks)` : baseName;
+                const nameWithQuantity = defaultV2Option
+                    ? `${baseName} (${defaultV2Option?.title?.[locale] || defaultV2Option?.key})`
+                    : (isBox ? `${baseName} (Balenie ${boxQuantity} ks)` : baseName);
 
                 const cartItem = {
                     kind: 'product',
@@ -66,8 +81,8 @@ const ProductButton = ({ product, locale }) => {
                     baseProductId: product._id, // Для связи с общим товаром
                     quantity: 1,
                     price: currentPrice,
-                    purchaseMode: defaultMode,
-                    itemsInPackage: isBox ? boxQuantity : 1,
+                    purchaseMode,
+                    itemsInPackage: defaultV2Option?.quantity || (isBox ? boxQuantity : 1),
                     product: product
                 };
                 updatedCart = [...currentCart, cartItem];

@@ -1,11 +1,23 @@
 'use client'
-import { useModals } from '@shared/index';
-
-import Image from 'next/image';
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import { useI18n, useModals } from '@shared';
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 
 import ProductGallerySwiper from './ProductGallerySwiper';
-import { useI18n } from '@shared/i18n/use-i18n';
+
+const getTrackedStockQuantity = (value) => {
+    const normalizedValue = Number(value);
+    return Number.isFinite(normalizedValue) ? Math.trunc(normalizedValue) : null;
+};
+
+const getIsOutOfStock = (stockSource) => {
+    const trackedStockQuantity = getTrackedStockQuantity(stockSource?.stockQuantity);
+
+    if (trackedStockQuantity !== null) {
+        return trackedStockQuantity <= 0;
+    }
+
+    return stockSource?.inStock === false;
+};
 
 const splitTitleByFlavor = (title) => {
     if (!title) return { firstPart: '', secondPart: '' };
@@ -77,7 +89,7 @@ const ProductModalContent = ({ product, locale }) => {
                 setSelectedV2Key(isValidDefault ? defaultKey : v2Items[0].key);
             }
         }
-    }, [product?._id, hasV2Options, v2Items, v2Data?.defaultKey]);
+    }, [product?._id, hasV2Options, selectedV2Key, v2Items, v2Data?.defaultKey]);
 
     useEffect(() => {
         const loadCart = () => {
@@ -99,6 +111,7 @@ const ProductModalContent = ({ product, locale }) => {
     const currentPrice = hasV2Options
         ? currentV2Option?.price
         : (selectedMode === 'unit' ? (unitOptions?.price || product.price) : (boxOptions?.price || product.price));
+    const isOutOfStock = getIsOutOfStock(currentV2Option || product);
 
     const handleAddToCart = (e) => {
         e.stopPropagation();
@@ -240,8 +253,16 @@ const ProductModalContent = ({ product, locale }) => {
 
                     <div className="prod-modal__main-btn">
 
-                        <button className={`products__item-button ${isInCart() ? 'in-cart' : ''}`} onClick={handleAddToCart}>
-                            {isInCart() ? `${t("cart1")} ✓` : `${t("cart2")} • € ${currentPrice}`}
+                        <button
+                            className={`products__item-button ${isInCart() ? 'in-cart' : ''} ${isOutOfStock ? 'out-of-stock' : ''}`}
+                            onClick={handleAddToCart}
+                            disabled={isOutOfStock}
+                        >
+                            {isOutOfStock
+                                ? t("cart3")
+                                : isInCart()
+                                    ? `${t("cart1")} ✓`
+                                    : `${t("cart2")} • € ${currentPrice}`}
 
                         </button>
                     </div>
