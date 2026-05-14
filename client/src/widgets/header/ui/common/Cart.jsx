@@ -5,7 +5,22 @@ import { removeItemById, updateQuantity } from '@widgets/header/lib/cart';
 import { useCart } from '@widgets/header/model/useCart';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
-import React from 'react';
+import React, { useState } from 'react';
+
+const FALLBACK_IMG = '/img/box.png';
+
+function CartImage({ src, alt }) {
+    const [imgSrc, setImgSrc] = useState(src || FALLBACK_IMG);
+    return (
+        <Image
+            src={imgSrc}
+            alt={alt}
+            width={70}
+            height={70}
+            onError={() => setImgSrc(FALLBACK_IMG)}
+        />
+    );
+}
 
 const Curt = () => {
     const { isModalOpen, setIsProdModalId, setIsModalOpen } = useModals();
@@ -61,11 +76,9 @@ const Curt = () => {
                                     }}
                                 >
                                     <div className="curt__item-content">
-                                        <Image
-                                            src={item?.product?.gallery?.[0]?.url || item?.product?.cover?.url || "/img/box.png"}
+                                        <CartImage
+                                            src={item?.product?.gallery?.[0]?.url || item?.product?.cover?.url}
                                             alt={item.name}
-                                            width={70}
-                                            height={70}
                                         />
                                         <div className="curt__item-content-text">
                                             <span className='curt__item-name'>{item.name}</span>
