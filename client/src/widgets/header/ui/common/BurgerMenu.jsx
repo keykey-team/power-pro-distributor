@@ -1,10 +1,10 @@
 "use client";
 
-import { useI18n } from '@shared/i18n/use-i18n';
-import { useModals } from '@shared/index';
-import { scrollToElement } from '@widgets/header/lib/scrollToOrderForm';
-import { useRouter, usePathname, useSearchParams, useParams } from 'next/navigation';
+import { useI18n, useModals } from '@shared';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React from 'react';
+
+import { scrollToElement } from '../../lib/scrollToOrderForm';
 
 const BurgerMenu = () => {
     
@@ -39,7 +39,7 @@ const BurgerMenu = () => {
             newSegments.push(nextLocale);
         }
 
-        const newPath = `/${locale}/` + newSegments.join('/');
+        const newPath = `/${newSegments.join('/')}`;
         const queryString = searchParams.toString();
         const urlWithQuery = queryString ? `${newPath}?${queryString}` : newPath;
 
