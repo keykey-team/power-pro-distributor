@@ -428,7 +428,14 @@ export async function uploadAdminImages(files) {
 }
 
 function normalizeUploadImageToDataUrl(image) {
-    if (!image?.base64) return null;
+    if (!image || typeof image !== 'object') return null;
+
+    const serverUrl = image.url || image.publicUrl || null;
+    if (typeof serverUrl === 'string' && serverUrl.trim()) {
+        return serverUrl;
+    }
+
+    if (!image.base64) return null;
 
     const rawBase64 = String(image.base64);
     if (rawBase64.startsWith('data:')) return rawBase64;
@@ -462,10 +469,22 @@ export async function uploadAdminPreviewImage(file) {
         }
 
         const image = data?.image || null;
+        const normalizedImage = image
+            ? {
+                ...image,
+                url: image.url || image.publicUrl || data?.url || data?.publicUrl || null,
+            }
+            : {
+                url: data?.url || data?.publicUrl || null,
+            };
+
+        const normalizedUrl = normalizeUploadImageToDataUrl(normalizedImage);
+
         return {
             ok: Boolean(data?.success),
-            image,
-            dataUrl: normalizeUploadImageToDataUrl(image),
+            image: normalizedImage,
+            url: normalizedUrl,
+            dataUrl: normalizedUrl,
         };
     } catch (error) {
         console.error('Error uploading admin preview image:', error);
@@ -501,13 +520,16 @@ export async function uploadAdminGalleryImages(files) {
         }
 
         const images = Array.isArray(data?.images) ? data.images : [];
+        const normalizedUrls = images
+            .map((image) => normalizeUploadImageToDataUrl(image))
+            .filter(Boolean);
+
         return {
             ok: Boolean(data?.success),
             totalProcessed: Number(data?.totalProcessed) || images.length,
             images,
-            dataUrls: images
-                .map((image) => normalizeUploadImageToDataUrl(image))
-                .filter(Boolean),
+            urls: normalizedUrls,
+            dataUrls: normalizedUrls,
         };
     } catch (error) {
         console.error('Error uploading admin gallery images:', error);

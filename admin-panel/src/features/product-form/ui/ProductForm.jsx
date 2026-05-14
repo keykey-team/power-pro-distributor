@@ -89,15 +89,20 @@ const ProductForm = ({
         try {
             if (fieldName === 'cover') {
                 const uploadedPreview = await uploadAdminPreviewImage(files[0]);
-                const finalCoverUrl = uploadedPreview?.dataUrl || localPreviewUrls[0] || '';
+                const finalCoverUrl = uploadedPreview?.url || uploadedPreview?.dataUrl || '';
+
+                if (!finalCoverUrl) {
+                    throw new Error('Сервер не вернул URL загруженного изображения');
+                }
+
                 formik.setFieldValue('cover', finalCoverUrl);
 
-                if (uploadedPreview?.dataUrl && localPreviewUrls[0]) {
+                if (localPreviewUrls[0]) {
                     URL.revokeObjectURL(localPreviewUrls[0]);
                 }
             } else if (fieldName === 'gallery') {
                 const uploadedGallery = await uploadAdminGalleryImages(files);
-                const uploadedUrls = uploadedGallery?.dataUrls || [];
+                const uploadedUrls = uploadedGallery?.urls || uploadedGallery?.dataUrls || [];
                 // Remove local previews and add uploaded URLs
                 const currentGallery = formik.values.gallery || [];
                 const galleryWithoutLocalPreviews = currentGallery.filter((url) => !localPreviewUrls.includes(url));
@@ -106,7 +111,9 @@ const ProductForm = ({
                     formik.setFieldValue('gallery', [...galleryWithoutLocalPreviews, ...uploadedUrls]);
                     localPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
                 } else {
-                    // If upload failed, keep previews (user can remove manually)
+                    formik.setFieldValue('gallery', previousGallery);
+                    localPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+                    throw new Error('Сервер не вернул URL загруженных изображений');
                 }
             }
 
@@ -181,6 +188,7 @@ const ProductForm = ({
         const localPreviewUrls = files.map((file) => URL.createObjectURL(file));
         const items = [...(formik.values.purchaseOptionsV2Items || [])];
         const currentImages = items[optionIndex]?.images || [];
+        const previousImages = [...currentImages];
         // Show instant previews
         items[optionIndex] = {
             ...items[optionIndex],
@@ -191,7 +199,11 @@ const ProductForm = ({
         setUploadingImages(true);
         try {
             const uploaded = await uploadAdminGalleryImages(files);
-            const uploadedUrls = uploaded?.dataUrls || [];
+            const uploadedUrls = uploaded?.urls || uploaded?.dataUrls || [];
+
+            if (!uploadedUrls.length) {
+                throw new Error('Сервер не вернул URL загруженных изображений варианта');
+            }
 
             const latestItems = [...(formik.values.purchaseOptionsV2Items || [])];
             const latestImages = latestItems[optionIndex]?.images || [];
@@ -206,6 +218,13 @@ const ProductForm = ({
             localPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
             toast.success('Зображення варіанту завантажено');
         } catch (error) {
+            const rollbackItems = [...(formik.values.purchaseOptionsV2Items || [])];
+            rollbackItems[optionIndex] = {
+                ...rollbackItems[optionIndex],
+                images: previousImages,
+            };
+            formik.setFieldValue('purchaseOptionsV2Items', rollbackItems);
+            localPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
             console.error('Error uploading option image:', error);
             toast.error(error?.message || 'Помилка завантаження зображення варіанту');
         } finally {
