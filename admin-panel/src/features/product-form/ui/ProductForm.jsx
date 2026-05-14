@@ -882,6 +882,7 @@ const ProductForm = ({
                                 <div className="product-form__content-row-meta">
                                     <div className="product-form__title-with-info">
                                         <h3 className="product-form__subsection-title">Ключові особливості</h3>
+                                        
                                         {renderInfoTooltip('main-features-info', 'main_features.jpg', 'Підказка для блоку ключових особливостей')}
                                     </div>
                                     <p className="product-form__section-note">По одному пункту з нового рядка.</p>
