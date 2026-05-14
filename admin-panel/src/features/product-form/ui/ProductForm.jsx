@@ -4,7 +4,7 @@ import { useProductForm } from '../lib/useProductForm';
 import { generateSlug } from '../lib/generateSlug';
 import CustomSelect from '../../../shared/ui/select-form/CustomSelect';
 import CustomInput from '../../../shared/ui/input-form/CustomInput';
-import { uploadAdminImages } from '../../../shared/api/products.services'; 
+import { uploadAdminGalleryImages, uploadAdminPreviewImage } from '../../../shared/api/products.services';
 import toast from '../../../shared/lib/toast';
 import { useAutoTranslate } from '../../../shared/lib/useAutoTranslate';
 import TranslateButton from '../../../shared/ui/translate-button/TranslateButton';
@@ -56,31 +56,58 @@ const ProductForm = ({
         const files = Array.from(e.target.files || []);
         if (!files.length) return;
 
+        const localPreviewUrls = files.map((file) => URL.createObjectURL(file));
+        const previousCover = formik.values.cover || '';
+        const previousGallery = formik.values.gallery || [];
+
+        // Always show previews instantly
+        if (fieldName === 'cover') {
+            formik.setFieldValue('cover', localPreviewUrls[0] || '');
+        } else if (fieldName === 'gallery') {
+            formik.setFieldValue('gallery', [...previousGallery, ...localPreviewUrls]);
+        }
+
         setUploadingImages(true);
         try {
-            const formData = new FormData();
-            files.forEach((file) => {
-                formData.append('images', file);
-            });
-
-            const uploadedUrls = await uploadAdminImages(formData);
-            const urls = Array.isArray(uploadedUrls) ? uploadedUrls : uploadedUrls?.urls || [];
-
             if (fieldName === 'cover') {
-                // Set first uploaded image as cover
-                formik.setFieldValue('cover', urls[0] || '');
+                const uploadedPreview = await uploadAdminPreviewImage(files[0]);
+                const finalCoverUrl = uploadedPreview?.dataUrl || localPreviewUrls[0] || '';
+                formik.setFieldValue('cover', finalCoverUrl);
+
+                if (uploadedPreview?.dataUrl && localPreviewUrls[0]) {
+                    URL.revokeObjectURL(localPreviewUrls[0]);
+                }
             } else if (fieldName === 'gallery') {
-                // Append to gallery
+                const uploadedGallery = await uploadAdminGalleryImages(files);
+                const uploadedUrls = uploadedGallery?.dataUrls || [];
+                // Remove local previews and add uploaded URLs
                 const currentGallery = formik.values.gallery || [];
-                formik.setFieldValue('gallery', [...currentGallery, ...urls]);
+                const galleryWithoutLocalPreviews = currentGallery.filter((url) => !localPreviewUrls.includes(url));
+
+                if (uploadedUrls.length) {
+                    formik.setFieldValue('gallery', [...galleryWithoutLocalPreviews, ...uploadedUrls]);
+                    localPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+                } else {
+                    // If upload failed, keep previews (user can remove manually)
+                }
             }
 
             toast.success('Зображення завантажено успішно');
         } catch (error) {
             console.error('Error uploading images:', error);
-            toast.error('Помилка завантаження зображень');
+            if (fieldName === 'cover') {
+                formik.setFieldValue('cover', previousCover);
+                if (localPreviewUrls[0]) {
+                    URL.revokeObjectURL(localPreviewUrls[0]);
+                }
+            } else if (fieldName === 'gallery') {
+                // On error, keep previews so user sees what was selected
+                // Optionally, show error toast
+            }
+            toast.error(error?.message || 'Помилка завантаження зображень');
         } finally {
             setUploadingImages(false);
+            e.target.value = '';
         }
     };
 
@@ -127,6 +154,311 @@ const ProductForm = ({
             title: { ...(items[index].title || {}), [lang]: value },
         };
         formik.setFieldValue('purchaseOptionsV2Items', items);
+    };
+
+    const handleOptionImageUpload = async (e, optionIndex) => {
+        const files = Array.from(e.target.files || []);
+        if (!files.length) return;
+
+        const localPreviewUrls = files.map((file) => URL.createObjectURL(file));
+        const items = [...(formik.values.purchaseOptionsV2Items || [])];
+        const currentImages = items[optionIndex]?.images || [];
+        // Show instant previews
+        items[optionIndex] = {
+            ...items[optionIndex],
+            images: [...currentImages, ...localPreviewUrls.map((url, i) => ({ url, sort: currentImages.length + i }))],
+        };
+        formik.setFieldValue('purchaseOptionsV2Items', items);
+
+        setUploadingImages(true);
+        try {
+            const uploaded = await uploadAdminGalleryImages(files);
+            const uploadedUrls = uploaded?.dataUrls || [];
+
+            const latestItems = [...(formik.values.purchaseOptionsV2Items || [])];
+            const latestImages = latestItems[optionIndex]?.images || [];
+            const withoutPreviews = latestImages.filter((img) => !localPreviewUrls.includes(img.url));
+            const newImages = uploadedUrls.map((url, i) => ({ url, sort: withoutPreviews.length + i }));
+
+            latestItems[optionIndex] = {
+                ...latestItems[optionIndex],
+                images: [...withoutPreviews, ...newImages],
+            };
+            formik.setFieldValue('purchaseOptionsV2Items', latestItems);
+            localPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+            toast.success('Зображення варіанту завантажено');
+        } catch (error) {
+            console.error('Error uploading option image:', error);
+            toast.error(error?.message || 'Помилка завантаження зображення варіанту');
+        } finally {
+            setUploadingImages(false);
+            e.target.value = '';
+        }
+    };
+
+    const removeOptionImage = (optionIndex, imageIndex) => {
+        const items = [...(formik.values.purchaseOptionsV2Items || [])];
+        const updated = (items[optionIndex]?.images || []).filter((_, i) => i !== imageIndex);
+        items[optionIndex] = { ...items[optionIndex], images: updated };
+        formik.setFieldValue('purchaseOptionsV2Items', items);
+    };
+
+    const buildPurchaseOptionKey = (mode, index) => `${mode || 'unit'}_${index + 1}`;
+
+    const normalizePurchaseOptions = (items) => (items || []).map((item, index) => {
+        const mode = item?.mode || 'unit';
+        return {
+            ...item,
+            mode,
+            key: buildPurchaseOptionKey(mode, index),
+        };
+    });
+
+    const resolveDefaultPurchaseOptionKey = (items, currentDefault) => {
+        if ((items || []).some((item) => item.key === currentDefault)) {
+            return currentDefault;
+        }
+        return items?.[0]?.key || '';
+    };
+
+    useEffect(() => {
+        const currentItems = formik.values.purchaseOptionsV2Items || [];
+        const normalizedItems = normalizePurchaseOptions(currentItems);
+        const currentDefaultKey = formik.values.purchaseOptionsV2DefaultKey || '';
+        const nextDefaultKey = resolveDefaultPurchaseOptionKey(normalizedItems, currentDefaultKey);
+
+        const keysOrModesChanged = normalizedItems.length !== currentItems.length || normalizedItems.some((item, index) => {
+            const current = currentItems[index] || {};
+            return item.key !== current.key || item.mode !== current.mode;
+        });
+
+        if (keysOrModesChanged || nextDefaultKey !== currentDefaultKey) {
+            formik.setFieldValue('purchaseOptionsV2Items', normalizedItems, false);
+            formik.setFieldValue('purchaseOptionsV2DefaultKey', nextDefaultKey, false);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formik.values.purchaseOptionsV2Items, formik.values.purchaseOptionsV2DefaultKey]);
+
+    const addCardBadge = () => {
+        const newBadge = {
+            key: '',
+            label: {
+                ua: '',
+                ru: '',
+                en: '',
+                sk: '',
+            },
+            valueNumber: 0,
+            valueText: '',
+            unit: '',
+            display: 'value',
+            sort: 0,
+            isHighlighted: false,
+        };
+
+        formik.setFieldValue('cardBadges', [...(formik.values.cardBadges || []), newBadge]);
+    };
+
+    const removeCardBadge = (index) => {
+        const updated = (formik.values.cardBadges || []).filter((_, i) => i !== index);
+        formik.setFieldValue('cardBadges', updated);
+    };
+
+    const updateCardBadge = (index, field, value) => {
+        const badges = [...(formik.values.cardBadges || [])];
+        badges[index] = {
+            ...badges[index],
+            [field]: value,
+        };
+        formik.setFieldValue('cardBadges', badges);
+    };
+
+    const updateCardBadgeLabel = (index, lang, value) => {
+        const badges = [...(formik.values.cardBadges || [])];
+        badges[index] = {
+            ...badges[index],
+            label: {
+                ...(badges[index].label || {}),
+                [lang]: value,
+            },
+        };
+        formik.setFieldValue('cardBadges', badges);
+    };
+
+    const buildDefaultNutritionTable = () => ({
+        title: {
+            ua: 'Поживна цінність',
+            ru: 'Пищевая ценность',
+            en: 'Nutrition facts',
+            sk: 'Vyzivove udaje',
+        },
+        columns: [
+            {
+                key: 'per_100g',
+                label: {
+                    ua: 'На 100 г',
+                    ru: 'На 100 г',
+                    en: 'Per 100g',
+                    sk: 'Na 100 g',
+                },
+                meta: {
+                    grams: 100,
+                },
+                sort: 0,
+            },
+            {
+                key: 'per_60g',
+                label: {
+                    ua: 'На 60 г',
+                    ru: 'На 60 г',
+                    en: 'Per 60g',
+                    sk: 'Na 60 g',
+                },
+                meta: {
+                    grams: 60,
+                },
+                sort: 1,
+            },
+        ],
+        rows: [],
+    });
+
+    const getNormalizedNutritionTable = () => {
+        const current = formik.values.nutritionTable;
+        const fallback = buildDefaultNutritionTable();
+
+        if (!current || typeof current !== 'object' || Array.isArray(current)) {
+            return fallback;
+        }
+
+        return {
+            ...fallback,
+            ...current,
+            title: {
+                ...fallback.title,
+                ...(current.title || {}),
+            },
+            columns: Array.isArray(current.columns) && current.columns.length
+                ? current.columns
+                : fallback.columns,
+            rows: Array.isArray(current.rows)
+                ? current.rows
+                : fallback.rows,
+        };
+    };
+
+    const nutritionTable = getNormalizedNutritionTable();
+    const nutritionColumns = [...(nutritionTable.columns || [])]
+        .sort((a, b) => (Number(a?.sort) || 0) - (Number(b?.sort) || 0));
+
+    const setNutritionTable = (nextTable) => {
+        formik.setFieldValue('nutritionTable', nextTable);
+    };
+
+    const addNutritionRow = () => {
+        const values = {};
+        nutritionColumns.forEach((column) => {
+            values[column.key] = {
+                value: null,
+                text: '',
+                unit: '',
+            };
+        });
+
+        const newRow = {
+            key: '',
+            label: {
+                ua: '',
+                ru: '',
+                en: '',
+                sk: '',
+            },
+            values,
+            sort: (nutritionTable.rows || []).length,
+        };
+
+        setNutritionTable({
+            ...nutritionTable,
+            rows: [...(nutritionTable.rows || []), newRow],
+        });
+    };
+
+    const removeNutritionRow = (index) => {
+        const rows = (nutritionTable.rows || []).filter((_, i) => i !== index);
+        setNutritionTable({
+            ...nutritionTable,
+            rows,
+        });
+    };
+
+    const updateNutritionRowLabel = (index, lang, value) => {
+        const rows = [...(nutritionTable.rows || [])];
+        rows[index] = {
+            ...rows[index],
+            label: {
+                ...(rows[index]?.label || {}),
+                [lang]: value,
+            },
+        };
+        setNutritionTable({
+            ...nutritionTable,
+            rows,
+        });
+    };
+
+    const updateNutritionRowCell = (index, columnKey, rawValue) => {
+        const rows = [...(nutritionTable.rows || [])];
+        const currentCell = rows[index]?.values?.[columnKey] || {};
+        const normalized = String(rawValue || '').trim();
+        const isNumeric = /^-?\d+(?:[\.,]\d+)?$/.test(normalized);
+
+        const nextCell = isNumeric
+            ? {
+                value: Number(normalized.replace(',', '.')),
+                text: '',
+                unit: currentCell.unit || '',
+            }
+            : {
+                value: null,
+                text: normalized,
+                unit: currentCell.unit || '',
+            };
+
+        rows[index] = {
+            ...rows[index],
+            values: {
+                ...(rows[index]?.values || {}),
+                [columnKey]: nextCell,
+            },
+        };
+
+        setNutritionTable({
+            ...nutritionTable,
+            rows,
+        });
+    };
+
+    const updateNutritionRowUnit = (index, unit) => {
+        const rows = [...(nutritionTable.rows || [])];
+        const row = rows[index] || {};
+        const nextValues = { ...(row.values || {}) };
+
+        nutritionColumns.forEach((column) => {
+            nextValues[column.key] = {
+                ...(nextValues[column.key] || {}),
+                unit,
+            };
+        });
+
+        rows[index] = {
+            ...row,
+            values: nextValues,
+        };
+
+        setNutritionTable({
+            ...nutritionTable,
+            rows,
+        });
     };
 
     return (
@@ -209,11 +541,22 @@ const ProductForm = ({
             {/* === DATA === */}
             <h1>Дані товару</h1>
             <div className="form-wrapper-2-column">
-                <CustomInput
-                    id="type" name="type" label="Тип товару"
-                    value={formik.values.type || ''} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                    placeholder="Тип товару" error={formik.errors.type} touched={formik.touched.type}
-                />
+                <div className="form-group">
+                    <label htmlFor="type">Тип товару</label>
+                    <CustomSelect
+                        id="type"
+                        name="type"
+                        options={[
+                            { value: 'unit', label: 'unit' },
+                            { value: 'box', label: 'box' },
+                        ]}
+                        value={formik.values.type || 'unit'}
+                        onChange={(value) => formik.setFieldValue('type', value)}
+                    />
+                    {Boolean(formik.touched.type) && Boolean(formik.errors.type) && (
+                        <div className="error-text">{String(formik.errors.type || '')}</div>
+                    )}
+                </div>
                 <CustomInput
                     id="sort" name="sort" label="Порядок сортування" type="number"
                     value={formik.values.sort || 0} onChange={formik.handleChange} onBlur={formik.handleBlur}
@@ -332,7 +675,6 @@ const ProductForm = ({
                     type="file"
                     id="cover"
                     className="product-form__upload-input"
-                    multiple
                     accept="image/*"
                     onChange={(e) => handleImageUpload(e, 'cover')}
                     disabled={uploadingImages}
@@ -424,28 +766,120 @@ const ProductForm = ({
                     placeholder="0"
                 />
             </div>
-            <div className="form-group">
-                <label htmlFor="nutritionTable">Таблиця поживної цінності (JSON)</label>
-                <textarea
-                    id="nutritionTable"
-                    name="nutritionTable"
-                    className="custom-textarea"
-                    value={formik.values.nutritionTable ? JSON.stringify(formik.values.nutritionTable, null, 2) : ''}
-                    onChange={(e) => {
-                        try {
-                            const val = e.target.value.trim();
-                            formik.setFieldValue('nutritionTable', val ? JSON.parse(val) : null);
-                        } catch {
-                            // Invalid JSON, just set as string (will fail validation on submit)
-                        }
-                    }}
-                    placeholder="{}"
-                    rows="3"
-                />
+            <div className="nutrition-table-editor">
+                <div className="form-wrapper-2-column">
+                    <CustomInput
+                        id="nutritionTable.title.en"
+                        label="Назва таблиці (EN)"
+                        value={nutritionTable.title?.en || ''}
+                        onChange={(e) => {
+                            setNutritionTable({
+                                ...nutritionTable,
+                                title: {
+                                    ...(nutritionTable.title || {}),
+                                    en: e.target.value,
+                                },
+                            });
+                        }}
+                        placeholder="Nutrition facts"
+                    />
+                    <CustomInput
+                        id="nutritionTable.title.sk"
+                        label="Назва таблиці (SK)"
+                        value={nutritionTable.title?.sk || ''}
+                        onChange={(e) => {
+                            setNutritionTable({
+                                ...nutritionTable,
+                                title: {
+                                    ...(nutritionTable.title || {}),
+                                    sk: e.target.value,
+                                },
+                            });
+                        }}
+                        placeholder="Vyzivove udaje"
+                    />
+                </div>
+
+                <div className="nutrition-table-editor__table-wrap">
+                    <table className="nutrition-table-editor__table">
+                        <thead>
+                            <tr>
+                                <th>Назва (EN / SK)</th>
+                                {nutritionColumns.map((column) => (
+                                    <th key={column.key}>{column.label?.ua || column.label?.en || column.key}</th>
+                                ))}
+                                <th>Unit</th>
+                                <th />
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {(nutritionTable.rows || []).map((row, index) => (
+                                <tr key={`${row.key || 'row'}-${index}`}>
+                                    <td>
+                                        <div className="nutrition-table-editor__name-cell">
+                                            <CustomInput
+                                                label=""
+                                                value={row.label?.en || ''}
+                                                onChange={(e) => updateNutritionRowLabel(index, 'en', e.target.value)}
+                                                placeholder="Protein"
+                                            />
+                                            <CustomInput
+                                                label=""
+                                                value={row.label?.sk || ''}
+                                                onChange={(e) => updateNutritionRowLabel(index, 'sk', e.target.value)}
+                                                placeholder="Bielkoviny"
+                                            />
+                                        </div>
+                                    </td>
+                                    {nutritionColumns.map((column) => {
+                                        const cell = row.values?.[column.key] || {};
+                                        const displayValue = cell.text || (cell.value ?? '');
+
+                                        return (
+                                            <td key={`${column.key}-${index}`}>
+                                                <CustomInput
+                                                    label=""
+                                                    value={String(displayValue)}
+                                                    onChange={(e) => updateNutritionRowCell(index, column.key, e.target.value)}
+                                                    placeholder="33.3 або 1436 kJ / 364 kcal"
+                                                />
+                                            </td>
+                                        );
+                                    })}
+                                    <td>
+                                        <CustomInput
+                                            label=""
+                                            value={row.values?.[nutritionColumns[0]?.key]?.unit || ''}
+                                            onChange={(e) => updateNutritionRowUnit(index, e.target.value)}
+                                            placeholder="g / kcal"
+                                        />
+                                    </td>
+                                    <td>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeNutritionRow(index)}
+                                            className="btn btn-danger"
+                                        >
+                                            Видалити
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                <button
+                    type="button"
+                    onClick={addNutritionRow}
+                    className="btn btn-primary"
+                >
+                    Додати рядок
+                </button>
             </div>
 
             {/* === SEO === */}
-            <h1>SEO</h1>
+            {/* <h1>SEO</h1>
             {['en', 'sk'].map((lang) => (
                 <div key={lang} className="form-group">
                     <label htmlFor={`seoTitle.${lang}`}>SEO Title ({lang.toUpperCase()})</label>
@@ -471,23 +905,112 @@ const ProductForm = ({
                         rows="2"
                     />
                 </div>
-            ))}
+            ))} */}
 
             {/* === CARD BADGES === */}
             <h1>Бейджи карточки</h1>
-            <div className="form-group">
-                <label htmlFor="cardBadges">Бейджи (через кому)</label>
-                <CustomInput
-                    id="cardBadges" name="cardBadges" label=""
-                    value={(formik.values.cardBadges || []).join(', ')}
-                    onChange={(e) => {
-                        const badges = e.target.value.split(',').map(b => b.trim()).filter(Boolean);
-                        formik.setFieldValue('cardBadges', badges);
-                    }}
-                    onBlur={formik.handleBlur}
-                    placeholder="Новинка, Хіт, Знижка"
-                />
+            <div className="card-badges-list">
+                {(formik.values.cardBadges || []).map((badge, index) => (
+                    <div key={index} className="purchase-option-item">
+                        <h4>Бейдж {index + 1}</h4>
+
+                        <div className="form-wrapper-2-column">
+                            <CustomInput
+                                label="Ключ"
+                                value={badge.key || ''}
+                                onChange={(e) => updateCardBadge(index, 'key', e.target.value)}
+                                placeholder="protein, kcal..."
+                            />
+                            <CustomInput
+                                label="Одиниця"
+                                value={badge.unit || ''}
+                                onChange={(e) => updateCardBadge(index, 'unit', e.target.value)}
+                                placeholder="g, kcal..."
+                            />
+                        </div>
+
+                        <div className="form-wrapper-2-column">
+                            <CustomInput
+                                label="Числове значення"
+                                type="number"
+                                value={badge.valueNumber ?? 0}
+                                onChange={(e) => updateCardBadge(index, 'valueNumber', Number(e.target.value || 0))}
+                            />
+                            <CustomInput
+                                label="Текстове значення"
+                                value={badge.valueText || ''}
+                                onChange={(e) => updateCardBadge(index, 'valueText', e.target.value)}
+                                placeholder="High, Low..."
+                            />
+                        </div>
+
+                        <div className="form-wrapper-2-column">
+                            <div className="form-group">
+                                <label htmlFor={`cardBadges.${index}.display`}>Display</label>
+                                <CustomSelect
+                                    id={`cardBadges.${index}.display`}
+                                    name={`cardBadges.${index}.display`}
+                                    options={[
+                                        { value: 'value', label: 'value' },
+                                        { value: 'text', label: 'text' },
+                                    ]}
+                                    value={badge.display || 'value'}
+                                    onChange={(value) => updateCardBadge(index, 'display', value)}
+                                />
+                            </div>
+                            <CustomInput
+                                label="Сортування"
+                                type="number"
+                                value={badge.sort ?? 0}
+                                onChange={(e) => updateCardBadge(index, 'sort', Number(e.target.value || 0))}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            {renderCheckbox(
+                                `cardBadges.${index}.isHighlighted`,
+                                Boolean(badge.isHighlighted),
+                                (e) => updateCardBadge(index, 'isHighlighted', e.target.checked),
+                                'Підсвічений бейдж'
+                            )}
+                        </div>
+
+                        <h4>Label (2 мови)</h4>
+                        <div className="form-wrapper-2-column">
+                            <CustomInput
+                                label="Label (EN)"
+                                value={badge.label?.en || ''}
+                                onChange={(e) => updateCardBadgeLabel(index, 'en', e.target.value)}
+                                placeholder="Protein"
+                            />
+                            <CustomInput
+                                label="Label (SK)"
+                                value={badge.label?.sk || ''}
+                                onChange={(e) => updateCardBadgeLabel(index, 'sk', e.target.value)}
+                                placeholder="Bielkoviny"
+                            />
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => removeCardBadge(index)}
+                            className="btn btn-danger"
+                            style={{ marginTop: '10px' }}
+                        >
+                            Видалити бейдж
+                        </button>
+                    </div>
+                ))}
             </div>
+
+            <button
+                type="button"
+                onClick={addCardBadge}
+                className="btn btn-primary"
+                style={{ marginTop: '20px' }}
+            >
+                Додати бейдж
+            </button>
 
             {/* === PURCHASE OPTIONS V2 === */}
             <h1>Варіанти покупки (версія 2)</h1>
@@ -496,8 +1019,8 @@ const ProductForm = ({
                 <CustomInput
                     id="purchaseOptionsV2DefaultKey" name="purchaseOptionsV2DefaultKey" label=""
                     value={formik.values.purchaseOptionsV2DefaultKey || 'unit'}
-                    onChange={formik.handleChange}
-                    placeholder="unit"
+                    readOnly
+                    placeholder="Автогенерація"
                 />
             </div>
 
@@ -509,8 +1032,8 @@ const ProductForm = ({
                             <CustomInput
                                 label="Ключ"
                                 value={item.key || ''}
-                                onChange={(e) => updatePurchaseOption(index, 'key', e.target.value)}
-                                placeholder="unit, pack, box..."
+                                readOnly
+                                placeholder="Генерується автоматично"
                             />
                             <CustomInput
                                 label="Кількість"
@@ -528,12 +1051,19 @@ const ProductForm = ({
                                 value={item.price || 0}
                                 onChange={(e) => updatePurchaseOption(index, 'price', Number(e.target.value))}
                             />
-                            <CustomInput
-                                label="Режим"
-                                value={item.mode || 'unit'}
-                                onChange={(e) => updatePurchaseOption(index, 'mode', e.target.value)}
-                                placeholder="unit, weight..."
-                            />
+                            <div className="form-group">
+                                <label htmlFor={`purchaseOptionsV2Items.${index}.mode`}>Режим</label>
+                                <CustomSelect
+                                    id={`purchaseOptionsV2Items.${index}.mode`}
+                                    name={`purchaseOptionsV2Items.${index}.mode`}
+                                    options={[
+                                        { value: 'unit', label: 'unit' },
+                                        { value: 'box', label: 'box' },
+                                    ]}
+                                    value={item.mode || 'unit'}
+                                    onChange={(value) => updatePurchaseOption(index, 'mode', value)}
+                                />
+                            </div>
                         </div>
 
                         <div className="form-wrapper-2-column">
@@ -576,6 +1106,45 @@ const ProductForm = ({
                                 placeholder={`Назва варіанту ${lang === 'ua' ? 'українською' : lang === 'en' ? 'англійською' : lang === 'ru' ? 'російською' : 'словацькою'}...`}
                             />
                         ))}
+
+                        <div className="form-group product-form__media-block" style={{ marginTop: '12px' }}>
+                            <div className="product-form__media-head">
+                                <label className="product-form__media-label">Фото варіанту</label>
+                                <label
+                                    htmlFor={`option-image-${index}`}
+                                    className={`product-form__upload-button ${uploadingImages ? 'is-loading' : ''}`}
+                                    aria-disabled={uploadingImages}
+                                >
+                                    {uploadingImages ? 'Завантаження...' : 'Додати фото'}
+                                </label>
+                            </div>
+                            <input
+                                type="file"
+                                id={`option-image-${index}`}
+                                className="product-form__upload-input"
+                                multiple
+                                accept="image/*"
+                                onChange={(e) => handleOptionImageUpload(e, index)}
+                                disabled={uploadingImages}
+                            />
+                            <div className="product-form__upload-preview-grid">
+                                {(item.images || []).map((img, imgIndex) => (
+                                    <div key={imgIndex} className="product-form__upload-preview-card">
+                                        <img className="product-form__upload-preview-image" src={img.url} alt={`Option ${index} img ${imgIndex}`} />
+                                        <div className="product-form__upload-preview-actions">
+                                            <span className="product-form__upload-preview-title">Фото {imgIndex + 1}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeOptionImage(index, imgIndex)}
+                                                className="btn-remove"
+                                            >
+                                                Видалити
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
 
                         <button
                             type="button"
