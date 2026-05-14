@@ -9,6 +9,42 @@ import toast from '../../../shared/lib/toast';
 import { useAutoTranslate } from '../../../shared/lib/useAutoTranslate';
 import TranslateButton from '../../../shared/ui/translate-button/TranslateButton';
 
+const PRODUCT_TYPE_OPTIONS = [
+    { value: 'unit', label: 'Поштучно' },
+    { value: 'box', label: 'Коробкою' },
+];
+
+const TRANSLATION_LANGUAGES = ['en', 'sk'];
+
+const SECTION_LINKS = [
+    { id: 'product-overview', label: 'Огляд' },
+    { id: 'product-main', label: 'Основне' },
+    { id: 'product-content', label: 'Опис і склад' },
+    { id: 'product-media', label: 'Фото' },
+    // { id: 'product-stock', label: 'Залишки' },
+    { id: 'product-nutrition', label: 'Харчова цінність' },
+    { id: 'product-badges', label: 'Бейджі' },
+    { id: 'product-variants', label: 'Варіанти покупки' },
+];
+
+const getAvailabilityMeta = (quantity) => {
+    const normalizedQuantity = Number(quantity) || 0;
+
+    if (normalizedQuantity > 0) {
+        return {
+            label: 'У наявності',
+            hint: 'Статус визначено автоматично за залишком.',
+            toneClassName: 'is-in-stock',
+        };
+    }
+
+    return {
+        label: 'Немає в наявності',
+        hint: 'Статус визначено автоматично за залишком.',
+        toneClassName: 'is-out-of-stock',
+    };
+};
+
 const ProductForm = ({
     type,
     initialData,
@@ -17,12 +53,6 @@ const ProductForm = ({
     const { translateFields, isTranslating } = useAutoTranslate(formik);
     const isEditMode = type !== 'create';
     const [uploadingImages, setUploadingImages] = useState(false);
-
-    useEffect(() => {
-        if (initialData) {
-            console.log('Product:', initialData);
-        }
-    }, [initialData]);
 
     useEffect(() => {
         const generatedSlug = generateSlug(formik.values.title?.en || '');
@@ -262,7 +292,6 @@ const ProductForm = ({
 
     const addCardBadge = () => {
         const newBadge = {
-            key: '',
             label: {
                 ua: '',
                 ru: '',
@@ -270,10 +299,7 @@ const ProductForm = ({
                 sk: '',
             },
             valueNumber: 0,
-            valueText: '',
             unit: '',
-            display: 'value',
-            sort: 0,
             isHighlighted: false,
         };
 
@@ -431,7 +457,7 @@ const ProductForm = ({
         const rows = [...(nutritionTable.rows || [])];
         const currentCell = rows[index]?.values?.[columnKey] || {};
         const normalized = String(rawValue || '').trim();
-        const isNumeric = /^-?\d+(?:[\.,]\d+)?$/.test(normalized);
+        const isNumeric = /^-?\d+(?:[.,]\d+)?$/.test(normalized);
 
         const nextCell = isNumeric
             ? {
@@ -482,657 +508,309 @@ const ProductForm = ({
         });
     };
 
+    const productAvailability = getAvailabilityMeta(formik.values.stockQuantity);
+    const totalVariantsCount = (formik.values.purchaseOptionsV2Items || []).length;
+    const activeVariantsCount = (formik.values.purchaseOptionsV2Items || []).filter((item) => item.enabled !== false).length;
+    const pageTitle = isEditMode ? 'Редагування товару' : 'Створення товару';
+
     return (
         <>
         <form id="product-create-form" onSubmit={formik.handleSubmit} className="product-form">
-            {/* === HEADER === */}
-            <div className="product__variations-header">
-                <h1>Переклад</h1>
-                <div className="form-translate-bar">
-                    <TranslateButton
-                        isLoading={isTranslating}
-                        onClick={() => {
-                            translateFields([
-                                { from: 'title.en', to: 'title.sk' },
-                                { from: 'subtitle.en', to: 'subtitle.sk' },
-                                { from: 'description.en', to: 'description.sk' },
-                            ]);
-                        }}
-                    />
-                </div>
-            </div>
+            <div className="product-form__layout">
+                <aside className="product-form__sidebar">
+                    <div className="product-form__sidebar-card" id="product-overview">
+                        <span className="product-form__eyebrow">Картка товару</span>
+                        <h1 className="product-form__page-title">{pageTitle}</h1>
+                        <p className="product-form__section-note">
+                            Форма згрупована по задачах: спочатку основні дані, потім контент, залишки та варіанти покупки.
+                        </p>
+                    </div>
 
-            {/* === TITLE === */}
-            <h1>Назва товару</h1>
-            <div className="form-wrapper-2-column">
-                <CustomInput
-                    id="title.en" label="Назва товару (EN)"
-                    value={String(formik.values.title?.en || '')} onChange={(e) => formik.setFieldValue('title.en', e.target.value)} onBlur={() => formik.setFieldTouched('title.en', true)}
-                    placeholder="Enter title in English" error={String(formik.errors.title?.en || '')} touched={Boolean(formik.touched.title?.en)}
-                />
-                <CustomInput
-                    id="title.sk" label="Назва товару (SK)"
-                    value={String(formik.values.title?.sk || '')} onChange={(e) => formik.setFieldValue('title.sk', e.target.value)} onBlur={() => formik.setFieldTouched('title.sk', true)}
-                    placeholder="Zadajte názov po slovensky" error={String(formik.errors.title?.sk || '')} touched={Boolean(formik.touched.title?.sk)}
-                />
-            </div>
-            <div className="form-wrapper-2-column">
-                <CustomInput
-                    id="slug" name="slug" label="Slug (URL)"
-                    value={formik.values.slug || ''} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                    placeholder="product-slug" error={formik.errors.slug} touched={formik.touched.slug}
-                />
-            </div>
+                    <div className="product-form__sidebar-nav-shell">
+                        <nav className="product-form__sidebar-card product-form__sidebar-nav" aria-label="Навігація по формі">
+                            {SECTION_LINKS.map((section) => (
+                                <a key={section.id} href={`#${section.id}`} className="product-form__sidebar-link">
+                                    {section.label}
+                                </a>
+                            ))}
+                        </nav>
+                    </div>
 
-            {/* === SUBTITLE === */}
-            <h1>Підпис до товару</h1>
-            <div className="form-wrapper-2-column">
-                <CustomInput
-                    id="subtitle.en" label="Підпис (EN)"
-                    value={String(formik.values.subtitle?.en || '')} onChange={(e) => formik.setFieldValue('subtitle.en', e.target.value)} onBlur={() => formik.setFieldTouched('subtitle.en', true)}
-                    placeholder="Short subtitle in English..."
-                />
-                <CustomInput
-                    id="subtitle.sk" label="Підпис (SK)"
-                    value={String(formik.values.subtitle?.sk || '')} onChange={(e) => formik.setFieldValue('subtitle.sk', e.target.value)} onBlur={() => formik.setFieldTouched('subtitle.sk', true)}
-                    placeholder="Krátky popis v slovenčine..."
-                />
-            </div>
-
-            {/* === DESCRIPTION === */}
-            <h1>Опис товару</h1>
-            {['en', 'sk'].map((lang) => (
-                <div key={lang} className="form-group">
-                    <label htmlFor={`description.${lang}`}>Опис ({lang.toUpperCase()})</label>
-                    <textarea
-                        id={`description.${lang}`}
-                        className={`custom-textarea ${Boolean(formik.touched.description?.[lang]) && Boolean(formik.errors.description?.[lang]) ? 'error' : ''}`}
-                        value={String(formik.values.description?.[lang] || '')}
-                        onChange={(e) => formik.setFieldValue(`description.${lang}`, e.target.value)}
-                        onBlur={() => formik.setFieldTouched(`description.${lang}`, true)}
-                        placeholder={`Опис товару ${lang === 'ua' ? 'українською' : lang === 'en' ? 'англійською' : lang === 'ru' ? 'російською' : 'словацькою'}...`}
-                        rows="3"
-                    />
-                    {Boolean(formik.touched.description?.[lang]) && Boolean(formik.errors.description?.[lang]) && (
-                        <div className="error-text">{String(formik.errors.description?.[lang] || '')}</div>
-                    )}
-                </div>
-            ))}
-
-            {/* === DATA === */}
-            <h1>Дані товару</h1>
-            <div className="form-wrapper-2-column">
-                <div className="form-group">
-                    <label htmlFor="type">Тип товару</label>
-                    <CustomSelect
-                        id="type"
-                        name="type"
-                        options={[
-                            { value: 'unit', label: 'unit' },
-                            { value: 'box', label: 'box' },
-                        ]}
-                        value={formik.values.type || 'unit'}
-                        onChange={(value) => formik.setFieldValue('type', value)}
-                    />
-                    {Boolean(formik.touched.type) && Boolean(formik.errors.type) && (
-                        <div className="error-text">{String(formik.errors.type || '')}</div>
-                    )}
-                </div>
-                <CustomInput
-                    id="sort" name="sort" label="Порядок сортування" type="number"
-                    value={formik.values.sort || 0} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                    placeholder="0" error={formik.errors.sort} touched={formik.touched.sort}
-                />
-            </div>
-            <div className="form-wrapper-2-column">
-                <div className="form-group">
-                    {renderCheckbox('isActive', Boolean(formik.values.isActive), formik.handleChange, 'Активний')}
-                </div>
-                <div className="form-group">
-                    {renderCheckbox('isBar', Boolean(formik.values.isBar), formik.handleChange, 'Это батончик (значок)')}
-                </div>
-            </div>
-
-            {/* === BRAND INFO === */}
-            <h1>Бренд</h1>
-            <div className="form-wrapper-2-column">
-                <CustomInput
-                    id="brand_title_en" name="brand_title_en" label="Назва бренду (EN)"
-                    value={formik.values.brand_title_en || ''} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                    placeholder="Brand name in English"
-                />
-                <CustomInput
-                    id="brand_title_sk" name="brand_title_sk" label="Назва бренду (SK)"
-                    value={formik.values.brand_title_sk || ''} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                    placeholder="Názov značky v slovenčine"
-                />
-            </div>
-
-            {/* === PRICING === */}
-            <h1>Ціна і валюта</h1>
-            <div className="form-wrapper-2-column">
-                <CustomInput
-                    id="price" name="price" label="Ціна" type="number" step="0.01"
-                    value={formik.values.price || ''} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                    placeholder="0.00" error={formik.errors.price} touched={formik.touched.price}
-                />
-                <CustomInput
-                    id="oldPrice" name="oldPrice" label="Стара ціна" type="number" step="0.01"
-                    value={formik.values.oldPrice || ''} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                    placeholder="0.00"
-                />
-            </div>
-            <div className="form-group">
-                <label htmlFor="currency">Валюта</label>
-                <CustomSelect
-                    options={[
-                        { value: 'EUR', label: 'EUR (€)' },
-                        { value: 'USD', label: 'USD ($)' },
-                        { value: 'CZK', label: 'CZK (Kč)' },
-                        { value: 'PLN', label: 'PLN (zł)' },
-                        { value: 'UAH', label: 'UAH (₴)' },
-                    ]}
-                    value={formik.values.currency || 'EUR'}
-                    onChange={(value) => formik.setFieldValue('currency', value)}
-                    name="currency"
-                    id="currency"
-                />
-            </div>
-
-            {/* === INGREDIENTS === */}
-            <h1>Компоненти / Інгредієнти</h1>
-            {['en', 'sk'].map((lang) => (
-                <div key={lang} className="form-group">
-                    <label htmlFor={`ingredients.${lang}`}>Інгредієнти ({lang.toUpperCase()})</label>
-                    <textarea
-                        id={`ingredients.${lang}`}
-                        className="custom-textarea"
-                        value={String(formik.values.ingredients?.[lang] || '')}
-                        onChange={(e) => formik.setFieldValue(`ingredients.${lang}`, e.target.value)}
-                        onBlur={() => formik.setFieldTouched(`ingredients.${lang}`, true)}
-                        placeholder={`Список інгредієнтів ${lang === 'ua' ? 'українською' : lang === 'en' ? 'англійською' : lang === 'ru' ? 'російською' : 'словацькою'}...`}
-                        rows="3"
-                    />
-                </div>
-            ))}
-
-            {/* === FEATURES === */}
-            <h1>Особливості</h1>
-            {['en', 'sk'].map((lang) => (
-                <div key={lang} className="form-group">
-                    <label htmlFor={`features.${lang}`}>Особливості ({lang.toUpperCase()})</label>
-                    <textarea
-                        id={`features.${lang}`}
-                        name={`features.${lang}`}
-                        className="custom-textarea"
-                        value={(formik.values.features?.[lang] || []).join('\n')}
-                        onChange={(e) => {
-                            const features = e.target.value.split('\n').filter(Boolean);
-                            formik.setFieldValue(`features.${lang}`, features);
-                        }}
-                        onBlur={formik.handleBlur}
-                        placeholder={`Особливості по одній на рядок ${lang === 'ua' ? 'українською' : lang === 'en' ? 'англійською' : lang === 'ru' ? 'російською' : 'словацькою'}...`}
-                        rows="3"
-                    />
-                </div>
-            ))}
-
-            {/* === IMAGES === */}
-            <h1>Зображення</h1>
-            <div className="form-group product-form__media-block">
-                <div className="product-form__media-head">
-                    <label className="product-form__media-label" htmlFor="cover">
-                        Основне зображення (обкладинка)
-                    </label>
-                    <label
-                        htmlFor="cover"
-                        className={`product-form__upload-button ${uploadingImages ? 'is-loading' : ''}`}
-                        aria-disabled={uploadingImages}
-                    >
-                        {uploadingImages ? 'Завантаження...' : 'Завантажити фото'}
-                    </label>
-                </div>
-                <input
-                    type="file"
-                    id="cover"
-                    className="product-form__upload-input"
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload(e, 'cover')}
-                    disabled={uploadingImages}
-                />
-                {formik.values.cover && (
-                    <div className="product-form__upload-preview-grid">
-                        <div className="product-form__upload-preview-card">
-                            <img className="product-form__upload-preview-image" src={formik.values.cover} alt="Cover" />
-                            <div className="product-form__upload-preview-actions">
-                                <span className="product-form__upload-preview-title">Обкладинка</span>
-                                <button
-                                    type="button"
-                                    onClick={() => formik.setFieldValue('cover', '')}
-                                    className="btn-remove"
-                                >
-                                    Видалити
-                                </button>
-                            </div>
+                    <div className="product-form__sidebar-card product-form__summary-list">
+                        <div className="product-form__summary-item">
+                            <span>Slug</span>
+                            <strong>{formik.values.slug || 'Згенерується з англійської назви'}</strong>
+                        </div>
+                        <div className="product-form__summary-item">
+                            <span>Наявність</span>
+                            <strong>{productAvailability.label}</strong>
+                        </div>
+                        <div className="product-form__summary-item">
+                            <span>Варіанти</span>
+                            <strong>{activeVariantsCount} з {totalVariantsCount} активні</strong>
+                        </div>
+                        <div className="product-form__summary-item">
+                            <span>Основний варіант</span>
+                            <strong>{formik.values.purchaseOptionsV2DefaultKey || 'Не задано'}</strong>
                         </div>
                     </div>
-                )}
-            </div>
+                </aside>
 
-            <div className="form-group product-form__media-block">
-                <div className="product-form__media-head">
-                    <label className="product-form__media-label" htmlFor="gallery">
-                        Галерея зображень
-                    </label>
-                    <label
-                        htmlFor="gallery"
-                        className={`product-form__upload-button ${uploadingImages ? 'is-loading' : ''}`}
-                        aria-disabled={uploadingImages}
-                    >
-                        {uploadingImages ? 'Завантаження...' : 'Додати фото в галерею'}
-                    </label>
-                </div>
-                <input
-                    type="file"
-                    id="gallery"
-                    className="product-form__upload-input"
-                    multiple
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload(e, 'gallery')}
-                    disabled={uploadingImages}
-                />
-                <div className="product-form__upload-preview-grid">
-                    {(formik.values.gallery || []).map((url, index) => (
-                        <div key={index} className="product-form__upload-preview-card">
-                            <img className="product-form__upload-preview-image" src={url} alt={`Gallery ${index}`} />
-                            <div className="product-form__upload-preview-actions">
-                                <span className="product-form__upload-preview-title">Фото {index + 1}</span>
-                                <button
-                                    type="button"
-                                    onClick={() => handleRemoveGalleryImage(index)}
-                                    className="btn-remove"
-                                >
-                                    Видалити
-                                </button>
+                <div className="product-form__main">
+                    <section id="product-main" className="product-form__section-card product-form__section-card--accent">
+                        <div className="product-form__section-head">
+                            <div>
+                                <h2 className="product-form__section-title-lg">Основна інформація</h2>
+                                <p className="product-form__section-note">
+                                    Тут залишилися тільки керовані поля. Slug, ціни, валюта і службові параметри рахуються автоматично.
+                                </p>
+                            </div>
+                            <div className="form-translate-bar">
+                                <TranslateButton
+                                    isLoading={isTranslating}
+                                    onClick={() => {
+                                        translateFields([
+                                            { from: 'title.en', to: 'title.sk' },
+                                            { from: 'subtitle.en', to: 'subtitle.sk' },
+                                            { from: 'description.en', to: 'description.sk' },
+                                        ]);
+                                    }}
+                                />
                             </div>
                         </div>
-                    ))}
-                </div>
-            </div>
 
-            {/* === STOCK === */}
-            <h1>Наявність на складі</h1>
-            <div className="form-wrapper-2-column">
-                <CustomInput
-                    id="stockQuantity" name="stockQuantity" label="Кількість на складі" type="number"
-                    value={formik.values.stockQuantity || 0} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                    placeholder="0"
-                />
-                <div className="form-group">
-                    {renderCheckbox('inStock', Boolean(formik.values.inStock), formik.handleChange, 'Є в наявності')}
-                </div>
-            </div>
+                        <div className="form-wrapper-2-column">
+                            <CustomInput
+                                id="title.en"
+                                label="Назва товару (EN)"
+                                value={String(formik.values.title?.en || '')}
+                                onChange={(e) => formik.setFieldValue('title.en', e.target.value)}
+                                onBlur={() => formik.setFieldTouched('title.en', true)}
+                                placeholder="Enter title in English"
+                                error={String(formik.errors.title?.en || '')}
+                                touched={Boolean(formik.touched.title?.en)}
+                            />
+                            <CustomInput
+                                id="title.sk"
+                                label="Назва товару (SK)"
+                                value={String(formik.values.title?.sk || '')}
+                                onChange={(e) => formik.setFieldValue('title.sk', e.target.value)}
+                                onBlur={() => formik.setFieldTouched('title.sk', true)}
+                                placeholder="Zadajte názov po slovensky"
+                                error={String(formik.errors.title?.sk || '')}
+                                touched={Boolean(formik.touched.title?.sk)}
+                            />
+                        </div>
 
-            {/* === NUTRITION INFO === */}
-            <h1>Информация про нутрієнти</h1>
-            <div className="form-wrapper-2-column">
-                <CustomInput
-                    id="weightG" name="weightG" label="Вага (г)" type="number" step="0.1"
-                    value={formik.values.weightG || ''} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                    placeholder="0"
-                />
-                <CustomInput
-                    id="proteinG" name="proteinG" label="Білки (г)" type="number" step="0.1"
-                    value={formik.values.proteinG || ''} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                    placeholder="0"
-                />
-            </div>
-            <div className="nutrition-table-editor">
-                <div className="form-wrapper-2-column">
-                    <CustomInput
-                        id="nutritionTable.title.en"
-                        label="Назва таблиці (EN)"
-                        value={nutritionTable.title?.en || ''}
-                        onChange={(e) => {
-                            setNutritionTable({
-                                ...nutritionTable,
-                                title: {
-                                    ...(nutritionTable.title || {}),
-                                    en: e.target.value,
-                                },
-                            });
-                        }}
-                        placeholder="Nutrition facts"
-                    />
-                    <CustomInput
-                        id="nutritionTable.title.sk"
-                        label="Назва таблиці (SK)"
-                        value={nutritionTable.title?.sk || ''}
-                        onChange={(e) => {
-                            setNutritionTable({
-                                ...nutritionTable,
-                                title: {
-                                    ...(nutritionTable.title || {}),
-                                    sk: e.target.value,
-                                },
-                            });
-                        }}
-                        placeholder="Vyzivove udaje"
-                    />
-                </div>
+                        <div className="form-wrapper-2-column">
+                            <CustomInput
+                                id="subtitle.en"
+                                label="Короткий підзаголовок (EN)"
+                                value={String(formik.values.subtitle?.en || '')}
+                                onChange={(e) => formik.setFieldValue('subtitle.en', e.target.value)}
+                                onBlur={() => formik.setFieldTouched('subtitle.en', true)}
+                                placeholder="Short subtitle in English"
+                            />
+                            <CustomInput
+                                id="subtitle.sk"
+                                label="Короткий підзаголовок (SK)"
+                                value={String(formik.values.subtitle?.sk || '')}
+                                onChange={(e) => formik.setFieldValue('subtitle.sk', e.target.value)}
+                                onBlur={() => formik.setFieldTouched('subtitle.sk', true)}
+                                placeholder="Krátky popis v slovenčine"
+                            />
+                        </div>
 
-                <div className="nutrition-table-editor__table-wrap">
-                    <table className="nutrition-table-editor__table">
-                        <thead>
-                            <tr>
-                                <th>Назва (EN / SK)</th>
-                                {nutritionColumns.map((column) => (
-                                    <th key={column.key}>{column.label?.ua || column.label?.en || column.key}</th>
-                                ))}
-                                <th>Unit</th>
-                                <th />
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {(nutritionTable.rows || []).map((row, index) => (
-                                <tr key={`${row.key || 'row'}-${index}`}>
-                                    <td>
-                                        <div className="nutrition-table-editor__name-cell">
-                                            <CustomInput
-                                                label=""
-                                                value={row.label?.en || ''}
-                                                onChange={(e) => updateNutritionRowLabel(index, 'en', e.target.value)}
-                                                placeholder="Protein"
+                        <div className="form-wrapper-2-column">
+                            <div className="form-group">
+                                <label htmlFor="type">Тип продажу</label>
+                                <CustomSelect
+                                    id="type"
+                                    name="type"
+                                    options={PRODUCT_TYPE_OPTIONS}
+                                    value={formik.values.type || 'unit'}
+                                    onChange={(value) => formik.setFieldValue('type', value)}
+                                />
+                                {Boolean(formik.touched.type) && Boolean(formik.errors.type) && (
+                                    <div className="error-text">{String(formik.errors.type || '')}</div>
+                                )}
+                            </div>
+                            <div className="product-form__toggle-group">
+                                <div className="form-group">
+                                    {renderCheckbox('isActive', Boolean(formik.values.isActive), formik.handleChange, 'Товар активний і показується на сайті')}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="form-wrapper-2-column">
+                            <CustomInput
+                                id="brand_title_en"
+                                name="brand_title_en"
+                                label="Назва бренду (EN)"
+                                value={formik.values.brand_title_en || ''}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                placeholder="Brand name in English"
+                            />
+                            <CustomInput
+                                id="brand_title_sk"
+                                name="brand_title_sk"
+                                label="Назва бренду (SK)"
+                                value={formik.values.brand_title_sk || ''}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                placeholder="Názov značky v slovenčine"
+                            />
+                        </div>
+
+                    </section>
+
+                    <section id="product-content" className="product-form__section-card">
+                        <div className="product-form__section-head">
+                            <div>
+                                <h2 className="product-form__section-title-lg">Опис, інгредієнти та особливості</h2>
+                                <p className="product-form__section-note">
+                                    Кожен тип контенту заповнюється в одному горизонтальному рядку: англійська і словацька версії поруч.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="product-form__content-rows">
+                            <div className="product-form__content-row">
+                                <div className="product-form__content-row-meta">
+                                    <h3 className="product-form__subsection-title">Опис товару</h3>
+                                    <p className="product-form__section-note">Головний опис на сторінці товару.</p>
+                                </div>
+                                <div className="product-form__content-row-fields">
+                                    {TRANSLATION_LANGUAGES.map((lang) => (
+                                        <div key={lang} className="form-group">
+                                            <label htmlFor={`description.${lang}`}>Опис ({lang.toUpperCase()})</label>
+                                            <textarea
+                                                id={`description.${lang}`}
+                                                className={`custom-textarea ${Boolean(formik.touched.description?.[lang]) && Boolean(formik.errors.description?.[lang]) ? 'error' : ''}`}
+                                                value={String(formik.values.description?.[lang] || '')}
+                                                onChange={(e) => formik.setFieldValue(`description.${lang}`, e.target.value)}
+                                                onBlur={() => formik.setFieldTouched(`description.${lang}`, true)}
+                                                placeholder={lang === 'en' ? 'Detailed product description in English' : 'Podrobný popis produktu v slovenčine'}
+                                                rows="3"
                                             />
-                                            <CustomInput
-                                                label=""
-                                                value={row.label?.sk || ''}
-                                                onChange={(e) => updateNutritionRowLabel(index, 'sk', e.target.value)}
-                                                placeholder="Bielkoviny"
+                                            {Boolean(formik.touched.description?.[lang]) && Boolean(formik.errors.description?.[lang]) && (
+                                                <div className="error-text">{String(formik.errors.description?.[lang] || '')}</div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="product-form__content-row">
+                                <div className="product-form__content-row-meta">
+                                    <h3 className="product-form__subsection-title">Інгредієнти</h3>
+                                    <p className="product-form__section-note">Склад продукту для двох мов.</p>
+                                </div>
+                                <div className="product-form__content-row-fields">
+                                    {TRANSLATION_LANGUAGES.map((lang) => (
+                                        <div key={lang} className="form-group">
+                                            <label htmlFor={`ingredients.${lang}`}>Інгредієнти ({lang.toUpperCase()})</label>
+                                            <textarea
+                                                id={`ingredients.${lang}`}
+                                                className="custom-textarea"
+                                                value={String(formik.values.ingredients?.[lang] || '')}
+                                                onChange={(e) => formik.setFieldValue(`ingredients.${lang}`, e.target.value)}
+                                                onBlur={() => formik.setFieldTouched(`ingredients.${lang}`, true)}
+                                                placeholder={lang === 'en' ? 'Ingredients list in English' : 'Zoznam ingrediencií po slovensky'}
+                                                rows="3"
                                             />
                                         </div>
-                                    </td>
-                                    {nutritionColumns.map((column) => {
-                                        const cell = row.values?.[column.key] || {};
-                                        const displayValue = cell.text || (cell.value ?? '');
-
-                                        return (
-                                            <td key={`${column.key}-${index}`}>
-                                                <CustomInput
-                                                    label=""
-                                                    value={String(displayValue)}
-                                                    onChange={(e) => updateNutritionRowCell(index, column.key, e.target.value)}
-                                                    placeholder="33.3 або 1436 kJ / 364 kcal"
-                                                />
-                                            </td>
-                                        );
-                                    })}
-                                    <td>
-                                        <CustomInput
-                                            label=""
-                                            value={row.values?.[nutritionColumns[0]?.key]?.unit || ''}
-                                            onChange={(e) => updateNutritionRowUnit(index, e.target.value)}
-                                            placeholder="g / kcal"
-                                        />
-                                    </td>
-                                    <td>
-                                        <button
-                                            type="button"
-                                            onClick={() => removeNutritionRow(index)}
-                                            className="btn btn-danger"
-                                        >
-                                            Видалити
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                <button
-                    type="button"
-                    onClick={addNutritionRow}
-                    className="btn btn-primary"
-                >
-                    Додати рядок
-                </button>
-            </div>
-
-            {/* === SEO === */}
-            {/* <h1>SEO</h1>
-            {['en', 'sk'].map((lang) => (
-                <div key={lang} className="form-group">
-                    <label htmlFor={`seoTitle.${lang}`}>SEO Title ({lang.toUpperCase()})</label>
-                    <CustomInput
-                        id={`seoTitle.${lang}`} label=""
-                        value={String(formik.values.seoTitle?.[lang] || '')} 
-                        onChange={(e) => formik.setFieldValue(`seoTitle.${lang}`, e.target.value)} 
-                        onBlur={() => formik.setFieldTouched(`seoTitle.${lang}`, true)}
-                        placeholder={`SEO title ${lang === 'ua' ? 'українською' : lang === 'en' ? 'англійською' : lang === 'ru' ? 'російською' : 'словацькою'}...`}
-                    />
-                </div>
-            ))}
-            {['en', 'sk'].map((lang) => (
-                <div key={lang} className="form-group">
-                    <label htmlFor={`seoDescription.${lang}`}>SEO Description ({lang.toUpperCase()})</label>
-                    <textarea
-                        id={`seoDescription.${lang}`}
-                        className="custom-textarea"
-                        value={String(formik.values.seoDescription?.[lang] || '')}
-                        onChange={(e) => formik.setFieldValue(`seoDescription.${lang}`, e.target.value)}
-                        onBlur={() => formik.setFieldTouched(`seoDescription.${lang}`, true)}
-                        placeholder={`SEO description ${lang === 'ua' ? 'українською' : lang === 'en' ? 'англійською' : lang === 'ru' ? 'російською' : 'словацькою'}...`}
-                        rows="2"
-                    />
-                </div>
-            ))} */}
-
-            {/* === CARD BADGES === */}
-            <h1>Бейджи карточки</h1>
-            <div className="card-badges-list">
-                {(formik.values.cardBadges || []).map((badge, index) => (
-                    <div key={index} className="purchase-option-item">
-                        <h4>Бейдж {index + 1}</h4>
-
-                        <div className="form-wrapper-2-column">
-                            <CustomInput
-                                label="Ключ"
-                                value={badge.key || ''}
-                                onChange={(e) => updateCardBadge(index, 'key', e.target.value)}
-                                placeholder="protein, kcal..."
-                            />
-                            <CustomInput
-                                label="Одиниця"
-                                value={badge.unit || ''}
-                                onChange={(e) => updateCardBadge(index, 'unit', e.target.value)}
-                                placeholder="g, kcal..."
-                            />
-                        </div>
-
-                        <div className="form-wrapper-2-column">
-                            <CustomInput
-                                label="Числове значення"
-                                type="number"
-                                value={badge.valueNumber ?? 0}
-                                onChange={(e) => updateCardBadge(index, 'valueNumber', Number(e.target.value || 0))}
-                            />
-                            <CustomInput
-                                label="Текстове значення"
-                                value={badge.valueText || ''}
-                                onChange={(e) => updateCardBadge(index, 'valueText', e.target.value)}
-                                placeholder="High, Low..."
-                            />
-                        </div>
-
-                        <div className="form-wrapper-2-column">
-                            <div className="form-group">
-                                <label htmlFor={`cardBadges.${index}.display`}>Display</label>
-                                <CustomSelect
-                                    id={`cardBadges.${index}.display`}
-                                    name={`cardBadges.${index}.display`}
-                                    options={[
-                                        { value: 'value', label: 'value' },
-                                        { value: 'text', label: 'text' },
-                                    ]}
-                                    value={badge.display || 'value'}
-                                    onChange={(value) => updateCardBadge(index, 'display', value)}
-                                />
+                                    ))}
+                                </div>
                             </div>
-                            <CustomInput
-                                label="Сортування"
-                                type="number"
-                                value={badge.sort ?? 0}
-                                onChange={(e) => updateCardBadge(index, 'sort', Number(e.target.value || 0))}
-                            />
+
+                            <div className="product-form__content-row">
+                                <div className="product-form__content-row-meta">
+                                    <h3 className="product-form__subsection-title">Ключові особливості</h3>
+                                    <p className="product-form__section-note">По одному пункту з нового рядка.</p>
+                                </div>
+                                <div className="product-form__content-row-fields">
+                                    {TRANSLATION_LANGUAGES.map((lang) => (
+                                        <div key={lang} className="form-group">
+                                            <label htmlFor={`features.${lang}`}>Особливості ({lang.toUpperCase()})</label>
+                                            <textarea
+                                                id={`features.${lang}`}
+                                                name={`features.${lang}`}
+                                                className="custom-textarea"
+                                                value={(formik.values.features?.[lang] || []).join('\n')}
+                                                onChange={(e) => {
+                                                    const features = e.target.value.split('\n').filter(Boolean);
+                                                    formik.setFieldValue(`features.${lang}`, features);
+                                                }}
+                                                onBlur={formik.handleBlur}
+                                                placeholder={lang === 'en' ? 'One feature per line' : 'Jeden benefit na každý riadok'}
+                                                rows="3"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
+                    </section>
 
-                        <div className="form-group">
-                            {renderCheckbox(
-                                `cardBadges.${index}.isHighlighted`,
-                                Boolean(badge.isHighlighted),
-                                (e) => updateCardBadge(index, 'isHighlighted', e.target.checked),
-                                'Підсвічений бейдж'
-                            )}
-                        </div>
-
-                        <h4>Label (2 мови)</h4>
-                        <div className="form-wrapper-2-column">
-                            <CustomInput
-                                label="Label (EN)"
-                                value={badge.label?.en || ''}
-                                onChange={(e) => updateCardBadgeLabel(index, 'en', e.target.value)}
-                                placeholder="Protein"
-                            />
-                            <CustomInput
-                                label="Label (SK)"
-                                value={badge.label?.sk || ''}
-                                onChange={(e) => updateCardBadgeLabel(index, 'sk', e.target.value)}
-                                placeholder="Bielkoviny"
-                            />
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={() => removeCardBadge(index)}
-                            className="btn btn-danger"
-                            style={{ marginTop: '10px' }}
-                        >
-                            Видалити бейдж
-                        </button>
-                    </div>
-                ))}
-            </div>
-
-            <button
-                type="button"
-                onClick={addCardBadge}
-                className="btn btn-primary"
-                style={{ marginTop: '20px' }}
-            >
-                Додати бейдж
-            </button>
-
-            {/* === PURCHASE OPTIONS V2 === */}
-            <h1>Варіанти покупки (версія 2)</h1>
-            <div className="form-group">
-                <label htmlFor="purchaseOptionsV2DefaultKey">Ключ за замовчуванням</label>
-                <CustomInput
-                    id="purchaseOptionsV2DefaultKey" name="purchaseOptionsV2DefaultKey" label=""
-                    value={formik.values.purchaseOptionsV2DefaultKey || 'unit'}
-                    readOnly
-                    placeholder="Автогенерація"
-                />
-            </div>
-
-            <div className="purchase-options-list">
-                {(formik.values.purchaseOptionsV2Items || []).map((item, index) => (
-                    <div key={index} className="purchase-option-item">
-                        <h4>Варіант {index + 1}</h4>
-                        <div className="form-wrapper-2-column">
-                            <CustomInput
-                                label="Ключ"
-                                value={item.key || ''}
-                                readOnly
-                                placeholder="Генерується автоматично"
-                            />
-                            <CustomInput
-                                label="Кількість"
-                                type="number"
-                                value={item.quantity || 1}
-                                onChange={(e) => updatePurchaseOption(index, 'quantity', Number(e.target.value))}
-                            />
-                        </div>
-
-                        <div className="form-wrapper-2-column">
-                            <CustomInput
-                                label="Ціна"
-                                type="number"
-                                step="0.01"
-                                value={item.price || 0}
-                                onChange={(e) => updatePurchaseOption(index, 'price', Number(e.target.value))}
-                            />
-                            <div className="form-group">
-                                <label htmlFor={`purchaseOptionsV2Items.${index}.mode`}>Режим</label>
-                                <CustomSelect
-                                    id={`purchaseOptionsV2Items.${index}.mode`}
-                                    name={`purchaseOptionsV2Items.${index}.mode`}
-                                    options={[
-                                        { value: 'unit', label: 'unit' },
-                                        { value: 'box', label: 'box' },
-                                    ]}
-                                    value={item.mode || 'unit'}
-                                    onChange={(value) => updatePurchaseOption(index, 'mode', value)}
-                                />
+                    <section id="product-media" className="product-form__section-card">
+                        <div className="product-form__section-head">
+                            <div>
+                                <h2 className="product-form__section-title-lg">Фото товару</h2>
+                                <p className="product-form__section-note">
+                                    Спочатку завантажте головне фото, потім галерею. Попередній перегляд показується одразу.
+                                </p>
                             </div>
                         </div>
 
-                        <div className="form-wrapper-2-column">
-                            <CustomInput
-                                label="Кількість на складі"
-                                type="number"
-                                value={item.stockQuantity || 0}
-                                onChange={(e) => updatePurchaseOption(index, 'stockQuantity', Number(e.target.value))}
-                            />
-                            {renderCheckbox(
-                                `purchaseOptionsV2Items.${index}.inStock`,
-                                Boolean(item.inStock),
-                                (e) => updatePurchaseOption(index, 'inStock', e.target.checked),
-                                'Є в наявності'
-                            )}
-                        </div>
-
-                        <div className="form-wrapper-2-column">
-                            <CustomInput
-                                label="Сортування"
-                                type="number"
-                                value={item.sort || 0}
-                                onChange={(e) => updatePurchaseOption(index, 'sort', Number(e.target.value))}
-                            />
-                            {renderCheckbox(
-                                `purchaseOptionsV2Items.${index}.enabled`,
-                                Boolean(item.enabled),
-                                (e) => updatePurchaseOption(index, 'enabled', e.target.checked),
-                                'Ввімкнено'
-                            )}
-                        </div>
-
-                        <h1>Назва варіанту (4 мови)</h1>
-                        {['en', 'sk'].map((lang) => (
-                            <CustomInput
-                                key={lang}
-                                label={`Назва (${lang.toUpperCase()})`}
-                                value={item.title?.[lang] || ''}
-                                onChange={(e) => updatePurchaseOptionLang(index, lang, e.target.value)}
-                                placeholder={`Назва варіанту ${lang === 'ua' ? 'українською' : lang === 'en' ? 'англійською' : lang === 'ru' ? 'російською' : 'словацькою'}...`}
-                            />
-                        ))}
-
-                        <div className="form-group product-form__media-block" style={{ marginTop: '12px' }}>
+                        <div className="form-group product-form__media-block">
                             <div className="product-form__media-head">
-                                <label className="product-form__media-label">Фото варіанту</label>
+                                <label className="product-form__media-label" htmlFor="cover">
+                                    Головне фото
+                                </label>
                                 <label
-                                    htmlFor={`option-image-${index}`}
+                                    htmlFor="cover"
+                                    className={`product-form__upload-button ${uploadingImages ? 'is-loading' : ''}`}
+                                    aria-disabled={uploadingImages}
+                                >
+                                    {uploadingImages ? 'Завантаження...' : 'Завантажити фото'}
+                                </label>
+                            </div>
+                            <input
+                                type="file"
+                                id="cover"
+                                className="product-form__upload-input"
+                                accept="image/*"
+                                onChange={(e) => handleImageUpload(e, 'cover')}
+                                disabled={uploadingImages}
+                            />
+                            {formik.values.cover && (
+                                <div className="product-form__upload-preview-grid">
+                                    <div className="product-form__upload-preview-card">
+                                        <img className="product-form__upload-preview-image" src={formik.values.cover} alt="Cover" />
+                                        <div className="product-form__upload-preview-actions">
+                                            <span className="product-form__upload-preview-title">Головне фото</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => formik.setFieldValue('cover', '')}
+                                                className="btn-remove"
+                                            >
+                                                Видалити
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="form-group product-form__media-block">
+                            <div className="product-form__media-head">
+                                <label className="product-form__media-label" htmlFor="gallery">
+                                    Галерея фото
+                                </label>
+                                <label
+                                    htmlFor="gallery"
                                     className={`product-form__upload-button ${uploadingImages ? 'is-loading' : ''}`}
                                     aria-disabled={uploadingImages}
                                 >
@@ -1141,22 +819,22 @@ const ProductForm = ({
                             </div>
                             <input
                                 type="file"
-                                id={`option-image-${index}`}
+                                id="gallery"
                                 className="product-form__upload-input"
                                 multiple
                                 accept="image/*"
-                                onChange={(e) => handleOptionImageUpload(e, index)}
+                                onChange={(e) => handleImageUpload(e, 'gallery')}
                                 disabled={uploadingImages}
                             />
                             <div className="product-form__upload-preview-grid">
-                                {(item.images || []).map((img, imgIndex) => (
-                                    <div key={imgIndex} className="product-form__upload-preview-card">
-                                        <img className="product-form__upload-preview-image" src={img.url} alt={`Option ${index} img ${imgIndex}`} />
+                                {(formik.values.gallery || []).map((url, index) => (
+                                    <div key={index} className="product-form__upload-preview-card">
+                                        <img className="product-form__upload-preview-image" src={url} alt={`Gallery ${index}`} />
                                         <div className="product-form__upload-preview-actions">
-                                            <span className="product-form__upload-preview-title">Фото {imgIndex + 1}</span>
+                                            <span className="product-form__upload-preview-title">Фото {index + 1}</span>
                                             <button
                                                 type="button"
-                                                onClick={() => removeOptionImage(index, imgIndex)}
+                                                onClick={() => handleRemoveGalleryImage(index)}
                                                 className="btn-remove"
                                             >
                                                 Видалити
@@ -1166,28 +844,464 @@ const ProductForm = ({
                                 ))}
                             </div>
                         </div>
+                    </section>
+
+                    <section id="product-stock" className="product-form__section-card" style={{ display: 'none' }}>
+                        <div className="product-form__section-head">
+                            <div>
+                                <h2 className="product-form__section-title-lg">Залишки та доступність</h2>
+                                <p className="product-form__section-note">
+                                    Доступність визначається автоматично за кількістю на складі. Ручний чекбокс для наявності більше не потрібен.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="form-wrapper-2-column">
+                            <CustomInput
+                                id="stockQuantity"
+                                name="stockQuantity"
+                                label="Кількість на складі"
+                                type="number"
+                                value={formik.values.stockQuantity || 0}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                placeholder="0"
+                            />
+                            <div className="product-form__status-panel">
+                                <span className={`product-form__status-badge ${productAvailability.toneClassName}`}>
+                                    {productAvailability.label}
+                                </span>
+                                <p className="product-form__status-hint">{productAvailability.hint}</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="product-nutrition" className="product-form__section-card">
+                        <div className="product-form__section-head">
+                            <div>
+                                <h2 className="product-form__section-title-lg">Харчова цінність</h2>
+                                <p className="product-form__section-note">
+                                    Увесь блок зібрано в компактну таблицю, щоб значення легко звіряти по рядках.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={addNutritionRow}
+                                className="btn btn-primary"
+                            >
+                                Додати рядок
+                            </button>
+                        </div>
+
+                        <div className="form-wrapper-2-column" style={{ display: 'none' }}>
+                            <CustomInput
+                                id="weightG"
+                                name="weightG"
+                                label="Вага (г)"
+                                type="number"
+                                step="0.1"
+                                value={formik.values.weightG || ''}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                placeholder="0"
+                            />
+                            <CustomInput
+                                id="proteinG"
+                                name="proteinG"
+                                label="Білки (г)"
+                                type="number"
+                                step="0.1"
+                                value={formik.values.proteinG || ''}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                placeholder="0"
+                            />
+                        </div>
+
+                        <div className="nutrition-table-editor" >
+                            <div className="nutrition-table-editor__toolbar" style={{ display: 'none' }}>
+                                <CustomInput
+                                    id="nutritionTable.title.en"
+                                    label="Таблиця (EN)"
+                                    value={nutritionTable.title?.en || 'Nutritional information'}
+                                    onChange={(e) => {
+                                        setNutritionTable({
+                                            ...nutritionTable,
+                                            title: {
+                                                ...(nutritionTable.title || {}),
+                                                en: e.target.value,
+                                            },
+                                        });
+                                    }}
+                                    placeholder="Nutrition facts"
+                                />
+                                <CustomInput
+                                    id="nutritionTable.title.sk"
+                                    label="Таблиця (SK)"
+                                    value={nutritionTable.title?.sk || 'Vyzivove udaje'}
+                                    onChange={(e) => {
+                                        setNutritionTable({
+                                            ...nutritionTable,
+                                            title: {
+                                                ...(nutritionTable.title || {}),
+                                                sk: e.target.value,
+                                            },
+                                        });
+                                    }}
+                                    placeholder="Vyzivove udaje"
+                                />
+                            </div>
+
+                            <div className="nutrition-table-editor__table-wrap">
+                                <table className="nutrition-table-editor__table">
+                                    <thead>
+                                        <tr>
+                                            <th>EN</th>
+                                            <th>SK</th>
+                                            {nutritionColumns.map((column) => (
+                                                <th key={column.key}>{column.label?.ua || column.label?.en || column.key}</th>
+                                            ))}
+                                            <th>Одиниця</th>
+                                            <th />
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {(nutritionTable.rows || []).map((row, index) => (
+                                            <tr key={`${row.key || 'row'}-${index}`}>
+                                                <td>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control nutrition-table-editor__input"
+                                                        value={row.label?.en || ''}
+                                                        onChange={(e) => updateNutritionRowLabel(index, 'en', e.target.value)}
+                                                        placeholder="Protein"
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control nutrition-table-editor__input"
+                                                        value={row.label?.sk || ''}
+                                                        onChange={(e) => updateNutritionRowLabel(index, 'sk', e.target.value)}
+                                                        placeholder="Bielkoviny"
+                                                    />
+                                                </td>
+                                                {nutritionColumns.map((column) => {
+                                                    const cell = row.values?.[column.key] || {};
+                                                    const displayValue = cell.text || (cell.value ?? '');
+
+                                                    return (
+                                                        <td key={`${column.key}-${index}`}>
+                                                            <input
+                                                                type="text"
+                                                                className="form-control nutrition-table-editor__input"
+                                                                value={String(displayValue)}
+                                                                onChange={(e) => updateNutritionRowCell(index, column.key, e.target.value)}
+                                                                placeholder="33.3 або 1436 kJ / 364 kcal"
+                                                            />
+                                                        </td>
+                                                    );
+                                                })}
+                                                <td>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control nutrition-table-editor__input"
+                                                        value={row.values?.[nutritionColumns[0]?.key]?.unit || ''}
+                                                        onChange={(e) => updateNutritionRowUnit(index, e.target.value)}
+                                                        placeholder="g / kcal"
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeNutritionRow(index)}
+                                                        className="btn btn-danger"
+                                                    >
+                                                        Видалити
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="product-badges" className="product-form__section-card">
+                        <div className="product-form__section-head">
+                            <div>
+                                <h2 className="product-form__section-title-lg">Бейджі картки</h2>
+                                <p className="product-form__section-note">
+                                    Короткі характеристики, які показуються на картці товару: білки, kcal, high protein тощо.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={addCardBadge}
+                                className="btn btn-primary"
+                            >
+                                Додати бейдж
+                            </button>
+                        </div>
+
+                        <div className="card-badges-list product-form__badge-list">
+                            {(formik.values.cardBadges || []).map((badge, index) => (
+                                <div key={index} className="purchase-option-item product-form__badge-item">
+                                    <div className="product-form__badge-index">{index + 1}</div>
+                                    <CustomInput
+                                        label="Підпис (EN)"
+                                        value={badge.label?.en || ''}
+                                        onChange={(e) => updateCardBadgeLabel(index, 'en', e.target.value)}
+                                        placeholder="Protein"
+                                    />
+                                    <CustomInput
+                                        label="Підпис (SK)"
+                                        value={badge.label?.sk || ''}
+                                        onChange={(e) => updateCardBadgeLabel(index, 'sk', e.target.value)}
+                                        placeholder="Bielkoviny"
+                                    />
+                                    <CustomInput
+                                        label="Значення"
+                                        type="number"
+                                        value={badge.valueNumber ?? 0}
+                                        onChange={(e) => updateCardBadge(index, 'valueNumber', Number(e.target.value || 0))}
+                                    />
+                                    <CustomInput
+                                        label="Одиниця"
+                                        value={badge.unit || ''}
+                                        onChange={(e) => updateCardBadge(index, 'unit', e.target.value)}
+                                        placeholder="g, kcal"
+                                    />
+                                    <div className="form-group product-form__badge-toggle" style={{ display: 'none'}}>
+                                        {renderCheckbox(
+                                            `cardBadges.${index}.isHighlighted`,
+                                            Boolean(badge.isHighlighted),
+                                            (e) => updateCardBadge(index, 'isHighlighted', e.target.checked),
+                                            'Підсвітити'
+                                        )}
+                                    </div>
+                                    <div className="product-form__badge-actions">
+                                        <button
+                                            type="button"
+                                            onClick={() => removeCardBadge(index)}
+                                            className="btn btn-danger"
+                                        >
+                                            Видалити бейдж
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+
+                    <section id="product-variants" className="product-form__section-card">
+                        <div className="product-form__section-head">
+                            <div>
+                                <h2 className="product-form__section-title-lg">Варіанти покупки</h2>
+                                <p className="product-form__section-note">
+                                    Для кожного варіанта задайте тип продажу, ціну, кількість, залишок і окремі фото. Наявність також рахується автоматично від залишку.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="form-group" style={{ display: 'none' }}>
+                            <label htmlFor="purchaseOptionsV2DefaultKey">Основний варіант</label>
+                            <CustomInput
+                                id="purchaseOptionsV2DefaultKey"
+                                name="purchaseOptionsV2DefaultKey"
+                                label=""
+                                value={formik.values.purchaseOptionsV2DefaultKey || 'unit'}
+                                readOnly
+                                placeholder="Автогенерація"
+                            />
+                        </div>
+
+                        <div className="purchase-options-list product-form__stack-lg">
+                            {(formik.values.purchaseOptionsV2Items || []).map((item, index) => {
+                                const optionAvailability = getAvailabilityMeta(item.stockQuantity);
+                                const resolvedVariantKey = item.key || buildPurchaseOptionKey(item.mode, index);
+                                const isDefaultVariant = resolvedVariantKey === (formik.values.purchaseOptionsV2DefaultKey || '');
+                                const modeLabel = PRODUCT_TYPE_OPTIONS.find((option) => option.value === (item.mode || 'unit'))?.label || 'Поштучно';
+
+                                return (
+                                    <div key={index} className="purchase-option-item product-form__nested-card">
+                                        <div className="product-form__item-header">
+                                            <div>
+                                                <h3 className="product-form__item-title">Варіант {index + 1}</h3>
+                                                <p className="product-form__section-note">Окремо заповнюються назва для клієнта, параметри продажу, склад і фото.</p>
+                                                <div className="product-form__variant-meta">
+                                                    {isDefaultVariant && (
+                                                        <span className="product-form__variant-pill product-form__variant-pill--accent">Основний варіант</span>
+                                                    )}
+                                                    <span className="product-form__variant-pill">{modeLabel}</span>
+                                                    <span className={`product-form__variant-pill ${optionAvailability.toneClassName}`}>
+                                                        {optionAvailability.label}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => removePurchaseOption(index)}
+                                                className="btn btn-danger"
+                                            >
+                                                Видалити варіант
+                                            </button>
+                                        </div>
+
+                                        <div className="product-form__variant-grid">
+                                            <div className="product-form__variant-section">
+                                                <div className="product-form__variant-section-head">
+                                                    <div>
+                                                        <h4 className="product-form__subsection-title">Назва та фото</h4>
+                                                        <p className="product-form__section-note">Це побачить клієнт у виборі варіанта на сайті.</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="product-form__variant-top-row">
+                                                    <div className="product-form__variant-top-fields">
+                                                        <div className="form-wrapper-2-column">
+                                                            {TRANSLATION_LANGUAGES.map((lang) => (
+                                                                <CustomInput
+                                                                    key={lang}
+                                                                    label={`Назва (${lang.toUpperCase()})`}
+                                                                    value={item.title?.[lang] || ''}
+                                                                    onChange={(e) => updatePurchaseOptionLang(index, lang, e.target.value)}
+                                                                    placeholder={lang === 'en' ? 'Variant title in English' : 'Názov variantu po slovensky'}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="form-group product-form__media-block product-form__media-block--nested product-form__variant-media">
+                                                        <div className="product-form__media-head">
+                                                            <label className="product-form__media-label" htmlFor={`option-image-${index}`}>
+                                                                Фото варіанта
+                                                            </label>
+                                                            <label
+                                                                htmlFor={`option-image-${index}`}
+                                                                className={`product-form__upload-button ${uploadingImages ? 'is-loading' : ''}`}
+                                                                aria-disabled={uploadingImages}
+                                                            >
+                                                                {uploadingImages ? 'Завантаження...' : 'Додати фото'}
+                                                            </label>
+                                                        </div>
+                                                        <input
+                                                            type="file"
+                                                            id={`option-image-${index}`}
+                                                            className="product-form__upload-input"
+                                                            multiple
+                                                            accept="image/*"
+                                                            onChange={(e) => handleOptionImageUpload(e, index)}
+                                                            disabled={uploadingImages}
+                                                        />
+                                                        <div className="product-form__upload-preview-grid">
+                                                            {(item.images || []).map((img, imgIndex) => (
+                                                                <div key={imgIndex} className="product-form__upload-preview-card">
+                                                                    <img className="product-form__upload-preview-image" src={img.url} alt={`Option ${index} img ${imgIndex}`} />
+                                                                    <div className="product-form__upload-preview-actions">
+                                                                        <span className="product-form__upload-preview-title">Фото {imgIndex + 1}</span>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => removeOptionImage(index, imgIndex)}
+                                                                            className="btn-remove"
+                                                                        >
+                                                                            Видалити
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="product-form__variant-detail-grid">
+                                                <div className="product-form__variant-section">
+                                                    <div className="product-form__variant-section-head">
+                                                        <div>
+                                                            <h4 className="product-form__subsection-title">Параметри продажу</h4>
+                                                            <p className="product-form__section-note">Тип продажу, ціна і кількість у варіанті.</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="form-wrapper-3-column">
+                                                        <div className="form-group">
+                                                            <label htmlFor={`purchaseOptionsV2Items.${index}.mode`}>Тип продажу</label>
+                                                            <CustomSelect
+                                                                id={`purchaseOptionsV2Items.${index}.mode`}
+                                                                name={`purchaseOptionsV2Items.${index}.mode`}
+                                                                options={PRODUCT_TYPE_OPTIONS}
+                                                                value={item.mode || 'unit'}
+                                                                onChange={(value) => updatePurchaseOption(index, 'mode', value)}
+                                                            />
+                                                        </div>
+                                                        <CustomInput
+                                                            label="Ціна"
+                                                            type="number"
+                                                            step="0.01"
+                                                            value={item.price || 0}
+                                                            onChange={(e) => updatePurchaseOption(index, 'price', Number(e.target.value))}
+                                                        />
+                                                        <CustomInput
+                                                            label="Кількість у варіанті"
+                                                            type="number"
+                                                            value={item.quantity || 1}
+                                                            onChange={(e) => updatePurchaseOption(index, 'quantity', Number(e.target.value))}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="product-form__variant-section">
+                                                    <div className="product-form__variant-section-head">
+                                                        <div>
+                                                            <h4 className="product-form__subsection-title">Склад та видимість</h4>
+                                                            <p className="product-form__section-note">Активність перемикається вручну, наявність рахується від залишку.</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="form-wrapper-2-column">
+                                                        <CustomInput
+                                                            label="Залишок на складі"
+                                                            type="number"
+                                                            value={item.stockQuantity || 0}
+                                                            onChange={(e) => updatePurchaseOption(index, 'stockQuantity', Number(e.target.value))}
+                                                        />
+                                                        <div className="product-form__toggle-group product-form__toggle-group--aligned">
+                                                            <div className="product-form__status-panel product-form__status-panel--compact">
+                                                                <span className={`product-form__status-badge ${optionAvailability.toneClassName}`}>
+                                                                    {optionAvailability.label}
+                                                                </span>
+                                                                <p className="product-form__status-hint">{optionAvailability.hint}</p>
+                                                            </div>
+                                                            <div className="form-group">
+                                                                {renderCheckbox(
+                                                                    `purchaseOptionsV2Items.${index}.enabled`,
+                                                                    Boolean(item.enabled),
+                                                                    (e) => updatePurchaseOption(index, 'enabled', e.target.checked),
+                                                                    'Варіант активний'
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
 
                         <button
                             type="button"
-                            onClick={() => removePurchaseOption(index)}
-                            className="btn btn-danger"
-                            style={{ marginTop: '10px' }}
+                            onClick={addPurchaseOption}
+                            className="btn btn-primary"
                         >
-                            Видалити варіант
+                            Додати варіант покупки
                         </button>
-                    </div>
-                ))}
+                    </section>
+                </div>
             </div>
-
-            <button
-                type="button"
-                onClick={addPurchaseOption}
-                className="btn btn-primary"
-                style={{ marginTop: '20px' }}
-            >
-                Додати варіант покупки
-            </button>
-
         </form>
         </>
     );

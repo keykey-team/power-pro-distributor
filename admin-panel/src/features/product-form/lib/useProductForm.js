@@ -15,94 +15,183 @@ const buildMultiLang = (src, key) => ({
     sk: src?.[key]?.sk || '',
 });
 
-const formatPayload = (values) => ({
-    slug: values.slug,
-    type: values.type || '',
-    isActive: Boolean(values.isActive),
-    isBar: Boolean(values.isBar),
-    sort: Number(values.sort) || 0,
-    brand: {
+const getNumericValue = (value, fallback = 0) => {
+    const normalizedValue = Number(value);
+    return Number.isFinite(normalizedValue) ? normalizedValue : fallback;
+};
+
+const buildPurchaseOptionKey = (mode, index) => `${mode || 'unit'}_${index + 1}`;
+
+const buildCardBadgeKey = (badge, index) => {
+    const baseLabel = badge?.label?.en || badge?.label?.sk || badge?.unit || `badge_${index + 1}`;
+    const slugValue = String(baseLabel)
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, '_')
+        .replace(/[^a-z0-9_]/g, '');
+
+    return slugValue || `badge_${index + 1}`;
+};
+
+const normalizeCardBadgesForPayload = (badges) => (badges || []).map((badge, index) => ({
+    key: buildCardBadgeKey(badge, index),
+    label: {
+        ua: badge?.label?.ua || '',
+        ru: badge?.label?.ru || '',
+        en: badge?.label?.en || '',
+        sk: badge?.label?.sk || '',
+    },
+    valueNumber: badge?.valueNumber !== '' && badge?.valueNumber != null ? getNumericValue(badge.valueNumber, 0) : null,
+    valueText: '',
+    unit: badge?.unit || '',
+    display: 'value',
+    sort: index,
+    isHighlighted: Boolean(badge?.isHighlighted),
+}));
+
+const buildNutritionRowKey = (row, index) => {
+    const baseLabel = row?.label?.en || row?.label?.sk || `nutrition_row_${index + 1}`;
+    const slugValue = String(baseLabel)
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, '_')
+        .replace(/[^a-z0-9_]/g, '');
+
+    return slugValue || `nutrition_row_${index + 1}`;
+};
+
+const normalizeNutritionTableForPayload = (nutritionTable) => {
+    if (!nutritionTable || typeof nutritionTable !== 'object' || Array.isArray(nutritionTable)) {
+        return null;
+    }
+
+    return {
         title: {
-            ua: values.brand_title_ua || '',
-            ru: values.brand_title_ru || '',
-            en: values.brand_title_en || '',
-            sk: values.brand_title_sk || '',
+            ua: nutritionTable.title?.ua || '',
+            ru: nutritionTable.title?.ru || '',
+            en: nutritionTable.title?.en || '',
+            sk: nutritionTable.title?.sk || '',
         },
-    },
-    title: {
-        ua: values.title?.ua || '',
-        ru: values.title?.ru || '',
-        en: values.title?.en || '',
-        sk: values.title?.sk || '',
-    },
-    subtitle: {
-        ua: values.subtitle?.ua || '',
-        ru: values.subtitle?.ru || '',
-        en: values.subtitle?.en || '',
-        sk: values.subtitle?.sk || '',
-    },
-    description: {
-        ua: values.description?.ua || '',
-        ru: values.description?.ru || '',
-        en: values.description?.en || '',
-        sk: values.description?.sk || '',
-    },
-    ingredients: {
-        ua: values.ingredients?.ua || '',
-        ru: values.ingredients?.ru || '',
-        en: values.ingredients?.en || '',
-        sk: values.ingredients?.sk || '',
-    },
-    features: {
-        ua: values.features?.ua || [],
-        ru: values.features?.ru || [],
-        en: values.features?.en || [],
-        sk: values.features?.sk || [],
-    },
-    cover: values.cover || '',
-    gallery: values.gallery || [],
-    currency: values.currency || 'EUR',
-    price: Number(values.price) || 0,
-    oldPrice: values.oldPrice !== '' && values.oldPrice != null ? Number(values.oldPrice) : null,
-    stockQuantity: Number(values.stockQuantity) || 0,
-    inStock: Boolean(values.inStock),
-    weightG: values.weightG !== '' && values.weightG != null ? Number(values.weightG) : 0,
-    proteinG: values.proteinG !== '' && values.proteinG != null ? Number(values.proteinG) : 0,
-    seoTitle: {
-        ua: values.seoTitle?.ua || '',
-        ru: values.seoTitle?.ru || '',
-        en: values.seoTitle?.en || '',
-        sk: values.seoTitle?.sk || '',
-    },
-    seoDescription: {
-        ua: values.seoDescription?.ua || '',
-        ru: values.seoDescription?.ru || '',
-        en: values.seoDescription?.en || '',
-        sk: values.seoDescription?.sk || '',
-    },
-    cardBadges: values.cardBadges || [],
-    nutritionTable: values.nutritionTable || null,
-    purchaseOptionsV2: {
-        defaultKey: values.purchaseOptionsV2DefaultKey || 'unit',
-        items: (values.purchaseOptionsV2Items || []).map((item) => ({
-            key: item.key || '',
-            title: {
-                ua: item.title?.ua || '',
-                ru: item.title?.ru || '',
-                en: item.title?.en || '',
-                sk: item.title?.sk || '',
-            },
-            enabled: Boolean(item.enabled),
-            price: Number(item.price) || 0,
-            quantity: Number(item.quantity) || 1,
-            mode: item.mode || 'unit',
-            stockQuantity: Number(item.stockQuantity) || 0,
-            inStock: Boolean(item.inStock),
-            sort: Number(item.sort) || 0,
-            images: item.images || [],
+        columns: (nutritionTable.columns || []).map((column, index) => ({
+            ...column,
+            key: column?.key || `column_${index + 1}`,
+            sort: index,
         })),
-    },
+        rows: (nutritionTable.rows || []).map((row, index) => ({
+            ...row,
+            key: buildNutritionRowKey(row, index),
+            sort: index,
+        })),
+    };
+};
+
+const normalizePurchaseOptionsForPayload = (items) => (items || []).map((item, index) => {
+    const stockQuantity = getNumericValue(item?.stockQuantity, 0);
+    const mode = item?.mode || 'unit';
+
+    return {
+        key: item?.key || buildPurchaseOptionKey(mode, index),
+        title: {
+            ua: item?.title?.ua || '',
+            ru: item?.title?.ru || '',
+            en: item?.title?.en || '',
+            sk: item?.title?.sk || '',
+        },
+        enabled: Boolean(item?.enabled),
+        price: getNumericValue(item?.price, 0),
+        quantity: getNumericValue(item?.quantity, 1),
+        mode,
+        stockQuantity,
+        inStock: stockQuantity > 0,
+        sort: index,
+        images: item?.images || [],
+    };
 });
+
+const resolveProductPrice = (values, purchaseOptionItems) => {
+    const defaultItem = purchaseOptionItems.find((item) => item.key === values.purchaseOptionsV2DefaultKey);
+    const fallbackItem = purchaseOptionItems.find((item) => item.enabled !== false) || purchaseOptionItems[0];
+    const sourcePrice = defaultItem?.price ?? fallbackItem?.price ?? values.price;
+    return getNumericValue(sourcePrice, 0);
+};
+
+const formatPayload = (values) => {
+    const purchaseOptionsItems = normalizePurchaseOptionsForPayload(values.purchaseOptionsV2Items);
+    const stockQuantity = getNumericValue(values.stockQuantity, 0);
+
+    return {
+        slug: values.slug,
+        type: values.type || '',
+        isActive: Boolean(values.isActive),
+        isBar: Boolean(values.isBar),
+        sort: getNumericValue(values.sort, 0),
+        brand: {
+            title: {
+                ua: values.brand_title_ua || '',
+                ru: values.brand_title_ru || '',
+                en: values.brand_title_en || '',
+                sk: values.brand_title_sk || '',
+            },
+        },
+        title: {
+            ua: values.title?.ua || '',
+            ru: values.title?.ru || '',
+            en: values.title?.en || '',
+            sk: values.title?.sk || '',
+        },
+        subtitle: {
+            ua: values.subtitle?.ua || '',
+            ru: values.subtitle?.ru || '',
+            en: values.subtitle?.en || '',
+            sk: values.subtitle?.sk || '',
+        },
+        description: {
+            ua: values.description?.ua || '',
+            ru: values.description?.ru || '',
+            en: values.description?.en || '',
+            sk: values.description?.sk || '',
+        },
+        ingredients: {
+            ua: values.ingredients?.ua || '',
+            ru: values.ingredients?.ru || '',
+            en: values.ingredients?.en || '',
+            sk: values.ingredients?.sk || '',
+        },
+        features: {
+            ua: values.features?.ua || [],
+            ru: values.features?.ru || [],
+            en: values.features?.en || [],
+            sk: values.features?.sk || [],
+        },
+        cover: values.cover || '',
+        gallery: values.gallery || [],
+        currency: values.currency || 'EUR',
+        price: resolveProductPrice(values, purchaseOptionsItems),
+        oldPrice: values.oldPrice !== '' && values.oldPrice != null ? getNumericValue(values.oldPrice, 0) : null,
+        stockQuantity,
+        inStock: stockQuantity > 0,
+        weightG: values.weightG !== '' && values.weightG != null ? getNumericValue(values.weightG, 0) : 0,
+        proteinG: values.proteinG !== '' && values.proteinG != null ? getNumericValue(values.proteinG, 0) : 0,
+        seoTitle: {
+            ua: values.seoTitle?.ua || '',
+            ru: values.seoTitle?.ru || '',
+            en: values.seoTitle?.en || '',
+            sk: values.seoTitle?.sk || '',
+        },
+        seoDescription: {
+            ua: values.seoDescription?.ua || '',
+            ru: values.seoDescription?.ru || '',
+            en: values.seoDescription?.en || '',
+            sk: values.seoDescription?.sk || '',
+        },
+        cardBadges: normalizeCardBadgesForPayload(values.cardBadges),
+        nutritionTable: normalizeNutritionTableForPayload(values.nutritionTable),
+        purchaseOptionsV2: {
+            defaultKey: values.purchaseOptionsV2DefaultKey || purchaseOptionsItems[0]?.key || 'unit',
+            items: purchaseOptionsItems,
+        },
+    };
+};
 
 export const useProductForm = (type, initialData) => {
     const navigate = useNavigate();
@@ -171,10 +260,6 @@ export const useProductForm = (type, initialData) => {
                 en: Yup.string().min(3, 'Мінімум 3 символи').required("Обов'язкове поле (EN)"),
                 sk: Yup.string().min(3, 'Мінімум 3 символи').required("Обов'язкове поле (SK)"),
             }),
-            price: Yup.number()
-                .typeError('Ціна має бути числом')
-                .min(0, "Ціна не може бути від'ємною")
-                .required("Обов'язкове поле"),
         }),
         onSubmit: async (values) => {
             await handleProductFormSubmit({
