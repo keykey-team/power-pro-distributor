@@ -54,7 +54,7 @@ const OrderFunc = ({ onSubmit, deliveryType = 'pickup' }) => {
                   width={71} 
                   height={71} 
                   alt='product' 
-                  src={item?.product?.gallery?.[0] || "/img/box.png"} 
+                  src={item?.product?.gallery?.[0]?.url || item?.product?.cover?.url || "/img/box.png"} 
                 />
                 <div className="order-func__item-txt">
                   <p className='order-func__item-title'>{item.name || item?.product?.name}</p>

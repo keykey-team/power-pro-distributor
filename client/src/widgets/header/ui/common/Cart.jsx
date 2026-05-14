@@ -62,7 +62,7 @@ const Curt = () => {
                                 >
                                     <div className="curt__item-content">
                                         <Image
-                                            src={item?.product?.gallery[0] || "/img/box.png"}
+                                            src={item?.product?.gallery?.[0]?.url || item?.product?.cover?.url || "/img/box.png"}
                                             alt={item.name}
                                             width={70}
                                             height={70}

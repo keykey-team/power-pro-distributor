@@ -238,7 +238,7 @@ const ProductModalContent = ({ product, locale }) => {
                         <div className="prod-modal-mobile">
                             <p className='prod-modal__data-title'>{firstPart} {secondPart && <b style={{ color: "red" }}>{secondPart}</b>}</p>
                             <p className='prod-modal__data-description'>{product?.subtitle?.[locale]}</p>
-                            {renderV2Select()}
+                            {/* {renderV2Select()} */}
                         </div>
 
                         <button className="prod-modal__close" onClick={() => setIsModalOpen(null)}>
