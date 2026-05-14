@@ -21,7 +21,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const FTP_FILES_DIRECTORY = path.resolve(__dirname, "..", "ftpuser", "ftp", "files");
 const PUBLIC_FTP_BASE_URL = "https://fitwin-powerpro.com/ftp";
-const SINGLE_FILE_NAME = "file.webp";
 
 async function ensureFtpDirectory() {
   await fs.mkdir(FTP_FILES_DIRECTORY, { recursive: true });
@@ -92,7 +91,7 @@ export async function uploadSingleImage(req, res) {
       req.file.buffer,
       req.file.mimetype
     );
-    const storedFile = await saveWebpFromBase64(result.base64, SINGLE_FILE_NAME);
+    const storedFile = await saveWebpFromBase64(result.base64, buildFileName("cover"));
 
     // Log successful upload
     await logSuccess({
