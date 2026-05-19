@@ -1,5 +1,6 @@
 import { getMessages } from "@shared/i18n/getMessages";
 import { notFound } from "next/navigation";
+import Script from "next/script";
 import { i18n } from "@shared/i18n/config";
 import Providers from "@shared/providers";
 import "../style/globals.scss";
@@ -23,7 +24,26 @@ export default async function LocaleLayout({ children, params }) {
       lang={locale}
       className={`${inter.variable} ${unbounded.variable}`} // Добавляем переменные шрифтов
     >
+      <head>
+        <Script id="gtm-init" strategy="beforeInteractive">
+          {`
+            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+            })(window,document,'script','dataLayer','GTM-KZBFZX6L');
+          `}
+        </Script>
+      </head>
       <body className={inter.className}> {/* Устанавливаем Inter как основной шрифт */}
+        <noscript>
+          <iframe
+            src="https://www.googletagmanager.com/ns.html?id=GTM-KZBFZX6L"
+            height="0"
+            width="0"
+            style={{ display: "none", visibility: "hidden" }}
+          />
+        </noscript>
         <Providers locale={locale} messages={messages}>
           <div className="layout">
             <Header locale={locale} />
