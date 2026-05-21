@@ -100,8 +100,13 @@ function formatOrderTelegramText(order) {
 
   lines.push("");
   lines.push(`💰 Разом за товари: ${Number(order.totals?.total || 0).toFixed(2)} €`);
+  lines.push(`📌 Статус замовлення: ${order.status || "-"}`);
   lines.push(`💳 Статус оплати: ${order.payment?.status || "-"}`);
   lines.push(`🧾 Транзакція: ${order.payment?.transactionId || "-"}`);
+
+  if (order.status === "stock_issue") {
+    lines.push("⚠️ Потрібна ручна перевірка складу: товар оплачено, але залишок не списано.");
+  }
 
   const deliveryLines = formatDeliveryText(order.delivery);
   if (deliveryLines.length) {
@@ -496,13 +501,23 @@ export const comgateCallback = async (req, res) => {
           stockError
         );
 
+        try {
+          await notifyPaidOrderOnce(order);
+        } catch (telegramError) {
+          console.error(
+            "Telegram notification failed for paid stock issue order:",
+            order._id,
+            telegramError
+          );
+        }
+
         return res.status(200).send("OK");
       }
     }
 
     await order.save();
 
-    if (paymentStatus === "paid" && order.status !== "stock_issue") {
+    if (paymentStatus === "paid") {
       try {
         await notifyPaidOrderOnce(order);
       } catch (telegramError) {
@@ -717,7 +732,7 @@ export const updateOrderStatus = async (req, res) => {
 
     await order.save();
 
-    if (paymentStatus === "paid" && order.status !== "stock_issue") {
+    if (paymentStatus === "paid") {
       try {
         await notifyPaidOrderOnce(order);
       } catch (telegramError) {

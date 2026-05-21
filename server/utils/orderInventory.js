@@ -216,12 +216,14 @@ async function rollbackAppliedAdjustments(appliedAdjustments) {
           buildPurchaseOptionStockIncreasePipeline(
             adjustment.purchaseOptionKey,
             adjustment.quantity
-          )
+          ),
+          { updatePipeline: true }
         );
       } else {
         await Product.findOneAndUpdate(
           { _id: adjustment.productId },
-          buildStockIncreasePipeline(adjustment.quantity)
+          buildStockIncreasePipeline(adjustment.quantity),
+          { updatePipeline: true }
         );
       }
     } catch {
@@ -309,6 +311,7 @@ export async function deductOrderStockOnce(order) {
             requirement.quantity
           ),
           {
+            updatePipeline: true,
             new: true,
             lean: true,
           }
@@ -333,6 +336,7 @@ export async function deductOrderStockOnce(order) {
           },
           buildStockDecreasePipeline(requirement.quantity),
           {
+            updatePipeline: true,
             new: true,
             lean: true,
           }
