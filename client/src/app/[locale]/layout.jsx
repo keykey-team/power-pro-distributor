@@ -34,6 +34,20 @@ export default async function LocaleLayout({ children, params }) {
             })(window,document,'script','dataLayer','GTM-KZBFZX6L');
           `}
         </Script>
+        {/* Google Analytics 4 (gtag.js) */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-18YDYZQW01"
+          strategy="afterInteractive"
+          async
+        />
+        <Script id="ga-init" strategy="afterInteractive">
+          {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-18YDYZQW01');
+            `}
+        </Script>
       </head>
       <body className={inter.className}> {/* Устанавливаем Inter как основной шрифт */}
         <noscript>
